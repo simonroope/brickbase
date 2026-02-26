@@ -1,13 +1,46 @@
 {
-  "name": "@brickbase/source",
-  "version": "0.0.0",
-  "license": "MIT",
-  "scripts": {},
+  "name": "brickbase",
+  "version": "0.1.0",
   "private": true,
-  "dependencies": {},
+  "license": "MIT",
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "contracts:compile": "nx run contracts:compile",
+    "seed:users": "nx run contracts:seed-users",
+    "seed:assets": "nx run contracts:seed-assets"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "@web3modal/wagmi": "^5.1.11",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "viem": "^2.46.2",
+    "wagmi": "^3.5.0"
+  },
   "devDependencies": {
+    "@chainlink/contracts": "^0.6.1",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nx/js": "22.5.2",
     "@nx/workspace": "22.5.2",
-    "nx": "22.5.2"
+    "@openzeppelin/contracts": "^5.0.0",
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "dotenv": "^16.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "hardhat": "^2.22.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "nx": "22.5.2",
+    "rimraf": "^5.0.0",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

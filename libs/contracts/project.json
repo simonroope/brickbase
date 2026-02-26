@@ -1,0 +1,52 @@
+{
+  "name": "contracts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/contracts",
+  "targets": {
+    "compile": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat compile",
+        "cwd": "libs/contracts"
+      },
+      "configurations": {}
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test",
+        "cwd": "libs/contracts"
+      }
+    },
+    "node": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat node",
+        "cwd": "libs/contracts"
+      }
+    },
+    "deploy:localhost": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat run scripts/deploy.ts --network localhost",
+        "cwd": "libs/contracts"
+      }
+    },
+    "seed-users": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat run scripts/seed-users.ts --network localhost",
+        "cwd": "libs/contracts"
+      }
+    },
+    "seed-assets": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat run scripts/seed-assets.ts --network localhost",
+        "cwd": "libs/contracts"
+      }
+    }
+  },
+  "tags": ["scope:contracts"]
+}

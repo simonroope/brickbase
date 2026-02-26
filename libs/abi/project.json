@@ -1,0 +1,16 @@
+{
+  "name": "abi",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/abi/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'ABI lib - no build step, reads from contracts artifacts'"
+      }
+    }
+  },
+  "implicitDependencies": ["contracts"],
+  "tags": ["scope:shared"]
+}

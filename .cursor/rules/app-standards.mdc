@@ -1,0 +1,20 @@
+---
+description: Brickbase monorepo – Nx, Next.js, Hardhat, MCP
+alwaysApply: true
+---
+
+# Brickbase Coding Standards
+
+## Structure
+
+- `apps/web` – Next.js app (property assets trading UI)
+- `apps/mcp-server` – MCP server for AI/automation
+- `libs/contracts` – Solidity smart contracts (Hardhat)
+- `libs/abi` – Shared ABIs (`@brickbase/abi`)
+- `libs/shared-config` – Chain config, env
+
+## Conventions
+
+- Use `@brickbase/abi` for contract ABIs in web and mcp-server
+- Contract addresses via `NEXT_PUBLIC_*` env vars
+- Nx targets: `nx run web:build`, `nx run contracts:compile`, `nx run mcp-server:serve`

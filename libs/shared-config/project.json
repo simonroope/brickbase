@@ -1,0 +1,7 @@
+{
+  "name": "shared-config",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/shared-config/src",
+  "tags": ["scope:shared"]
+}
