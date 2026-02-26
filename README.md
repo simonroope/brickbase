@@ -72,3 +72,17 @@ The MCP server exposes smart contract data via tools and resources. Uses stdio (
 - `config://deployments` – chain and contract addresses
 
 Uses the same `.env` contract addresses as the web app.
+
+**Testing:**
+
+1. **MCP Inspector** (browser UI): Prerequisites – Hardhat node running, contracts deployed, seeds run. From brickbase:
+   ```bash
+   npx @modelcontextprotocol/inspector npx tsx apps/mcp-server/src/index.ts
+   ```
+   Opens http://localhost:6274 to call tools and read resources.
+
+2. **Test script** (programmatic):
+   ```bash
+   npx nx run mcp-server:test:mcp
+   ```
+   Spawns the server, calls `get_oracle_prices`, `get_property_list`, reads `config://deployments`.

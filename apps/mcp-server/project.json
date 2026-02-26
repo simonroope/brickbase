@@ -17,8 +17,20 @@
         "command": "npx tsx src/index.ts",
         "cwd": "apps/mcp-server"
       }
+    },
+    "test:mcp": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsx src/test-client.ts",
+        "cwd": "apps/mcp-server"
+      }
     }
   },
-  "implicitDependencies": ["abi", "shared-config"],
-  "tags": ["scope:mcp"]
+  "implicitDependencies": [
+    "abi",
+    "shared-config"
+  ],
+  "tags": [
+    "scope:mcp"
+  ]
 }

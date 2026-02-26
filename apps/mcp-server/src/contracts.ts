@@ -2,6 +2,13 @@
  * Contract read client for MCP server.
  * Uses same env vars as web app (NEXT_PUBLIC_*) for consistency.
  */
+import * as dotenv from "dotenv";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, "../../../.env") }); // brickbase root
+
 import { createPublicClient, defineChain, http, type Address } from "viem";
 import { sepolia } from "viem/chains";
 import {

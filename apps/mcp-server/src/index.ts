@@ -2,9 +2,6 @@
  * Brickbase MCP Server
  * Exposes smart contracts, config, and property data via Model Context Protocol.
  */
-import * as dotenv from "dotenv";
-dotenv.config();
-
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
