@@ -6,7 +6,11 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@brickbase/abi": ["../../libs/abi/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

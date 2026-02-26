@@ -14,7 +14,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx ts-node src/index.ts",
+        "command": "npx tsx src/index.ts",
         "cwd": "apps/mcp-server"
       }
     }

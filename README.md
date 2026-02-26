@@ -7,7 +7,7 @@ Nx monorepo for Property Assets: tokenized commercial real estate RWAs on Ethere
 | Path | Description |
 |------|-------------|
 | `apps/web` | Next.js web app (display & trade properties) |
-| `apps/mcp-server` | MCP server for AI/automation (scaffold) |
+| `apps/mcp-server` | MCP server for AI/automation (smart contracts, tools, resources) |
 | `libs/contracts` | Solidity smart contracts (Hardhat) |
 | `libs/abi` | Shared ABIs (`@brickbase/abi`) |
 | `libs/shared-config` | Chain config, env |
@@ -43,6 +43,9 @@ npx nx run web:build
 # Serve web app or npx nx serve web
 npx nx run web:serve
 
+# MCP server (stdio – use with Cursor or other MCP clients)
+npx nx run mcp-server:serve
+
 ```
 
 ## Environment
@@ -54,10 +57,18 @@ Copy `.env.example` to `.env` and set:
 
 ## MCP Server
 
-The MCP server in `apps/mcp-server` is a scaffold. To implement:
+The MCP server exposes smart contract data via tools and resources. Uses stdio (spawn by Cursor or other MCP clients).
 
-1. `npm install @modelcontextprotocol/sdk`
-2. Add tools: `get_property_list`, `get_oracle_prices`, etc.
-3. Add resources: `contract://AssetVault/abi`, etc.
+**Tools:**
+- `get_property_list` – list all tokenized properties
+- `get_property_detail` – detail for asset ID
+- `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100
+- `get_user_whitelist_status` – check if address is whitelisted
+- `get_user_shares` – user's share balance for an asset
+- `get_whitelisted_users` – list all whitelisted addresses
 
-See `property-assets.md` PRD for full specification.
+**Resources:**
+- `contract://AssetVault/abi`, `contract://AssetShares/abi`, `contract://OracleRouter/abi`, `contract://AssetUserAllowList/abi`
+- `config://deployments` – chain and contract addresses
+
+Uses the same `.env` contract addresses as the web app.

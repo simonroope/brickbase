@@ -11,6 +11,7 @@
     "seed:assets": "nx run contracts:seed-assets"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@tanstack/react-query": "^5.90.21",
     "@web3modal/wagmi": "^5.1.11",
     "next": "16.1.6",
@@ -38,7 +39,9 @@
     "rimraf": "^5.0.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "tsx": "^4.21.0",
+    "typescript": "^5",
+    "zod": "^4.3.6"
   },
   "engines": {
     "node": ">=18.0.0"
