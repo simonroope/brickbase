@@ -1,11 +1,15 @@
 "use client";
 
+/**
+ * Property details are viewable by all users (signed, unsigned, whitelisted or not).
+ * Whitelist is only enforced when attempting to purchase shares (see BuyShares).
+ */
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchAssetDetail, getUserShareBalance } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
-import { formatInt, formatNum, formatUsdc, ASSET_STATUS } from "@/lib/format";
+import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
 import { BuyShares } from "./BuyShares";
 
 export function AssetDetail({ assetId }: { assetId: number }) {

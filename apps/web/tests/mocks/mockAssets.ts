@@ -1,5 +1,5 @@
 /**
- * Mock asset data for testing.
+ * Mock asset data used by the app.
  */
 export const mockMetadata = {
   assetType: "office",

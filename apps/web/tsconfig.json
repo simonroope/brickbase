@@ -26,6 +26,9 @@
       "@/*": [
         "./src/*"
       ],
+      "@tests/*": [
+        "./tests/*"
+      ],
       "@brickbase/abi": [
         "../../libs/abi/src/index.ts"
       ]
@@ -40,7 +43,6 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules",
-    "tests"
+    "node_modules"
   ]
 }

@@ -18,6 +18,27 @@
         "command": "npx next dev --webpack",
         "cwd": "apps/web"
       }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run test",
+        "cwd": "apps/web"
+      }
+    },
+    "test:e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run test:e2e",
+        "cwd": "apps/web"
+      }
+    },
+    "test:integration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run test:integration",
+        "cwd": "apps/web"
+      }
     }
   },
   "implicitDependencies": ["abi", "shared-config"],

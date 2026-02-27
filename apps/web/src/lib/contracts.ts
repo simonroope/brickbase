@@ -1,6 +1,7 @@
 import { createPublicClient, defineChain, http, type Address } from "viem";
 import { sepolia } from "viem/chains";
 import { config } from "./config";
+import { mockAssets } from "@tests/mocks/mockAssets";
 
 const localhost = defineChain({
   id: 31337,
@@ -187,98 +188,14 @@ function mergeAssetWithShareInfo(
   };
 }
 
-/**
- * Fetch assets following the required flow:
- * 1. Asset IDs from AssetVaulted event logs
- * 2. AssetVault data (status, capitalValue, incomeValue, metadataUri)
- * 3. Metadata JSON from metadataUri, merged with AssetVault data
- * 4. AssetShares data (totalSupply, availableSupply, sharePrice, tradingEnabled), merged by asset
- */
+/** Fetch assets from mock data. */
 export async function fetchAssets(): Promise<AssetSummary[]> {
-  if (!config.assetVaultAddress || !config.assetSharesAddress) return [];
-  try {
-    const assetIds = await fetchAssetIdsFromEvents();
-    if (assetIds.length === 0) return [];
-
-    const assetVaultData = await publicClient.readContract({
-      address: config.assetVaultAddress,
-      abi: assetVaultAbi,
-      functionName: "getAllAssets",
-      args: [assetIds.map((id) => BigInt(id))],
-    }) as { status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string; createdAt: bigint }[];
-
-    const [metadataList, shareInfoList] = await Promise.all([
-      Promise.all(
-        assetVaultData.map((a) =>
-          a.metadataURI ? fetchMetadata(a.metadataURI) : Promise.resolve(null)
-        )
-      ),
-      Promise.all(
-        assetIds.map((id) =>
-          publicClient.readContract({
-            address: config.assetSharesAddress!,
-            abi: assetSharesAbi as never[],
-            functionName: "getAssetShares",
-            args: [BigInt(id)],
-          }) as Promise<[bigint, bigint, bigint, boolean]>
-        )
-      ),
-    ]);
-
-    const results: AssetSummary[] = [];
-    for (let i = 0; i < assetIds.length; i++) {
-      const asset = assetVaultData[i];
-      if (!asset || asset.createdAt === BigInt(0)) continue;
-      const merged = mergeAssetWithShareInfo(
-        assetIds[i],
-        asset,
-        shareInfoList[i],
-        metadataList[i]
-      );
-      results.push(merged);
-    }
-    return results;
-  } catch {
-    return [];
-  }
+  return mockAssets;
 }
 
 export async function fetchAssetDetail(assetId: number) {
-  if (!config.assetVaultAddress || !config.assetSharesAddress) return null;
-  try {
-    const [assets, shareInfo] = await Promise.all([
-      publicClient.readContract({
-        address: config.assetVaultAddress,
-        abi: assetVaultAbi as never[],
-        functionName: "getAllAssets",
-        args: [[BigInt(assetId)]],
-      }) as Promise<{ status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string; createdAt: bigint }[]>,
-      publicClient.readContract({
-        address: config.assetSharesAddress,
-        abi: assetSharesAbi as never[],
-        functionName: "getAssetShares",
-        args: [BigInt(assetId)],
-      }) as Promise<[bigint, bigint, bigint, boolean]>,
-    ]);
-    const asset = assets[0];
-    if (!asset || asset.createdAt === BigInt(0)) return null;
-    const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : null;
-    return {
-      assetId,
-      capitalValue: asset.capitalValue,
-      incomeValue: asset.incomeValue,
-      status: asset.status,
-      metadataUri: asset.metadataURI,
-      metadata,
-      totalSupply: shareInfo[0],
-      availableSupply: shareInfo[1],
-      sharePrice: shareInfo[2],
-      exists: true,
-      tradingEnabled: shareInfo[3],
-    };
-  } catch {
-    return null;
-  }
+  const asset = mockAssets.find((a) => a.assetId === assetId);
+  return asset ? { ...asset, exists: true } : null;
 }
 
 /** getUserShares returns [totalSupply, availableSupply, sharePrice, tradingEnabled, balance, frozen, unfrozen, recordedPurchasePrice] */

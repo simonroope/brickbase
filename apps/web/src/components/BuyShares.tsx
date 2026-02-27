@@ -29,6 +29,11 @@ export function BuyShares({ assetId, sharePrice, availableSupply }: BuySharesPro
 
   const handlePurchase = async () => {
     if (!address || !amount || BigInt(amount) <= BigInt(0)) return;
+    if (whitelisted === false) {
+      setErrorMessage("Your address is not on the whitelist. Contact the compliance officer to be added.");
+      setStatus("error");
+      return;
+    }
     const numAmount = BigInt(amount);
     if (numAmount > availableSupply) {
       setErrorMessage("Amount exceeds available supply");
@@ -57,14 +62,6 @@ export function BuyShares({ assetId, sharePrice, availableSupply }: BuySharesPro
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
         <p className="text-amber-800">Connect your wallet to purchase shares.</p>
-      </div>
-    );
-  }
-
-  if (whitelisted === false) {
-    return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-        <p className="text-amber-800">Your address is not on the whitelist. Contact the compliance officer to be added.</p>
       </div>
     );
   }
