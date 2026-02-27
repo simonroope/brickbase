@@ -12,6 +12,7 @@ import {
   getUserShareBalance,
   isUserWhitelisted,
   getWhitelistedUsers,
+  preparePurchaseTransactions,
   config,
 } from "./contracts.js";
 import { readFileSync } from "node:fs";
@@ -141,6 +142,56 @@ server.registerTool("get_whitelisted_users", {
   const users = await getWhitelistedUsers();
   return {
     content: [{ type: "text", text: JSON.stringify(users, null, 2) }],
+  };
+});
+
+server.registerTool("purchase_shares", {
+  title: "Purchase Shares",
+  description:
+    "Prepare unsigned transactions to purchase property shares. Returns transaction payloads (approve USDC, then purchaseShares) for the agent to sign with its own private key. The agent's wallet must be whitelisted and have sufficient USDC. For web users, use the web app to sign directly.",
+  inputSchema: {
+    assetId: z.number().int().min(0).describe("Asset ID to purchase shares for"),
+    amount: z.string().describe("Number of shares to purchase (e.g. '100' for 100 shares)"),
+  },
+}, async ({ assetId, amount }) => {
+  const amountParsed = amount.trim();
+  if (!amountParsed || !/^\d+(\.\d+)?$/.test(amountParsed)) {
+    return {
+      content: [{ type: "text", text: "Amount must be a positive number (e.g. '100')" }],
+      isError: true,
+    };
+  }
+  const amountRaw = BigInt(Math.floor(parseFloat(amountParsed) * 1e18));
+  if (amountRaw === BigInt(0)) {
+    return {
+      content: [{ type: "text", text: "Amount must be greater than zero" }],
+      isError: true,
+    };
+  }
+  const result = await preparePurchaseTransactions(assetId, amountRaw);
+  if (!result.success) {
+    return {
+      content: [{ type: "text", text: JSON.stringify({ success: false, error: result.error }) }],
+      isError: true,
+    };
+  }
+  const payload = {
+    chainId: result.chainId,
+    rpcUrl: result.rpcUrl,
+    sharePrice: result.sharePrice,
+    assetId,
+    amount: amountParsed,
+    transactions: result.transactions.map((t) => ({
+      step: t.step,
+      to: t.to,
+      data: t.data,
+      value: t.value.toString(),
+    })),
+    instructions:
+      "Sign and submit these two transactions in order (1. approve USDC, 2. purchaseShares) using the agent's own wallet. The MCP server does not hold private keys.",
+  };
+  return {
+    content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
   };
 });
 

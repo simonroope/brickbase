@@ -21,6 +21,7 @@
     "wagmi": "^3.5.0"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^12.6.0",
     "@chainlink/contracts": "^0.6.1",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nx/js": "22.5.2",

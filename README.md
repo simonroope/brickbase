@@ -11,6 +11,7 @@ Nx monorepo for Property Assets: tokenized commercial real estate RWAs on Ethere
 | `libs/contracts` | Solidity smart contracts (Hardhat) |
 | `libs/abi` | Shared ABIs (`@brickbase/abi`) |
 | `libs/shared-config` | Chain config, env |
+| `libs/test-seed` | Shared users/assets seeding for MCP and web e2e tests |
 
 ## Setup
 
@@ -60,6 +61,7 @@ Copy `.env.example` to `.env` and set:
 The MCP server exposes smart contract data via tools and resources. Uses stdio (spawn by Cursor or other MCP clients).
 
 **Tools:**
+- `purchase_shares` – returns unsigned transaction payloads (approve USDC, purchaseShares) for the agent to sign with its own key. The MCP server holds no private keys.
 - `get_property_list` – list all tokenized properties
 - `get_property_detail` – detail for asset ID
 - `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100
@@ -71,7 +73,7 @@ The MCP server exposes smart contract data via tools and resources. Uses stdio (
 - `contract://AssetVault/abi`, `contract://AssetShares/abi`, `contract://OracleRouter/abi`, `contract://AssetUserAllowList/abi`
 - `config://deployments` – chain and contract addresses
 
-Uses the same `.env` contract addresses as the web app.
+Uses the same `.env` contract addresses as the web app. No private keys; each agent signs with its own wallet.
 
 **Testing:**
 
@@ -81,8 +83,8 @@ Uses the same `.env` contract addresses as the web app.
    ```
    Opens http://localhost:6274 to call tools and read resources.
 
-2. **Test script** (programmatic):
+2. **Playwright tests**:
    ```bash
    npx nx run mcp-server:test:mcp
    ```
-   Spawns the server, calls `get_oracle_prices`, `get_property_list`, reads `config://deployments`.
+   Runs Playwright tests in `apps/mcp-server/tests/mcp.spec.ts`: tools listing, `get_oracle_prices`, `get_property_list`, `config://deployments`, and agent purchase flow. Seeds users and assets via `@brickbase/test-seed` (independent of contracts scripts). Uses Hardhat account #2. Prereqs: Hardhat node, deploy.

@@ -9,7 +9,13 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, "../../../.env") }); // brickbase root
 
-import { createPublicClient, defineChain, http, type Address } from "viem";
+import {
+  createPublicClient,
+  encodeFunctionData,
+  defineChain,
+  http,
+  type Address,
+} from "viem";
 import { sepolia } from "viem/chains";
 import {
   assetVaultAbi,
@@ -264,5 +270,79 @@ export async function getWhitelistedUsers(): Promise<string[]> {
       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
     return [];
+  }
+}
+
+const erc20ApproveAbi = [
+  {
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    name: "approve",
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+export type PurchaseTransactionPayload = {
+  to: Address;
+  data: `0x${string}`;
+  value: bigint;
+  step: string;
+};
+
+/**
+ * Prepares unsigned transactions for share purchase.
+ * The agent signs and submits these with its own private key.
+ * Returns: approve (USDC) then purchaseShares, in order.
+ */
+export async function preparePurchaseTransactions(
+  assetId: number,
+  amountRaw: bigint
+): Promise<
+  | { success: true; chainId: number; rpcUrl: string; transactions: PurchaseTransactionPayload[]; sharePrice: string }
+  | { success: false; error: string }
+> {
+  if (!config.usdcAddress || !config.assetSharesAddress) {
+    return { success: false, error: "Contract addresses not configured" };
+  }
+
+  try {
+    const [, , sharePrice] = (await publicClient.readContract({
+      address: config.assetSharesAddress,
+      abi: assetSharesAbi as never[],
+      functionName: "getAssetShares",
+      args: [BigInt(assetId)],
+    })) as [bigint, bigint, bigint, boolean];
+
+    const totalCostUsdc = (amountRaw * sharePrice) / BigInt(1e18);
+
+    const approveData = encodeFunctionData({
+      abi: erc20ApproveAbi,
+      functionName: "approve",
+      args: [config.assetSharesAddress, totalCostUsdc],
+    });
+
+    const purchaseData = encodeFunctionData({
+      abi: assetSharesAbi,
+      functionName: "purchaseShares",
+      args: [BigInt(assetId), amountRaw],
+    });
+
+    return {
+      success: true,
+      chainId: config.chainId,
+      rpcUrl: config.rpcUrl,
+      sharePrice: sharePrice.toString(),
+      transactions: [
+        { step: "approve_usdc", to: config.usdcAddress, data: approveData, value: BigInt(0) },
+        { step: "purchase_shares", to: config.assetSharesAddress, data: purchaseData, value: BigInt(0) },
+      ],
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { success: false, error: message };
   }
 }

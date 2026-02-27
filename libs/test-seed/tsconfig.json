@@ -1,18 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@brickbase/abi": ["../../libs/abi/src/index.ts"],
-    "@brickbase/test-seed": ["../../libs/test-seed/src/index.ts"]
+      "@brickbase/abi": ["../abi/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules"]
 }

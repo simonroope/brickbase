@@ -21,14 +21,15 @@
     "test:mcp": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx tsx src/test-client.ts",
+        "command": "npx playwright test",
         "cwd": "apps/mcp-server"
       }
     }
   },
   "implicitDependencies": [
     "abi",
-    "shared-config"
+    "shared-config",
+    "test-seed"
   ],
   "tags": [
     "scope:mcp"

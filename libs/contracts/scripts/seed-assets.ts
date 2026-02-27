@@ -206,6 +206,14 @@ async function main() {
     } else {
       console.warn(`⚠️ Signer has insufficient USDC (need ${ethers.formatUnits(cost, 6)} USDC) - skipping purchase; availableSupply remains 2000`);
     }
+
+    // Fund agent user (signers[2]) for MCP tests – 1000 USDC for test purchases
+    if (isLocalNetwork && signers.length > 2) {
+      const agentUser = signers[2].address;
+      const agentUsdcAmount = ethers.parseUnits("1000", 6);
+      await usdc.transfer(agentUser, agentUsdcAmount);
+      console.log(`✓ Funded agent user (${agentUser}) with 1000 USDC for MCP tests`);
+    }
   } else {
     console.warn(`⚠️ USDC address not in addresses file - cannot simulate purchase; availableSupply remains 2000`);
   }
