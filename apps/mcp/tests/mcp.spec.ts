@@ -76,8 +76,8 @@ test.describe("MCP Server Tools", () => {
     const toolNames = tools.tools.map((t) => t.name);
     const expectedTools = [
       "get_oracle_prices",
-      "get_property_list",
-      "get_property_detail",
+      "get_asset_list",
+      "get_asset_detail",
       "purchase_shares",
       "get_user_whitelist_status",
       "get_user_shares",
@@ -97,8 +97,8 @@ test.describe("MCP Server Tools", () => {
     expect(parseInt(prices.ethUsd, 10)).toBeGreaterThan(0);
   });
 
-  test("get_property_list returns properties with required fields", async () => {
-    const result = await client.callTool({ name: "get_property_list", arguments: {} });
+  test("get_asset_list returns assets with required fields", async () => {
+    const result = await client.callTool({ name: "get_asset_list", arguments: {} });
     const content = Array.isArray(result.content) ? result.content[0] : undefined;
     expect(content?.type).toBe("text");
     const properties = JSON.parse((content as { text: string }).text) as Array<Record<string, unknown>>;

@@ -83,8 +83,8 @@ The MCP server exposes smart contract data via tools and resources. Uses stdio (
 
 **Tools:**
 - `purchase_shares` – returns unsigned transaction payloads (approve USDC, purchaseShares) for the agent to sign with its own key. The MCP server holds no private keys.
-- `get_property_list` – list all tokenized properties
-- `get_property_detail` – detail for asset ID
+- `get_asset_list` – list all tokenized assets
+- `get_asset_detail` – detail for asset ID
 - `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100
 - `get_user_whitelist_status` – check if address is whitelisted
 - `get_user_shares` – user's share balance for an asset

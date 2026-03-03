@@ -13,3 +13,6 @@ libs/contracts/typechain-types
 
 # Build artifacts
 *.tsbuildinfo
+
+# Test results
+test-results

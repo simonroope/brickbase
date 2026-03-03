@@ -6,8 +6,8 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   getOraclePrices,
-  getPropertyList,
-  getPropertyDetail,
+  getAssetList,
+  getAssetDetail,
   getUserShareBalance,
   isUserWhitelisted,
   getWhitelistedUsers,
@@ -31,12 +31,12 @@ function readAbi(name: string): string {
 export function registerBrickbaseTools(server: McpServer): void {
   // --- Tools ---
 
-  server.registerTool("get_property_list", {
-    title: "Get Property List",
-    description: "Fetch all tokenized property assets from the AssetVault",
+  server.registerTool("get_asset_list", {
+    title: "Get Asset List",
+    description: "Fetch all tokenized assets from the AssetVault",
     inputSchema: {},
   }, async () => {
-    const assets = await getPropertyList();
+    const assets = await getAssetList();
     return {
       content: [
         {
@@ -47,14 +47,14 @@ export function registerBrickbaseTools(server: McpServer): void {
     };
   });
 
-  server.registerTool("get_property_detail", {
-    title: "Get Property Detail",
-    description: "Fetch detailed info for a specific property asset by ID",
+  server.registerTool("get_asset_detail", {
+    title: "Get Asset Detail",
+    description: "Fetch detailed info for a specific asset by ID",
     inputSchema: {
       assetId: z.number().int().min(0).describe("Asset ID"),
     },
   }, async ({ assetId }) => {
-    const asset = await getPropertyDetail(assetId);
+    const asset = await getAssetDetail(assetId);
     if (!asset) {
       return {
         content: [{ type: "text", text: `Asset ${assetId} not found` }],

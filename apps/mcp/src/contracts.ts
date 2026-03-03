@@ -154,7 +154,7 @@ async function fetchMetadata(uri: string): Promise<Record<string, unknown> | nul
   }
 }
 
-export async function getPropertyList(): Promise<AssetSummary[]> {
+export async function getAssetList(): Promise<AssetSummary[]> {
   if (useMocks) return mockPropertyList;
   if (!config.assetVaultAddress || !config.assetSharesAddress) return [];
   try {
@@ -208,7 +208,7 @@ export async function getPropertyList(): Promise<AssetSummary[]> {
   }
 }
 
-export async function getPropertyDetail(assetId: number): Promise<AssetSummary & { metadata?: Record<string, unknown> } | null> {
+export async function getAssetDetail(assetId: number): Promise<AssetSummary & { metadata?: Record<string, unknown> } | null> {
   if (useMocks) return mockPropertyList[0]?.assetId === assetId ? { ...mockPropertyList[0] } : null;
   if (!config.assetVaultAddress || !config.assetSharesAddress) return null;
   try {
