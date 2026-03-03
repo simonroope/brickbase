@@ -41,6 +41,6 @@
       }
     }
   },
-  "implicitDependencies": ["abi", "shared-config"],
+  "implicitDependencies": ["abi", "mcp", "shared-config"],
   "tags": ["scope:web"]
 }

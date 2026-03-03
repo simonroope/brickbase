@@ -37,6 +37,49 @@ const localhost = defineChain({
 const chain =
   chainId === 31337 ? localhost : chainId === 11155111 ? sepolia : localhost;
 
+const useMocks = process.env.MCP_USE_MOCKS === "1";
+
+export type OraclePrices = {
+  ethUsd: { price: bigint; updatedAt: bigint };
+  gbpUsd: { price: bigint; updatedAt: bigint };
+  goldUsd: { price: bigint; updatedAt: bigint };
+  ftse100: { value: bigint; updatedAt: bigint };
+};
+
+export type AssetSummary = {
+  assetId: number;
+  status: number;
+  capitalValue: string;
+  incomeValue: string;
+  metadataUri: string;
+  totalSupply: string;
+  availableSupply: string;
+  sharePrice: string;
+  tradingEnabled: boolean;
+};
+
+/** Mock data when MCP_USE_MOCKS=1 for tests without blockchain. */
+const mockOraclePrices: OraclePrices = {
+  ethUsd: { price: BigInt(3500e8), updatedAt: BigInt(Math.floor(Date.now() / 1000)) },
+  gbpUsd: { price: BigInt(127e8), updatedAt: BigInt(Math.floor(Date.now() / 1000)) },
+  goldUsd: { price: BigInt(2700e8), updatedAt: BigInt(Math.floor(Date.now() / 1000)) },
+  ftse100: { value: BigInt(7500e8), updatedAt: BigInt(Math.floor(Date.now() / 1000)) },
+};
+
+const mockPropertyList: AssetSummary[] = [
+  {
+    assetId: 1,
+    status: 2,
+    capitalValue: "1000000000000000000000000",
+    incomeValue: "50000000000000000000000",
+    metadataUri: "ipfs://mock",
+    totalSupply: "1000000000000000000000",
+    availableSupply: "800000000000000000000",
+    sharePrice: "1000000000000000000",
+    tradingEnabled: true,
+  },
+];
+
 export const config = {
   chainId,
   rpcUrl,
@@ -52,14 +95,8 @@ const publicClient = createPublicClient({
   transport: http(rpcUrl),
 });
 
-export type OraclePrices = {
-  ethUsd: { price: bigint; updatedAt: bigint };
-  gbpUsd: { price: bigint; updatedAt: bigint };
-  goldUsd: { price: bigint; updatedAt: bigint };
-  ftse100: { value: bigint; updatedAt: bigint };
-};
-
 export async function getOraclePrices(): Promise<OraclePrices | null> {
+  if (useMocks) return mockOraclePrices;
   if (!config.oracleRouterAddress || config.oracleRouterAddress === "0x")
     return null;
   try {
@@ -96,18 +133,6 @@ export async function getOraclePrices(): Promise<OraclePrices | null> {
   }
 }
 
-export type AssetSummary = {
-  assetId: number;
-  status: number;
-  capitalValue: string;
-  incomeValue: string;
-  metadataUri: string;
-  totalSupply: string;
-  availableSupply: string;
-  sharePrice: string;
-  tradingEnabled: boolean;
-};
-
 function toDisplayUrl(u: string): string {
   if (!u || typeof u !== "string") return "";
   if (u.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${u.slice(7)}`;
@@ -130,6 +155,7 @@ async function fetchMetadata(uri: string): Promise<Record<string, unknown> | nul
 }
 
 export async function getPropertyList(): Promise<AssetSummary[]> {
+  if (useMocks) return mockPropertyList;
   if (!config.assetVaultAddress || !config.assetSharesAddress) return [];
   try {
     const logs = await publicClient.getContractEvents({
@@ -183,6 +209,7 @@ export async function getPropertyList(): Promise<AssetSummary[]> {
 }
 
 export async function getPropertyDetail(assetId: number): Promise<AssetSummary & { metadata?: Record<string, unknown> } | null> {
+  if (useMocks) return mockPropertyList[0]?.assetId === assetId ? { ...mockPropertyList[0] } : null;
   if (!config.assetVaultAddress || !config.assetSharesAddress) return null;
   try {
     const [assets, shareInfo] = await Promise.all([

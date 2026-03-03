@@ -15,7 +15,10 @@
     "test:e2e": "start-server-and-test 'dev:for-test' http://localhost:3000 \"TS_NODE_COMPILER_OPTIONS='{\\\"module\\\":\\\"commonjs\\\",\\\"moduleResolution\\\":\\\"node\\\"}' cucumber-js -p e2e\""
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@tanstack/react-query": "^5.90.21",
+    "mcp-handler": "^1.0.7",
+    "zod": "^4.3.6",
     "@web3modal/wagmi": "^5.1.11",
     "next": "16.1.6",
     "react": "19.2.3",

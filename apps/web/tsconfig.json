@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "types": ["node"],
+    "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
@@ -31,6 +32,12 @@
       ],
       "@brickbase/abi": [
         "../../libs/abi/src/index.ts"
+      ],
+      "@brickbase/mcp": [
+        "../../apps/mcp/src/index.ts"
+      ],
+      "@brickbase/mcp/registerTools": [
+        "../../apps/mcp/src/registerTools.ts"
       ]
     }
   },

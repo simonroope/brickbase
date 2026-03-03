@@ -7,13 +7,19 @@
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
     "contracts:compile": "nx run contracts:compile",
-    "seed:users": "nx run contracts:seed-users",
-    "seed:assets": "nx run contracts:seed-assets"
+    "contracts:test": "nx run contracts:test",
+    "contracts:deploy": "nx run contracts:deploy:localhost",
+    "contracts:seed:users": "nx run contracts:seed-users",
+    "contracts:seed:assets": "nx run contracts:seed-assets",
+    "web:dev": "nx run web:serve",
+    "mcp:dev": "nx run mcp:serve",
+    "mcp:test": "nx run mcp:test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@tanstack/react-query": "^5.90.21",
     "@web3modal/wagmi": "^5.1.11",
+    "mcp-handler": "^1.0.7",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -21,8 +27,8 @@
     "wagmi": "^3.5.0"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^12.6.0",
     "@chainlink/contracts": "^0.6.1",
+    "@cucumber/cucumber": "^12.6.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nx/js": "22.5.2",
     "@nx/workspace": "22.5.2",

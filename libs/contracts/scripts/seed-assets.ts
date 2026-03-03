@@ -219,34 +219,8 @@ async function main() {
   }
 
   console.log("\n=== Seed Complete ===");
-  console.log("Asset 1: ipfs://prop001-metadata.json");
-  console.log("Expected metadata-1.json contents:");
-  console.log(JSON.stringify({
-    assetType: "office",
-    name: "Lyons House",
-    address: "123 Cannon Street, London EC1 3JN",
-    purchasePrice: 140000000,
-    purchaseDate: "2019-04-01",
-    area: 10000,
-    yearBuilt: 2001,
-    jurisdiction: "UK",
-    images: ["ipfs://Qm...11", "ipfs://Qm...12"],
-    documents: ["ipfs://Qm...", "ipfs://Qm..."],
-  }, null, 2));
-  console.log("\nAsset 2: ipfs://metadata-2.json");
-  console.log("Expected prop002-metadata.json contents:");
-  console.log(JSON.stringify({
-    assetType: "office",
-    name: "Dewis House",
-    address: "55 Oxford Street, London W1 4AW",
-    purchasePrice: 88000000,
-    purchaseDate: "2024-03-21",
-    area: 20000,
-    yearBuilt: 1999,
-    jurisdiction: "UK",
-    images: ["ipfs://Qm...21", "ipfs://Qm...22"],
-    documents: ["ipfs://Qm...", "ipfs://Qm..."],
-  }, null, 2));
+  console.log("Asset 1:", ASSET_1);
+  console.log("Asset 2:", ASSET_2);
 }
 
 main().catch((error) => {

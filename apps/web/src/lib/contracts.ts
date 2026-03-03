@@ -161,7 +161,6 @@ async function fetchAssetIdsFromEvents(): Promise<number[]> {
       const args = (log as { args?: { assetId?: bigint } }).args;
       if (args?.assetId != null) ids.add(Number(args.assetId));
     }
-    console.log("ids", ids);
     return [...ids].sort((a, b) => a - b);
   } catch {
     return [];
@@ -188,14 +187,84 @@ function mergeAssetWithShareInfo(
   };
 }
 
-/** Fetch assets from mock data. */
+/** Fetch assets from blockchain, or mock when contracts not configured. */
 export async function fetchAssets(): Promise<AssetSummary[]> {
-  return mockAssets;
+  if (!config.assetVaultAddress || !config.assetSharesAddress) return mockAssets;
+  try {
+    const ids = await fetchAssetIdsFromEvents();
+    if (ids.length === 0) return mockAssets;
+    const vaultData = (await publicClient.readContract({
+      address: config.assetVaultAddress,
+      abi: assetVaultAbi,
+      functionName: "getAllAssets",
+      args: [ids.map((id) => BigInt(id))],
+    })) as { status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string }[];
+    const shareInfos = await Promise.all(
+      ids.map((id) =>
+        publicClient.readContract({
+          address: config.assetSharesAddress,
+          abi: assetSharesAbi as never[],
+          functionName: "getAssetShares",
+          args: [BigInt(id)],
+        }) as Promise<[bigint, bigint, bigint, boolean]>
+      )
+    );
+    const results: AssetSummary[] = [];
+    for (let i = 0; i < ids.length; i++) {
+      const asset = vaultData[i];
+      if (!asset) continue;
+      const [totalSupply, availableSupply, sharePrice, tradingEnabled] = shareInfos[i];
+      const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : null;
+      results.push(
+        mergeAssetWithShareInfo(
+          ids[i],
+          asset,
+          [totalSupply, availableSupply, sharePrice, tradingEnabled],
+          metadata
+        )
+      );
+    }
+    return results;
+  } catch {
+    return mockAssets;
+  }
 }
 
 export async function fetchAssetDetail(assetId: number) {
-  const asset = mockAssets.find((a) => a.assetId === assetId);
-  return asset ? { ...asset, exists: true } : null;
+  if (!config.assetVaultAddress || !config.assetSharesAddress) {
+    const asset = mockAssets.find((a) => a.assetId === assetId);
+    return asset ? { ...asset, exists: true } : null;
+  }
+  try {
+    const [assets, shareInfo] = await Promise.all([
+      publicClient.readContract({
+        address: config.assetVaultAddress,
+        abi: assetVaultAbi as never[],
+        functionName: "getAllAssets",
+        args: [[BigInt(assetId)]],
+      }) as Promise<{ status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string }[]>,
+      publicClient.readContract({
+        address: config.assetSharesAddress,
+        abi: assetSharesAbi as never[],
+        functionName: "getAssetShares",
+        args: [BigInt(assetId)],
+      }) as Promise<[bigint, bigint, bigint, boolean]>,
+    ]);
+    const asset = assets[0];
+    if (!asset) return null;
+    const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : null;
+    const [totalSupply, availableSupply, sharePrice, tradingEnabled] = shareInfo;
+    const summary = mergeAssetWithShareInfo(
+      assetId,
+      asset,
+      [totalSupply, availableSupply, sharePrice, tradingEnabled],
+      metadata
+    );
+    return { ...summary, exists: true };
+  } catch {
+    const asset = mockAssets.find((a) => a.assetId === assetId);
+    return asset ? { ...asset, exists: true } : null;
+  }
 }
 
 /** getUserShares returns [totalSupply, availableSupply, sharePrice, tradingEnabled, balance, frozen, unfrozen, recordedPurchasePrice] */

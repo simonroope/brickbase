@@ -13,9 +13,15 @@ const nextConfig: NextConfig = {
   },
   webpack: (config) => {
     // Stub React Native async-storage so MetaMask SDK browser build doesn't fail
+    const root = path.resolve(__dirname, "../..");
     config.resolve.alias = {
       ...config.resolve.alias,
-      "@brickbase/abi": path.resolve(__dirname, "../../libs/abi/src/index.ts"),
+      "@brickbase/abi": path.resolve(root, "libs/abi/src/index.ts"),
+      // MCP contracts.ts imports libs/abi via relative path
+      [path.resolve(root, "libs/abi/src/index.js")]: path.resolve(
+        root,
+        "libs/abi/src/index.ts"
+      ),
       "@react-native-async-storage/async-storage": path.resolve(
         __dirname,
         "src/lib/async-storage-stub.js"

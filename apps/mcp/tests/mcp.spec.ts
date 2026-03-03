@@ -1,9 +1,9 @@
 /**
  * MCP server tests using Playwright Test.
- * Run: npx nx run mcp-server:test:mcp
+ * Run: npx nx run mcp:test:mcp
  *
- * Prereqs: Hardhat node running, contracts deployed, .env configured.
- * Seeds users and assets via @brickbase/test-seed (independent of contracts scripts).
+ * Uses MCP_USE_MOCKS=1 for read-only tools (no blockchain required).
+ * The purchase_shares test is skipped when mocking (requires real chain).
  */
 import { test, expect } from "@playwright/test";
 import * as dotenv from "dotenv";
@@ -24,8 +24,11 @@ import {
   type Address,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
-import hardhatMnemonic from "../../../libs/test-seed/src/hardhat-mnemonic.js";
-const { HARDHAT_MNEMONIC } = hardhatMnemonic;
+
+const useMocks = process.env.MCP_USE_MOCKS === "1";
+
+const HARDHAT_MNEMONIC =
+  "test test test test test test test test test test test junk";
 const agentAccount = mnemonicToAccount(HARDHAT_MNEMONIC, {
   accountIndex: 0,
   changeIndex: 0,
@@ -53,18 +56,11 @@ const erc1155BalanceOfAbi = parseAbi([
 let client: Client;
 
 test.beforeAll(async () => {
-  if (assetVaultAddress && assetSharesAddress && usdcAddress) {
-    const { execSync } = await import("node:child_process");
-    execSync("npx tsx apps/mcp-server/tests/run-seed.ts", {
-      cwd: serverCwd,
-      stdio: "pipe",
-    });
-  }
-
   const transport = new StdioClientTransport({
     command: "npx",
-    args: ["tsx", "apps/mcp-server/src/index.ts"],
+    args: ["tsx", "apps/mcp/src/index.ts"],
     cwd: serverCwd,
+    env: { ...process.env, MCP_USE_MOCKS: "1" },
   });
   client = new Client({ name: "mcp-test", version: "1.0.0" });
   await client.connect(transport);
@@ -133,8 +129,8 @@ test.describe("MCP Server Resources", () => {
 
 test.describe("purchase_shares", () => {
   test.skip(
-    !assetSharesAddress || !usdcAddress || !assetVaultAddress,
-    "Skipped: contract addresses not set in .env"
+    useMocks || !assetSharesAddress || !usdcAddress || !assetVaultAddress,
+    useMocks ? "Skipped: requires real chain (run without MCP_USE_MOCKS for integration)" : "Skipped: contract addresses not set in .env"
   );
 
   test("returns approve and purchase transactions, agent can purchase shares", async () => {

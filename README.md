@@ -7,11 +7,10 @@ Nx monorepo for Property Assets: tokenized commercial real estate RWAs on Ethere
 | Path | Description |
 |------|-------------|
 | `apps/web` | Next.js web app (display & trade properties) |
-| `apps/mcp-server` | MCP server for AI/automation (smart contracts, tools, resources) |
+| `apps/mcp` | MCP server for AI/automation (smart contracts, tools, resources) |
 | `libs/contracts` | Solidity smart contracts (Hardhat) |
 | `libs/abi` | Shared ABIs (`@brickbase/abi`) |
 | `libs/shared-config` | Chain config, env |
-| `libs/test-seed` | Shared users/assets seeding for MCP and web e2e tests |
 
 ## Setup
 
@@ -48,7 +47,7 @@ npx nx run web:test:integration # Cucumber BDD integration tests (mock data, sta
 npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts dev server)
 
 # MCP server (stdio – use with Cursor or other MCP clients)
-npx nx run mcp-server:serve
+npx nx run mcp:serve
 
 ```
 
@@ -97,16 +96,8 @@ The MCP server exposes smart contract data via tools and resources. Uses stdio (
 
 Uses the same `.env` contract addresses as the web app. No private keys; each agent signs with its own wallet.
 
-**Testing:**
-
-1. **MCP Inspector** (browser UI): Prerequisites – Hardhat node running, contracts deployed, seeds run. From brickbase:
+**Testing:** MCP Inspector (browser UI). Prerequisites – Hardhat node running, contracts deployed, seeds run. From brickbase:
    ```bash
-   npx @modelcontextprotocol/inspector npx tsx apps/mcp-server/src/index.ts
+   npx @modelcontextprotocol/inspector npx tsx apps/mcp/src/index.ts
    ```
    Opens http://localhost:6274 to call tools and read resources.
-
-2. **Playwright tests**:
-   ```bash
-   npx nx run mcp-server:test:mcp
-   ```
-   Runs Playwright tests in `apps/mcp-server/tests/mcp.spec.ts`: tools listing, `get_oracle_prices`, `get_property_list`, `config://deployments`, and agent purchase flow. Seeds users and assets via `@brickbase/test-seed` (independent of contracts scripts). Uses Hardhat account #2. Prereqs: Hardhat node, deploy.
