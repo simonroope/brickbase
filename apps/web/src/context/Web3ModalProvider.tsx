@@ -40,6 +40,24 @@ export default function Web3ModalProvider({
           projectId,
           enableAnalytics: true,
           enableOnramp: true,
+          customWallets: [
+            {
+              id: "quantum",
+              name: "Quantum Wallet",
+              homepage: "https://wallet.qat.xyz",
+              image_url:
+                "https://lh3.googleusercontent.com/placeholder", // Replace with actual icon URL
+              mobile_link: "quantum://",
+              desktop_link:
+                "https://chromewebstore.google.com/detail/quantum-wallet/ajopcimklncnhjednieoejhkffdolemp",
+              webapp_link:
+                "https://chromewebstore.google.com/detail/quantum-wallet/ajopcimklncnhjednieoejhkffdolemp",
+              app_store:
+                "https://apps.apple.com/kw/app/quantum-wallet/id6511246853",
+              play_store:
+                "https://play.google.com/store/apps/details?id=com.quantum.wallet.app",
+            },
+          ],
         });
       }
     });
