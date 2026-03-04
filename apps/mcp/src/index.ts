@@ -12,10 +12,7 @@ const server = new McpServer(
     version: "1.0.0",
   },
   {
-    capabilities: {
-      tools: { listChanged: true },
-      resources: { listChanged: true },
-    },
+    capabilities: { tools: {}, resources: {} },
   }
 );
 
