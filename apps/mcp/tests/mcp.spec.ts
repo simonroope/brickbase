@@ -2,8 +2,8 @@
  * MCP server tests using Playwright Test.
  * Run: npx nx run mcp:test:mcp
  *
- * Uses MCP_USE_MOCKS=1 for read-only tools (no blockchain required).
- * The purchase_asset_shares test is skipped when mocking (requires real chain).
+ * Requires contract addresses in .env and a running chain (e.g. Hardhat node) for
+ * get_oracle_prices, get_asset_list, and purchase_asset_shares tests.
  */
 import { test, expect } from "@playwright/test";
 import * as dotenv from "dotenv";
@@ -24,8 +24,6 @@ import {
   type Address,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
-
-const useMocks = process.env.MCP_USE_MOCKS === "1";
 
 const HARDHAT_MNEMONIC =
   "test test test test test test test test test test test junk";
@@ -60,7 +58,7 @@ test.beforeAll(async () => {
     command: "npx",
     args: ["tsx", "apps/mcp/src/index.ts"],
     cwd: serverCwd,
-    env: { ...process.env, MCP_USE_MOCKS: "1" },
+    env: process.env,
   });
   client = new Client({ name: "mcp-test", version: "1.0.0" });
   await client.connect(transport);
@@ -88,6 +86,10 @@ test.describe("MCP Server Tools", () => {
   });
 
   test("get_oracle_prices returns valid prices", async () => {
+    test.skip(
+      !process.env.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS || process.env.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS === "0x",
+      "Oracle router address not configured"
+    );
     const result = await client.callTool({ name: "get_oracle_prices", arguments: {} });
     const content = Array.isArray(result.content) ? result.content[0] : undefined;
     expect(content?.type).toBe("text");
@@ -98,6 +100,10 @@ test.describe("MCP Server Tools", () => {
   });
 
   test("get_asset_list returns assets with required fields", async () => {
+    test.skip(
+      !process.env.NEXT_PUBLIC_ASSET_VAULT_ADDRESS || !process.env.NEXT_PUBLIC_ASSET_SHARES_ADDRESS,
+      "Asset contract addresses not configured"
+    );
     const result = await client.callTool({ name: "get_asset_list", arguments: {} });
     const content = Array.isArray(result.content) ? result.content[0] : undefined;
     expect(content?.type).toBe("text");
@@ -128,12 +134,11 @@ test.describe("MCP Server Resources", () => {
 });
 
 test.describe("purchase_asset_shares", () => {
-  test.skip(
-    useMocks || !assetSharesAddress || !usdcAddress || !assetVaultAddress,
-    useMocks ? "Skipped: requires real chain (run without MCP_USE_MOCKS for integration)" : "Skipped: contract addresses not set in .env"
-  );
-
   test("returns approve and purchase transactions, agent can purchase shares", async () => {
+    test.skip(
+      !assetSharesAddress || !usdcAddress || !assetVaultAddress,
+      "Contract addresses not set in .env"
+    );
     const account = agentAccount;
     const walletClient = createWalletClient({
       account,

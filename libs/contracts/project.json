@@ -7,8 +7,15 @@
     "compile": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat compile",
-        "cwd": "libs/contracts"
+        "commands": [
+          "npx hardhat compile",
+          "cp artifacts/contracts/core/AssetVault.sol/AssetVault.json ../../libs/abi/src/generated/AssetVault.json",
+          "cp artifacts/contracts/core/AssetShares.sol/AssetShares.json ../../libs/abi/src/generated/AssetShares.json",
+          "cp artifacts/contracts/periphery/OracleRouter.sol/OracleRouter.json ../../libs/abi/src/generated/OracleRouter.json",
+          "cp artifacts/contracts/core/AssetUserAllowList.sol/AssetUserAllowList.json ../../libs/abi/src/generated/AssetUserAllowList.json"
+        ],
+        "cwd": "libs/contracts",
+        "parallel": false
       },
       "configurations": {}
     },

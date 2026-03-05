@@ -16,3 +16,4 @@ libs/contracts/typechain-types
 
 # Test results
 test-results
+apps/mcp/test-results
