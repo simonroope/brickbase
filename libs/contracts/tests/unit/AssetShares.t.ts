@@ -692,7 +692,7 @@ describe("AssetShares", () => {
       await usdc.connect(user1).approve(await shares.getAddress(), expectedCost);
 
       // Purchase shares
-      await expect(shares.connect(user1).purchaseShares(assetId, purchaseAmount))
+      await expect(shares.connect(user1).purchaseAssetShares(assetId, purchaseAmount))
         .to.emit(shares, "SharesPurchased")
         .withArgs(user1.address, assetId, purchaseAmount, sharePrice, expectedCost);
 
@@ -715,7 +715,7 @@ describe("AssetShares", () => {
       await shares.setUserAllowed(user2.address, false);
 
       await expect(
-        shares.connect(user2).purchaseShares(assetId, purchaseAmount)
+        shares.connect(user2).purchaseAssetShares(assetId, purchaseAmount)
       ).to.be.revertedWith("User not allowed");
     });
 
@@ -726,7 +726,7 @@ describe("AssetShares", () => {
       await usdc.connect(user1).approve(await shares.getAddress(), expectedCost);
 
       await expect(
-        shares.connect(user1).purchaseShares(999, purchaseAmount)
+        shares.connect(user1).purchaseAssetShares(999, purchaseAmount)
       ).to.be.revertedWith("Asset does not exist");
     });
 
@@ -737,7 +737,7 @@ describe("AssetShares", () => {
       await usdc.connect(user1).approve(await shares.getAddress(), expectedCost);
 
       await expect(
-        shares.connect(user1).purchaseShares(assetId, purchaseAmount)
+        shares.connect(user1).purchaseAssetShares(assetId, purchaseAmount)
       ).to.be.revertedWith("Insufficient available supply");
     });
 
@@ -751,7 +751,7 @@ describe("AssetShares", () => {
       await usdc.connect(user1).approve(await shares.getAddress(), expectedCost);
 
       await expect(
-        shares.connect(user1).purchaseShares(assetId, purchaseAmount)
+        shares.connect(user1).purchaseAssetShares(assetId, purchaseAmount)
       ).to.be.revertedWithCustomError(shares, "EnforcedPause");
     });
 
@@ -764,7 +764,7 @@ describe("AssetShares", () => {
 
     beforeEach(async () => {
       // Use test helper: shares must exist for a property before trading; mintSharesForTest
-      // simulates the state after purchase (test-only, production uses purchaseShares).
+      // simulates the state after purchase (test-only, production uses purchaseAssetShares).
       const ASSET_MANAGER_ROLE = await testShares.ASSET_MANAGER_ROLE();
       await testShares.grantRole(ASSET_MANAGER_ROLE, deployer.address);
       await testShares.setShareInfoForTest(
@@ -868,7 +868,7 @@ describe("AssetShares", () => {
       await usdc.transfer(user2.address, user2Cost);
 
       await usdc.connect(user1).approve(await testShares.getAddress(), user1Cost);
-      await testShares.connect(user1).purchaseShares(assetIdForTest, sixtyPercent);
+      await testShares.connect(user1).purchaseAssetShares(assetIdForTest, sixtyPercent);
 
       await usdc.connect(user2).approve(await testShares.getAddress(), user2Cost);
       await testShares.connect(user1).setApprovalForAll(await testShares.getAddress(), true);

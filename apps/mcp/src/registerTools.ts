@@ -140,10 +140,10 @@ export function registerBrickbaseTools(server: McpServer): void {
     };
   });
 
-  server.registerTool("purchase_shares", {
+  server.registerTool("purchase_asset_shares", {
     title: "Purchase Shares",
     description:
-      "Prepare unsigned transactions to purchase property shares. Returns transaction payloads (approve USDC, then purchaseShares) for the agent to sign with its own private key. The agent's wallet must be whitelisted and have sufficient USDC. For web users, use the web app to sign directly.",
+      "Prepare unsigned transactions to purchase property shares. Returns transaction payloads (approve USDC, then purchaseAssetShares) for the agent to sign with its own private key. The agent's wallet must be whitelisted and have sufficient USDC. For web users, use the web app to sign directly.",
     inputSchema: {
       assetId: z.number().int().min(0).describe("Asset ID to purchase shares for"),
       amount: z.string().describe("Number of shares to purchase (e.g. '100' for 100 shares)"),
@@ -183,7 +183,7 @@ export function registerBrickbaseTools(server: McpServer): void {
         value: t.value.toString(),
       })),
       instructions:
-        "Sign and submit these two transactions in order (1. approve USDC, 2. purchaseShares) using the agent's own wallet. The MCP server does not hold private keys.",
+        "Sign and submit these two transactions in order (1. approve USDC, 2. purchaseAssetShares) using the agent's own wallet. The MCP server does not hold private keys.",
     };
     return {
       content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],

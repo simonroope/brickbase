@@ -171,27 +171,27 @@ export async function getAssetList(): Promise<AssetSummary[]> {
       address: config.assetVaultAddress,
       abi: assetVaultAbi,
       functionName: "getAllAssets",
-      args: [ids.map((id) => BigInt(id))],
+      args: [ids.map((assetId) => BigInt(assetId))],
     }) as { status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string }[];
 
     const shareInfos = await Promise.all(
-      ids.map((id) =>
+      ids.map((assetId) =>
         publicClient.readContract({
           address: config.assetSharesAddress,
           abi: assetSharesAbi as never[],
           functionName: "getAssetShares",
-          args: [BigInt(id)],
+          args: [BigInt(assetId)],
         }) as Promise<[bigint, bigint, bigint, boolean]>
       )
     );
 
     return ids
-      .map((id, i) => {
+      .map((assetId, i) => {
         const asset = vaultData[i];
         if (!asset) return null;
         const [totalSupply, availableSupply, sharePrice, tradingEnabled] = shareInfos[i];
         return {
-          assetId: id,
+          assetId,
           status: asset.status,
           capitalValue: asset.capitalValue.toString(),
           incomeValue: asset.incomeValue.toString(),
@@ -323,7 +323,7 @@ export type PurchaseTransactionPayload = {
 /**
  * Prepares unsigned transactions for share purchase.
  * The agent signs and submits these with its own private key.
- * Returns: approve (USDC) then purchaseShares, in order.
+ * Returns: approve (USDC) then purchaseAssetShares, in order.
  */
 export async function preparePurchaseTransactions(
   assetId: number,
@@ -354,7 +354,7 @@ export async function preparePurchaseTransactions(
 
     const purchaseData = encodeFunctionData({
       abi: assetSharesAbi,
-      functionName: "purchaseShares",
+      functionName: "purchaseAssetShares",
       args: [BigInt(assetId), amountRaw],
     });
 
@@ -365,7 +365,7 @@ export async function preparePurchaseTransactions(
       sharePrice: sharePrice.toString(),
       transactions: [
         { step: "approve_usdc", to: config.usdcAddress, data: approveData, value: BigInt(0) },
-        { step: "purchase_shares", to: config.assetSharesAddress, data: purchaseData, value: BigInt(0) },
+        { step: "purchase_asset_shares", to: config.assetSharesAddress, data: purchaseData, value: BigInt(0) },
       ],
     };
   } catch (err) {

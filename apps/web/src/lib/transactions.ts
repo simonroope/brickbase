@@ -82,7 +82,7 @@ export async function purchaseShares(
     const purchaseHash = await walletClient.writeContract({
       address: config.assetSharesAddress,
       abi: assetSharesAbi,
-      functionName: "purchaseShares",
+      functionName: "purchaseAssetShares",
       args: [BigInt(assetId), amount],
       account,
     });

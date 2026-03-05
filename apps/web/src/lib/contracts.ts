@@ -197,15 +197,15 @@ export async function fetchAssets(): Promise<AssetSummary[]> {
       address: config.assetVaultAddress,
       abi: assetVaultAbi,
       functionName: "getAllAssets",
-      args: [ids.map((id) => BigInt(id))],
+      args: [ids.map((assetId) => BigInt(assetId))],
     })) as { status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string }[];
     const shareInfos = await Promise.all(
-      ids.map((id) =>
+      ids.map((assetId) =>
         publicClient.readContract({
           address: config.assetSharesAddress,
           abi: assetSharesAbi as never[],
           functionName: "getAssetShares",
-          args: [BigInt(id)],
+          args: [BigInt(assetId)],
         }) as Promise<[bigint, bigint, bigint, boolean]>
       )
     );

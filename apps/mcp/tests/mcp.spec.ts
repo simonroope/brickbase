@@ -3,7 +3,7 @@
  * Run: npx nx run mcp:test:mcp
  *
  * Uses MCP_USE_MOCKS=1 for read-only tools (no blockchain required).
- * The purchase_shares test is skipped when mocking (requires real chain).
+ * The purchase_asset_shares test is skipped when mocking (requires real chain).
  */
 import { test, expect } from "@playwright/test";
 import * as dotenv from "dotenv";
@@ -78,7 +78,7 @@ test.describe("MCP Server Tools", () => {
       "get_oracle_prices",
       "get_asset_list",
       "get_asset_detail",
-      "purchase_shares",
+      "purchase_asset_shares",
       "get_user_whitelist_status",
       "get_user_shares",
     ];
@@ -127,7 +127,7 @@ test.describe("MCP Server Resources", () => {
   });
 });
 
-test.describe("purchase_shares", () => {
+test.describe("purchase_asset_shares", () => {
   test.skip(
     useMocks || !assetSharesAddress || !usdcAddress || !assetVaultAddress,
     useMocks ? "Skipped: requires real chain (run without MCP_USE_MOCKS for integration)" : "Skipped: contract addresses not set in .env"
@@ -156,7 +156,7 @@ test.describe("purchase_shares", () => {
     });
 
     const result = await client.callTool({
-      name: "purchase_shares",
+      name: "purchase_asset_shares",
       arguments: { assetId, amount },
     });
 
@@ -170,7 +170,7 @@ test.describe("purchase_shares", () => {
     const txs = payload.transactions ?? [];
     expect(txs.length).toBeGreaterThanOrEqual(2);
     expect(txs[0].step).toBe("approve_usdc");
-    expect(txs[1].step).toBe("purchase_shares");
+    expect(txs[1].step).toBe("purchase_asset_shares");
 
     for (const tx of txs) {
       const hash = await walletClient.sendTransaction({

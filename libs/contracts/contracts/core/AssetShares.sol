@@ -192,7 +192,7 @@ contract AssetShares is ERC1155, IERC1155Receiver, IERC7943MultiToken, AccessCon
         require(totalSupply_ > 0, "Total supply must be greater than zero");
         require(sharePrice_ > 0, "Share price must be greater than zero");
 
-        // Initialize shareInfo - shares will be minted directly to buyers via purchaseShares
+        // Initialize shareInfo - shares will be minted directly to buyers via purchaseAssetShares
         shareInfo[assetId] = ShareInfo({
             totalSupply: totalSupply_,
             availableSupply: totalSupply_,
@@ -240,7 +240,7 @@ contract AssetShares is ERC1155, IERC1155Receiver, IERC7943MultiToken, AccessCon
      * @param amount The number of shares to purchase.
      * @dev User must be on allowlist, asset must exist, and sufficient availableSupply must exist.
      */
-    function purchaseShares(uint256 assetId, uint256 amount) external nonReentrant whenNotPaused {
+    function purchaseAssetShares(uint256 assetId, uint256 amount) external nonReentrant whenNotPaused {
         require(userAllowList.isUserAllowed(msg.sender), "User not allowed");
         require(shareInfo[assetId].totalSupply > 0, "Asset does not exist");
         require(amount > 0, "Amount must be greater than zero");

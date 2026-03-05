@@ -82,7 +82,7 @@ Next.js application to **display and trade** commercial real estate RWAs.
 The MCP server exposes smart contract data via tools and resources. Uses stdio (spawn by Cursor or other MCP clients).
 
 **Tools:**
-- `purchase_shares` – returns unsigned transaction payloads (approve USDC, purchaseShares) for the agent to sign with its own key. The MCP server holds no private keys.
+- `purchase_asset_shares` – returns unsigned transaction payloads (approve USDC, purchaseAssetShares) for the agent to sign with its own key. The MCP server holds no private keys.
 - `get_asset_list` – list all tokenized assets
 - `get_asset_detail` – detail for asset ID
 - `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100

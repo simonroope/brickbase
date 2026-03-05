@@ -52,6 +52,7 @@ contract AssetVault is ERC721, IERC7943NonFungible, AccessControl, ReentrancyGua
 
     mapping(uint256 => Asset) internal _assets;
     mapping(uint256 => bool) private _frozenTokens;
+    mapping(bytes32 => uint256) private _metadataURIToAssetId;
 
     event AssetVaulted(
         uint256 indexed assetId,
@@ -162,20 +163,26 @@ contract AssetVault is ERC721, IERC7943NonFungible, AccessControl, ReentrancyGua
 
     /**
      * @notice Create an asset with metadata (ASSET_MANAGER_ROLE only).
-     * @param assetId The asset ID to create.
+     * @dev Assigns the next available asset ID automatically. Reverts if an asset with the same metadataURI already exists.
      * @param status_ The asset status (Active, UnderContract, Sold, Suspended).
      * @param capitalValue_ Capital value in USDC decimals (typically 6).
      * @param incomeValue_ Income value in USDC decimals (typically 6).
      * @param metadataURI_ URI pointing to JSON containing address, purchasePrice, area, images, documents, etc.
+     * @return assetId The assigned asset ID.
      */
     function createAsset(
-        uint256 assetId,
         AssetStatus status_,
         uint256 capitalValue_,
         uint256 incomeValue_,
         string calldata metadataURI_
-    ) external onlyRole(ASSET_MANAGER_ROLE) {
-        require(_assets[assetId].createdAt == 0, "Asset already exists");
+    ) external onlyRole(ASSET_MANAGER_ROLE) returns (uint256 assetId) {
+        bytes32 uriHash = keccak256(bytes(metadataURI_));
+        require(_metadataURIToAssetId[uriHash] == 0, "Asset already exists");
+        assetId = _nextAssetId;
+        unchecked {
+            _nextAssetId = assetId + 1;
+        }
+        _metadataURIToAssetId[uriHash] = assetId;
         _assets[assetId] = Asset({
             status: status_,
             capitalValue: capitalValue_,
