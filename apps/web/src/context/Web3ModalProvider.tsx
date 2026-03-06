@@ -65,8 +65,8 @@ export default function Web3ModalProvider({
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-zinc-50 antialiased flex items-center justify-center">
-        <div className="text-zinc-500 text-sm">Loading...</div>
+      <div className="min-h-screen bg-page antialiased flex items-center justify-center">
+        <div className="text-text-muted text-sm">Loading...</div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import Web3ModalProvider from "@/context/Web3ModalProvider";
+import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Property Assets - Trade Commercial Real Estate RWAs",
+  title: "BrickBase - Trade Commercial Real Estate RWAs",
   description: "Display and trade commercial real estate Real World Assets tokenized on Ethereum",
 };
 
@@ -33,7 +34,10 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Web3ModalProvider cookie={cookie}>
-          {children}
+          <div className="flex min-h-screen flex-col">
+            {children}
+            <Footer />
+          </div>
         </Web3ModalProvider>
       </body>
     </html>

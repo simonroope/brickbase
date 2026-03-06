@@ -19,11 +19,11 @@ export function ConnectWallet() {
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-4">
-        <div className="hidden flex-wrap items-center gap-x-4 text-sm text-zinc-600 sm:flex">
-          <span className="text-zinc-600 truncate max-w-[140px]" title={address}>
+        <div className="hidden flex-wrap items-center gap-x-4 text-sm text-header-text sm:flex">
+          <span className="truncate max-w-[140px]" title={address}>
             {`${address.slice(0, 6)}…${address.slice(-4)}`}
           </span>
-          <span className="text-zinc-600">{chainName}</span>
+          <span>{chainName}</span>
           <span>
             {balanceLoading
               ? "…"
@@ -35,7 +35,7 @@ export function ConnectWallet() {
         <button
           type="button"
           onClick={disconnect}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+          className="rounded-md border border-brown-light px-3 py-1.5 text-sm text-header-text hover:bg-brown-light"
         >
           Disconnect
         </button>

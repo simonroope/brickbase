@@ -6,7 +6,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { purchaseShares } from "@/lib/transactions";
 import { isUserWhitelisted } from "@/lib/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { formatInt, formatNum, formatUsdc } from "@/lib/format";
+import { formatInt, formatUsdc } from "@/lib/format";
 
 type BuySharesProps = {
   assetId: number;
@@ -60,19 +60,13 @@ export function BuyShares({ assetId, sharePrice, availableSupply }: BuySharesPro
 
   if (!isConnected) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-        <p className="text-amber-800">Connect your wallet to purchase shares.</p>
-      </div>
+      <p className="text-sm text-warning">Connect your wallet to purchase shares.</p>
     );
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-900">Purchase Shares</h3>
-      <p className="mb-2 text-sm text-zinc-600">
-        Share price: {formatUsdc(sharePrice)} | Available: {formatNum(availableSupply)}
-      </p>
-      <div className="flex flex-wrap gap-4">
+    <div>
+      <div className="flex flex-wrap gap-3">
         <input
           type="number"
           min="1"
@@ -80,25 +74,25 @@ export function BuyShares({ assetId, sharePrice, availableSupply }: BuySharesPro
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Number of shares"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          className="rounded-md border border-border-strong px-3 py-2 text-sm"
         />
         <button
           type="button"
           onClick={handlePurchase}
           disabled={status === "loading" || !amount || BigInt(amount || "0") <= BigInt(0)}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {status === "loading" ? "Processing..." : "Buy Shares"}
         </button>
       </div>
       {totalCost > BigInt(0) && (
-        <p className="mt-2 text-sm text-zinc-600">Total cost: {formatInt(totalCost)} USDC</p>
+        <p className="mt-2 text-sm text-text-secondary">Total cost: {formatInt(totalCost)} USDC</p>
       )}
       {status === "success" && (
-        <p className="mt-2 text-sm text-green-600">Purchase successful!</p>
+        <p className="mt-2 text-sm text-success">Purchase successful!</p>
       )}
       {status === "error" && errorMessage && (
-        <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
+        <p className="mt-2 text-sm text-error">{errorMessage}</p>
       )}
     </div>
   );

@@ -13,7 +13,7 @@ export function OraclePrices() {
 
   if (isError && error) {
     return (
-      <div className="flex flex-wrap gap-4 text-sm text-red-600">
+      <div className="flex flex-wrap gap-4 text-sm text-error">
         Oracle error: {error instanceof Error ? error.message : String(error)}
       </div>
     );
@@ -21,7 +21,7 @@ export function OraclePrices() {
 
   if (isLoading || !prices) {
     return (
-      <div className="flex flex-wrap gap-4 text-sm text-zinc-500">
+      <div className="flex flex-wrap gap-4 text-sm text-header-text-muted">
         <span><span className="font-semibold">ETH/USD:</span> --</span>
         <span><span className="font-semibold">GBP/USD:</span> --</span>
         <span><span className="font-semibold">Gold/USD:</span> --</span>
@@ -31,7 +31,7 @@ export function OraclePrices() {
   }
 
   return (
-      <div className="flex flex-wrap gap-4 text-sm text-zinc-600">
+      <div className="flex flex-wrap gap-4 text-sm text-header-text">
         <span><span className="font-semibold">ETH/USD:</span> {formatOracleInt(prices.ethUsd.price)}</span>
         <span><span className="font-semibold">GBP/USD:</span> {formatOracleInt(prices.gbpUsd.price)}</span>
         <span><span className="font-semibold">Gold/USD:</span> {formatOracleInt(prices.goldUsd.price)}</span>

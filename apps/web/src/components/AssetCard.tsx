@@ -13,9 +13,9 @@ export function AssetCard({ asset }: { asset: AssetSummary }) {
   const href = `/asset-property/${asset.assetId}`;
 
   return (
-    <div className="flex flex-col rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex flex-col rounded-xl border border-border bg-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <Link href={href} className="block flex-1">
-        <div className="relative h-48 w-full bg-zinc-100">
+        <div className="relative h-48 w-full bg-surface-elevated">
           {imageSrc && (
             <Image
               src={imageSrc}
@@ -25,32 +25,32 @@ export function AssetCard({ asset }: { asset: AssetSummary }) {
               sizes="(max-width: 768px) 100vw, 400px"
             />
           )}
-          <span className="absolute top-2 right-2 rounded-md bg-white/90 px-2 py-0.5 text-xs font-medium text-zinc-700">
+          <span className="absolute top-2 right-2 rounded-md bg-surface/90 px-2 py-0.5 text-xs font-medium text-text-tertiary">
             {statusLabel}
           </span>
         </div>
         <div className="p-4">
-          <h3 className="font-semibold text-zinc-900">
+          <h3 className="font-semibold text-text-primary">
             {asset.metadata?.name ?? asset.metadata?.address ?? `Asset #${asset.assetId}`}
           </h3>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-text-secondary">
             Capital Value: {formatUsdc(asset.capitalValue)}
           </p>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-text-secondary">
             Income Value: {formatUsdc(asset.incomeValue)}
           </p>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-text-secondary">
             Share Price: {formatUsdc(asset.sharePrice)}
           </p>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-text-secondary">
             Available Shares: {formatInt(asset.availableSupply)}
           </p>
         </div>
       </Link>
-      <div className="border-t border-zinc-100 p-4">
+      <div className="border-t border-border-subtle p-4">
         <Link
           href={href}
-          className="block w-full rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-500"
+          className="block w-full rounded-md bg-brand px-4 py-2 text-center text-sm font-medium text-white hover:bg-brand-hover"
         >
           Buy Shares
         </Link>
