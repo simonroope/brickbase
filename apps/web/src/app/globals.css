@@ -29,10 +29,10 @@
   --color-brand: #db2777;
   --color-brand-hover: #be185d;
 
-  /* Brown palette */
-  --color-brown: #2c1810;
-  --color-brown-dark: #1a0c07;
-  --color-brown-light: #3d2314;
+  /* Nav (header/footer) */
+  --color-nav-bg: #2c1810;
+  --color-nav-bg-dark: #1a0c07;
+  --color-nav-border: #3d2314;
 
   /* Status */
   --color-success: #22c55e;
@@ -65,9 +65,9 @@
   --color-header-text-muted: var(--color-header-text-muted);
   --color-brand: var(--color-brand);
   --color-brand-hover: var(--color-brand-hover);
-  --color-brown: var(--color-brown);
-  --color-brown-dark: var(--color-brown-dark);
-  --color-brown-light: var(--color-brown-light);
+  --color-nav-bg: var(--color-nav-bg);
+  --color-nav-bg-dark: var(--color-nav-bg-dark);
+  --color-nav-border: var(--color-nav-border);
   --color-success: var(--color-success);
   --color-error: var(--color-error);
   --color-warning: var(--color-warning);

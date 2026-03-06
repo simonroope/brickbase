@@ -35,7 +35,7 @@ export function ConnectWallet() {
         <button
           type="button"
           onClick={disconnect}
-          className="rounded-md border border-brown-light px-3 py-1.5 text-sm text-header-text hover:bg-brown-light"
+          className="rounded-md border border-nav-border px-3 py-1.5 text-sm text-header-text hover:bg-nav-border"
         >
           Disconnect
         </button>
