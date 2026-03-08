@@ -19,7 +19,7 @@ const ASSET_1 = {
   assetId: 1,
   // AssetVault properties
   status: 0, // Active
-  metadataURI: "https://ivory-independent-bison-569.mypinata.cloud/ipfs/bafkreih6m7alojklbblqvtuhizkduouuepawfpax2jexuac4w5xse2amby",
+  metadataURI: "https://ivory-independent-bison-569.mypinata.cloud/ipfs/bafkreihuvf5pnroufid4cpzfy4fhyyahononohxoycmdnaiobxibk525am",
   capitalValue: ethers.parseUnits("155000000", 6), // $155M (USDC 6 decimals)
   incomeValue: ethers.parseUnits("500000", 6), // $500k (USDC 6 decimals)
   // AssetShares
@@ -34,7 +34,7 @@ const ASSET_2 = {
   assetId: 2,
   // AssetVault properties
   status: 0, // Active
-  metadataURI: "https://ivory-independent-bison-569.mypinata.cloud/ipfs/bafkreibsqx5frs2ke2hjvm3rra3fpcvikdnolipups7kacp5ossygehkc4",
+  metadataURI: "https://ivory-independent-bison-569.mypinata.cloud/ipfs/bafkreibru36m5prgxabdlgjnz4av4lcizll5cn5vbnyv55s4vi23nyl4fe",
   capitalValue: ethers.parseUnits("102000000", 6), // $102M (USDC 6 decimals)
   incomeValue: ethers.parseUnits("550000", 6), // $550k (USDC 6 decimals)
   // AssetShares
@@ -191,7 +191,7 @@ async function main() {
   await setTradingTx.wait();
   console.log(`✓ ShareInfo: totalSupply=2000, sharePrice=$2.5, tradingEnabled=true`);
 
-  // Purchase 1000 shares to achieve availableSupply=1000 (signer must be whitelisted and have USDC)
+  // Purchase 1000 shares to achieve availableSupply=1000 (signer must be whitelisted and have USDC from seed-users)
   if (usdc) {
     await assetShares.setUserAllowed(signer.address, true);
     const cost = (ASSET_2.sharesToPurchase * ASSET_2.sharePrice) / ethers.parseUnits("1", 18);
@@ -202,15 +202,7 @@ async function main() {
       await purchaseTx.wait();
       console.log(`✓ Purchased 1000 shares (availableSupply now 1000)`);
     } else {
-      console.warn(`⚠️ Signer has insufficient USDC (need ${ethers.formatUnits(cost, 6)} USDC) - skipping purchase; availableSupply remains 2000`);
-    }
-
-    // Fund agent user (signers[2]) for MCP tests – 1000 USDC for test purchases
-    if (isLocalNetwork && signers.length > 2) {
-      const agentUser = signers[2].address;
-      const agentUsdcAmount = ethers.parseUnits("1000", 6);
-      await usdc.transfer(agentUser, agentUsdcAmount);
-      console.log(`✓ Funded agent user (${agentUser}) with 1000 USDC for MCP tests`);
+      console.warn(`⚠️ Signer has insufficient USDC (need ${ethers.formatUnits(cost, 6)} USDC) - skipping purchase; availableSupply remains 2000. Run seed-users first to fund signer.`);
     }
   } else {
     console.warn(`⚠️ USDC address not in addresses file - cannot simulate purchase; availableSupply remains 2000`);

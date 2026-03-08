@@ -3,10 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { AssetSummary } from "@/lib/contracts";
-import { formatInt, formatNum, formatUsdc, ASSET_STATUS } from "@/lib/format";
+import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
 
 export function AssetCard({ asset }: { asset: AssetSummary }) {
-  console.log("asset", asset);
   const imageSrc = asset.metadata?.images?.[0];
   const statusLabel = ASSET_STATUS[asset.status] ?? "Unknown";
 
@@ -33,6 +32,9 @@ export function AssetCard({ asset }: { asset: AssetSummary }) {
           <h3 className="font-semibold text-text-primary">
             {asset.metadata?.name ?? asset.metadata?.address ?? `Asset #${asset.assetId}`}
           </h3>
+          <p className="mt-1 text-sm text-text-secondary">
+            Location: {asset.metadata?.location}
+          </p>
           <p className="mt-1 text-sm text-text-secondary">
             Capital Value: {formatUsdc(asset.capitalValue)}
           </p>

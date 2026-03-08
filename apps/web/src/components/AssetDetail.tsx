@@ -7,7 +7,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchAssetDetail, getUserShareBalance } from "@/lib/contracts";
+import { fetchAssetDetail, getUserShareBalance, type AssetMetadata } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
 import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
 import { BuyShares } from "./BuyShares";
@@ -46,7 +46,7 @@ export function AssetDetail({ assetId }: { assetId: number }) {
     );
   }
 
-  const m = asset.metadata;
+  const m = asset.metadata as AssetMetadata | null;
   const imageSrc = m?.images?.[0];
   const statusLabel = ASSET_STATUS[asset.status] ?? "Unknown";
 
@@ -77,7 +77,7 @@ export function AssetDetail({ assetId }: { assetId: number }) {
             {m?.name ?? m?.address ?? `Asset #${assetId}`}
           </h1>
 
-          {(m?.name || m?.assetType || m?.purchasePrice != null || m?.purchaseDate || m?.area != null || m?.yearBuilt || m?.jurisdiction) && (
+          {(m?.name || m?.assetType || m?.address || m?.location || m?.purchasePrice != null || m?.purchaseDate || m?.area != null || m?.yearBuilt || m?.jurisdiction) && (
             <div className="mt-2 rounded-lg border border-border bg-surface-muted/50 p-4">
               <dl className="grid gap-2 text-sm sm:grid-cols-2">
                 {m?.name && (
@@ -90,6 +90,18 @@ export function AssetDetail({ assetId }: { assetId: number }) {
                   <div className="flex justify-between gap-4">
                     <dt className="text-text-secondary">Type</dt>
                     <dd className="font-medium">{m.assetType}</dd>
+                  </div>
+                )}
+                {m?.address && (
+                  <div className="flex justify-between gap-4 sm:col-span-2">
+                    <dt className="text-text-secondary">Address</dt>
+                    <dd className="font-medium">{m.address}</dd>
+                  </div>
+                )}
+                {m?.location && (
+                  <div className="flex justify-between gap-4 sm:col-span-2">
+                    <dt className="text-text-secondary">Location</dt>
+                    <dd className="font-medium">{m.location}</dd>
                   </div>
                 )}
                 {m?.purchasePrice != null && (

@@ -64,6 +64,7 @@ export type AssetMetadata = {
   assetType?: string;
   name?: string;
   address?: string;
+  location?: string;
   purchasePrice?: bigint;
   purchaseDate?: string;
   area?: number;
@@ -131,6 +132,7 @@ async function fetchMetadata(metadataUri: string): Promise<AssetMetadata | null>
       assetType: json.assetType as string | undefined,
       name: json.name as string | undefined,
       address: json.address as string | undefined,
+      location: json.location as string | undefined,
       purchasePrice,
       purchaseDate: json.purchaseDate as string | undefined,
       area: typeof json.area === "number" ? json.area : undefined,
