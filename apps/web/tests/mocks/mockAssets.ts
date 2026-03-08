@@ -5,7 +5,7 @@ export const mockMetadata = {
   assetType: "office",
   name: "Lyons House",
   address: "123 Cannon Street, London EC1 3JN",
-  location: "London, UK",
+  location: "London, EC1",
   purchasePrice: BigInt("14000000000000000000000000"), // 14M with 18 decimals
   purchaseDate: "2019-04-01",
   area: 10_000,

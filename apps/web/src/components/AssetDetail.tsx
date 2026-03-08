@@ -77,90 +77,76 @@ export function AssetDetail({ assetId }: { assetId: number }) {
             {m?.name ?? m?.address ?? `Asset #${assetId}`}
           </h1>
 
-          {(m?.name || m?.assetType || m?.address || m?.location || m?.purchasePrice != null || m?.purchaseDate || m?.area != null || m?.yearBuilt || m?.jurisdiction) && (
+          {(m?.name || m?.assetType || m?.address || m?.purchasePrice != null || m?.purchaseDate || m?.area != null || m?.yearBuilt || m?.jurisdiction) && (
             <div className="mt-2 rounded-lg border border-border bg-surface-muted/50 p-4">
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <dl className="grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
                 {m?.name && (
-                  <div className="flex justify-between gap-4 sm:col-span-2">
-                    <dt className="text-text-secondary">Name</dt>
+                  <>
+                    <dt className="text-text-secondary">Name:</dt>
                     <dd className="font-medium">{m.name}</dd>
-                  </div>
-                )}
-                {m?.assetType && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-text-secondary">Type</dt>
-                    <dd className="font-medium">{m.assetType}</dd>
-                  </div>
+                  </>
                 )}
                 {m?.address && (
-                  <div className="flex justify-between gap-4 sm:col-span-2">
-                    <dt className="text-text-secondary">Address</dt>
+                  <>
+                    <dt className="text-text-secondary">Address:</dt>
                     <dd className="font-medium">{m.address}</dd>
-                  </div>
-                )}
-                {m?.location && (
-                  <div className="flex justify-between gap-4 sm:col-span-2">
-                    <dt className="text-text-secondary">Location</dt>
-                    <dd className="font-medium">{m.location}</dd>
-                  </div>
-                )}
-                {m?.purchasePrice != null && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-text-secondary">Purchase Price</dt>
-                    <dd className="font-medium">{formatInt(m.purchasePrice)}</dd>
-                  </div>
-                )}
-                {m?.purchaseDate && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-text-secondary">Purchase Date</dt>
-                    <dd className="font-medium">{m.purchaseDate}</dd>
-                  </div>
-                )}
-                {m?.area != null && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-text-secondary">Area</dt>
-                    <dd className="font-medium">{formatInt(BigInt(m.area))}</dd>
-                  </div>
-                )}
-                {m?.yearBuilt && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-text-secondary">Year Built</dt>
-                    <dd className="font-medium">{m.yearBuilt}</dd>
-                  </div>
+                  </>
                 )}
                 {m?.jurisdiction && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-text-secondary">Jurisdiction</dt>
+                  <>
+                    <dt className="text-text-secondary">Jurisdiction:</dt>
                     <dd className="font-medium">{m.jurisdiction}</dd>
-                  </div>
+                  </>
+                )}
+                {m?.assetType && (
+                  <>
+                    <dt className="text-text-secondary">Type:</dt>
+                    <dd className="font-medium">{m.assetType}</dd>
+                  </>
+                )}
+                {m?.purchaseDate && (
+                  <>
+                    <dt className="text-text-secondary">Purchase Date:</dt>
+                    <dd className="font-medium">{m.purchaseDate}</dd>
+                  </>
+                )}
+                {m?.purchasePrice != null && (
+                  <>
+                    <dt className="text-text-secondary">Purchase Price:</dt>
+                    <dd className="font-medium">{formatInt(m.purchasePrice)}</dd>
+                  </>
+                )}
+                {m?.yearBuilt != null && (
+                  <>
+                    <dt className="text-text-secondary">Year Built:</dt>
+                    <dd className="font-medium">{m.yearBuilt}</dd>
+                  </>
+                )}
+                {m?.area != null && (
+                  <>
+                    <dt className="text-text-secondary">Area:</dt>
+                    <dd className="font-medium">{formatInt(BigInt(m.area))}</dd>
+                  </>
                 )}
               </dl>
             </div>
           )}
 
           <div className="mt-6">
-            <dl className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Capital Value</dt>
-                <dd className="font-medium">{formatInt(asset.capitalValue)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Income Value</dt>
-                <dd className="font-medium">{formatInt(asset.incomeValue)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Share Price</dt>
-                <dd className="font-medium">{formatUsdc(asset.sharePrice)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Available Shares</dt>
-                <dd className="font-medium">{formatInt(asset.availableSupply)}</dd>
-              </div>
+            <dl className="grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
+              <dt className="text-text-secondary">Capital Value:</dt>
+              <dd className="font-medium">{formatInt(asset.capitalValue)}</dd>
+              <dt className="text-text-secondary">Income Value:</dt>
+              <dd className="font-medium">{formatInt(asset.incomeValue)}</dd>
+              <dt className="text-text-secondary">Share Price:</dt>
+              <dd className="font-medium">{formatUsdc(asset.sharePrice)}</dd>
+              <dt className="text-text-secondary">Available Shares:</dt>
+              <dd className="font-medium">{formatInt(asset.availableSupply)}</dd>
               {address && userBalance !== undefined && userBalance > BigInt(0) && (
-                <div className="flex justify-between">
-                  <dt className="text-text-secondary">Your balance</dt>
-                  <dd className="font-medium">{userBalance.toString()} shares</dd>
-                </div>
+                <>
+                  <dt className="text-text-secondary">Your balance:</dt>
+                  <dd className="font-medium">{userBalance.toString()} shares:</dd>
+                </>
               )}
             </dl>
             <div className="mt-4">
