@@ -1,16 +1,18 @@
 # Brickbase
 
-Nx monorepo for Property Assets: tokenized commercial real estate RWAs on Ethereum.
+Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents and a **Next.js** investor portal for tokenised commercial real estate.
 
 ## Structure
 
-| Path | Description |
-|------|-------------|
-| `apps/web` | Next.js web app (display & trade properties) |
-| `apps/mcp` | MCP server for AI/automation (smart contracts, tools, resources) |
-| `libs/contracts` | Solidity smart contracts (Hardhat) |
-| `libs/abi` | Shared ABIs (`@brickbase/abi`) |
-| `libs/shared-config` | Chain config, env |
+
+| Path                 | Description                                                      |
+| -------------------- | ---------------------------------------------------------------- |
+| `apps/web`           | Next.js web app (display & trade properties)                     |
+| `apps/mcp`           | MCP server for AI/automation (smart contracts, tools, resources) |
+| `libs/contracts`     | Solidity smart contracts (Hardhat)                               |
+| `libs/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
+| `libs/shared-config` | Chain config, env                                                |
+
 
 ## Setup
 
@@ -20,7 +22,8 @@ npm install
 
 Copy `.env.example` to `.env` (and to `apps/web/.env.local` for the web app) and set contract addresses, RPC URL, and `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`. ABIs are in `libs/abi` (`@brickbase/abi`).
 
-## Commands
+
+**Smart Contracts**
 
 ```bash
 # Compile contracts
@@ -38,20 +41,50 @@ npx nx run contracts:deploy:localhost
 # Seeds
 npx nx run contracts:seed-users
 npx nx run contracts:seed-assets
+```
 
-# Web app
+**MCP Server**
+
+```bash
+npx nx run mcp:serve
+```
+
+**Web App**
+
+```bash
 npx nx run web:serve            # Dev server
 npx nx run web:build            # Production build
 npx nx run web:test             # Jest unit tests
 npx nx run web:test:integration # Cucumber BDD integration tests (mock data, starts dev server)
 npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts dev server)
-
-# MCP server (stdio – use with Cursor or other MCP clients)
-npx nx run mcp:serve
-
 ```
 
-## Web app
+## MCP Server
+
+The MCP server exposes smart contract data via tools and resources. Uses stdio (spawn by Cursor or other MCP clients).
+
+**Tools:**
+
+- `purchase_asset_shares` – returns unsigned transaction payloads (approve USDC, purchaseAssetShares) for the agent to sign with its own key. The MCP server holds no private keys.
+- `get_asset_list` – list all tokenized assets
+- `get_asset_detail` – detail for asset ID
+- `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100
+- `get_user_whitelist_status` – check if address is whitelisted
+- `get_user_shares` – user's share balance for an asset
+- `get_whitelisted_users` – list all whitelisted addresses
+
+**Resources:**
+
+- `contract://AssetVault/abi`, `contract://AssetShares/abi`, `contract://OracleRouter/abi`, `contract://AssetUserAllowList/abi`
+- `config://deployments` – chain and contract addresses
+
+Uses the same `.env` contract addresses as the web app. No private keys; each agent signs with its own wallet.
+
+**Testing:** MCP Inspector (browser UI). Prerequisites – Hardhat node running, contracts deployed, seeds run. From brickbase:
+
+   Opens [http://localhost:6274](http://localhost:6274) to call tools and read resources.
+
+   ## Web app
 
 Next.js application to **display and trade** commercial real estate RWAs.
 
@@ -66,38 +99,14 @@ Next.js application to **display and trade** commercial real estate RWAs.
 
 ## Environment
 
-| Env var | Description |
-|---------|-------------|
+
+| Env var                                | Description                    |
+| -------------------------------------- | ------------------------------ |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID |
-| `NEXT_PUBLIC_RPC_URL` | Ethereum RPC URL |
-| `NEXT_PUBLIC_CHAIN_ID` | Chain ID (e.g. 11155111) |
-| `NEXT_PUBLIC_ASSET_VAULT_ADDRESS` | AssetVault contract |
-| `NEXT_PUBLIC_ASSET_SHARES_ADDRESS` | AssetShares contract |
-| `NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS` | OracleRouter contract |
-| `NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS` | AllowList contract |
-| `NEXT_PUBLIC_USDC_ADDRESS` | USDC token address |
-
-## MCP Server
-
-The MCP server exposes smart contract data via tools and resources. Uses stdio (spawn by Cursor or other MCP clients).
-
-**Tools:**
-- `purchase_asset_shares` – returns unsigned transaction payloads (approve USDC, purchaseAssetShares) for the agent to sign with its own key. The MCP server holds no private keys.
-- `get_asset_list` – list all tokenized assets
-- `get_asset_detail` – detail for asset ID
-- `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100
-- `get_user_whitelist_status` – check if address is whitelisted
-- `get_user_shares` – user's share balance for an asset
-- `get_whitelisted_users` – list all whitelisted addresses
-
-**Resources:**
-- `contract://AssetVault/abi`, `contract://AssetShares/abi`, `contract://OracleRouter/abi`, `contract://AssetUserAllowList/abi`
-- `config://deployments` – chain and contract addresses
-
-Uses the same `.env` contract addresses as the web app. No private keys; each agent signs with its own wallet.
-
-**Testing:** MCP Inspector (browser UI). Prerequisites – Hardhat node running, contracts deployed, seeds run. From brickbase:
-   ```bash
-   npx @modelcontextprotocol/inspector npx tsx apps/mcp/src/index.ts
-   ```
-   Opens http://localhost:6274 to call tools and read resources.
+| `NEXT_PUBLIC_RPC_URL`                  | Ethereum RPC URL               |
+| `NEXT_PUBLIC_CHAIN_ID`                 | Chain ID (e.g. 11155111)       |
+| `NEXT_PUBLIC_ASSET_VAULT_ADDRESS`      | AssetVault contract            |
+| `NEXT_PUBLIC_ASSET_SHARES_ADDRESS`     | AssetShares contract           |
+| `NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS`    | OracleRouter contract          |
+| `NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS`   | AllowList contract             |
+| `NEXT_PUBLIC_USDC_ADDRESS`             | USDC token address             |
