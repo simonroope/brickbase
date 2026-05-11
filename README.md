@@ -14,6 +14,23 @@ Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, *
 | `libs/shared-config` | Chain config, env                                                |
 
 
+## Contracts
+
+Solidity in `libs/contracts/` (Hardhat): **AssetVault**, **AssetShares**, **AssetUserAllowList**, **OracleRouter**, plus mocks. Key Ethereum standards (EIPs):
+
+| EIP / ERC | Name | Usage in Brickbase |
+| --------- | ---- | ------------------ |
+| [EIP-20](https://eips.ethereum.org/EIPS/eip-20) | Token Standard | **AssetShares** settles purchases in **USDC** (and `MockERC20` in tests) via `approve` / `transferFrom`. |
+| [EIP-721](https://eips.ethereum.org/EIPS/eip-721) | Non-Fungible Token | **AssetVault** mints one NFT per vaulted property; metadata URI and status are on-chain. |
+| [EIP-1155](https://eips.ethereum.org/EIPS/eip-1155) | Multi Token | **AssetShares** issues fungible share balances per `assetId`; implements **IERC1155Receiver** for safe transfers. |
+| [EIP-165](https://eips.ethereum.org/EIPS/eip-165) | Standard Interface Detection | **AssetShares** exposes `IERC165` alongside ERC-1155 / receiver interfaces. |
+| [EIP-7943](https://eips.ethereum.org/EIPS/eip-7943) | uRWA — Universal Real World Asset interface | Compliance hooks on **AssetVault** (non-fungible variant) and **AssetShares** (multi-token variant): allowlist checks, freeze, and forced transfer for regulated RWAs. |
+
+**OracleRouter** uses [Chainlink](https://docs.chain.link/data-feeds) `AggregatorV3Interface` price feeds (ETH/USD, GBP/USD, gold, FTSE-style indices); that is a Chainlink abstraction, not an Ethereum token EIP.
+
+Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pausable** for roles, reentrancy protection, and emergency pause.
+
+
 ## Setup
 
 ```bash
