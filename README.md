@@ -114,8 +114,8 @@ Next.js application to **display and trade** commercial real estate RWAs.
 - **Integration** (`test:integration`): `tests/features/integration/*.feature`, mock data, no deployed contracts
 - **E2E** (`test:e2e`): `tests/features/e2e/*.feature`, real contracts, no e2e scenarios yet
 
-## Environment
 
+## Environment
 
 | Env var                                | Description                    |
 | -------------------------------------- | ------------------------------ |
@@ -127,3 +127,9 @@ Next.js application to **display and trade** commercial real estate RWAs.
 | `NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS`    | OracleRouter contract          |
 | `NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS`   | AllowList contract             |
 | `NEXT_PUBLIC_USDC_ADDRESS`             | USDC token address             |
+
+
+## ToDo
+
+- Account Abstraction
+- Upgradeable proxy contracts
