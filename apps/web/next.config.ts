@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+const monorepoRoot = path.resolve(__dirname, "../..");
+
 const nextConfig: NextConfig = {
+  // Monorepo: trace deps from repo root (avoids multi-lockfile root warning)
+  outputFileTracingRoot: monorepoRoot,
   turbopack: {},
   images: {
     remotePatterns: [
@@ -13,10 +17,14 @@ const nextConfig: NextConfig = {
   },
   webpack: (config) => {
     // Stub React Native async-storage so MetaMask SDK browser build doesn't fail
-    const root = path.resolve(__dirname, "../..");
+    const root = monorepoRoot;
     config.resolve.alias = {
       ...config.resolve.alias,
       "@brickbase/abi": path.resolve(root, "libs/abi/src/index.ts"),
+      "@brickbase/integrations-types": path.resolve(
+        root,
+        "apps/integrations/types/index.ts"
+      ),
       // MCP contracts.ts imports libs/abi via relative path
       [path.resolve(root, "libs/abi/src/index.js")]: path.resolve(
         root,

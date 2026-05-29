@@ -1,0 +1,23 @@
+{
+  "name": "brickbase-integrations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "tsx ingest/src/index.ts",
+    "gateway": "tsx gateway/src/index.ts",
+    "test": "tsx --test types/__tests__/schemas.test.ts ingest/src/__tests__/parsers.test.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "redis": "^4.7.0",
+    "ws": "^8.18.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

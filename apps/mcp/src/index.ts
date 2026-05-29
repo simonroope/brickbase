@@ -18,6 +18,13 @@ const server = new McpServer(
 
 registerBrickbaseTools(server);
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
-console.error("Brickbase MCP server connected");
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("Brickbase MCP server connected");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

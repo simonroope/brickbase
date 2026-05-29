@@ -1,8 +1,10 @@
 # PRD: Real-Time Ticker Feeds (Redis Pub/Sub + WebSockets)
 
-**Status:** Draft  
-**Audience:** Developers implementing new infrastructure and UI in the Brickbase monorepo  
-**Related:** `apps/web` (`OraclePrices`, `Header`), `libs/shared-config`
+**Status:** Draft — implementation specification  
+**Audience:** Developers generating this feature in the Brickbase monorepo  
+**Related:** `apps/web` (`OraclePrices`, `Header`), `libs/shared-config`, `libs/abi` (unchanged by live feeds)
+
+Use this document as the **single source of truth** to scaffold code. Follow the layout and conventions below exactly unless a later PRD revision says otherwise.
 
 ---
 
@@ -11,11 +13,11 @@
 Add **new real-time data feeds** for **display only** in the Brickbase web app using a **Redis pub/sub → WebSocket gateway → browser** pipeline. Upstream sources:
 
 1. **Coinbase Advanced Trade WebSocket** — live **ETH/USD** spot ticker (UI only)  
-2. **Infura WebSocket** — live **block headers** and, optionally, **log** subscriptions for chain-activity display  
+2. **Infura WebSocket** — live **block headers** (`newHeads`); optional **logs** in a later phase  
 
-**Display-only scope:** New ticker prices and related live feed data are shown in the UI only. There is **no requirement to integrate with smart contracts** — no writes, no reads of Brickbase contracts for this feature, no use in purchase/share flows, and no changes to MCP contract tools. Ingest and the web client do not need `@brickbase/abi`, deployed contract addresses, or viem contract calls for the live ticker path.
+**Display-only scope:** Live feed data is shown in the UI only. **Do not integrate with smart contracts** — no writes, no reads of Brickbase contracts for this feature, no use in purchase/share flows, and no changes to MCP contract tools. Ingest and the live ticker UI must not require `@brickbase/abi`, deployed contract addresses, or viem contract calls.
 
-These feeds are **additive**. They do **not** replace, remove, or change existing **on-chain polling** of `OracleRouter` (ETH/USD, GBP/USD, Gold/USD, FTSE 100 via React Query every 30 seconds in `OraclePrices`). The oracle strip and MCP `get_oracle_prices` continue to serve contract-adjacent and Chainlink-backed context independently of the live ticker.
+These feeds are **additive**. They **must not** replace, remove, or change existing **on-chain polling** of `OracleRouter` (ETH/USD, GBP/USD, Gold/USD, FTSE 100 via React Query every 30 seconds in `OraclePrices`). The oracle strip and MCP `get_oracle_prices` remain independent of the live ticker.
 
 ---
 
@@ -24,46 +26,46 @@ These feeds are **additive**. They do **not** replace, remove, or change existin
 ### Problem
 
 - Header oracle data refreshes only every 30 seconds; users have no live market or chain pulse without leaving the app.
-- Long-lived connections to Coinbase and Infura should not run inside the Next.js process.
-- Future consumers (admin UI, alerts) need a bus decoupled from the web server.
+- Long-lived connections to Coinbase and Infura must not run inside the Next.js process.
+- Future consumers (admin UI, alerts, `apps/integrations/api`) need a bus decoupled from the web server.
 
 ### Goals
 
 | Goal | Success metric |
 |------|----------------|
-| Add live feeds without breaking existing oracle UI | `OraclePrices` polling unchanged; new UI reads WS only |
+| Add live feeds without breaking existing oracle UI | `OraclePrices` polling unchanged; new UI reads WebSocket only |
 | Low-latency ETH/USD spot | Median client latency &lt; 500 ms from Coinbase tick (p95 &lt; 2 s) |
-| Chain liveness visible | New block header updates within one block time of Infura notification |
+| Chain liveness visible | Block indicator updates within one block time of Infura `newHeads` |
 | Resilient ingest | Reconnect within 30 s of upstream drop; no crash on malformed frames |
-| Horizontally scalable fan-out | Multiple WS gateway instances share one ingest via Redis |
+| Horizontally scalable fan-out | Multiple gateway instances share one ingest via Redis |
 
 ### Explicit non-goals
 
-- **Replacing** on-chain `OracleRouter` polling or MCP `get_oracle_prices`.
-- **Smart contract integration** for live feeds (no triggering txs, no syncing prices on-chain, no AssetShares/AssetVault/OracleRouter coupling in ingest or UI).
-- Using Coinbase or Infura data for settlement, pricing shares, or any business logic.
+- Replacing on-chain `OracleRouter` polling or MCP `get_oracle_prices`.
+- Smart contract integration for live feeds.
+- Using Coinbase or Infura data for settlement, share pricing, or any business logic.
 - Guaranteed delivery or historical storage of every tick (at-most-once is fine for display).
 
 ---
 
-## 3. Current state (unchanged by this feature)
+## 3. Current state (must remain unchanged)
 
-| Component | Behavior | Must remain |
+| Component | Behavior | Requirement |
 |-----------|----------|-------------|
-| `OraclePrices` | `useQuery` → `fetchOraclePrices` → `OracleRouter`, `refetchInterval: 30_000` | Yes — no removal or interval change |
-| MCP | `get_oracle_prices` reads chain | Yes |
-| Infra | HTTP RPC via `NEXT_PUBLIC_RPC_URL`; no Redis/WS services | Extended, not replaced |
+| `OraclePrices` | `useQuery` → `fetchOraclePrices` → `OracleRouter`, `refetchInterval: 30_000` | Do not modify |
+| MCP | `get_oracle_prices` reads chain | Do not modify for this feature |
+| Infra | HTTP RPC via `NEXT_PUBLIC_RPC_URL` | Extend with Redis + integrations processes |
 
-**Principle:** Two parallel data planes:
+**Two parallel data planes:**
 
 | Plane | Source | UI role |
 |-------|--------|---------|
-| **On-chain oracle** (existing) | `OracleRouter` / Chainlink | Authoritative oracle strip: ETH/USD, GBP/USD, Gold/USD, FTSE 100 |
-| **Live feeds** (new) | Coinbase WS + Infura WS | Display-only: spot ETH/USD, block height/pulse; optional log lines for UI (not wired to contracts) |
+| **On-chain oracle** (existing) | `OracleRouter` / Chainlink | Oracle strip: ETH/USD, GBP/USD, Gold/USD, FTSE 100 |
+| **Live feeds** (new) | Coinbase WS + Infura WS | Display-only: spot ETH/USD, block #; logs optional later |
 
 ---
 
-## 4. Proposed architecture
+## 4. Architecture
 
 ```
 ┌─────────────────────┐     ┌─────────────────────┐
@@ -73,9 +75,9 @@ These feeds are **additive**. They do **not** replace, remove, or change existin
            │                           │
            ▼                           ▼
 ┌──────────────────────────────────────────────────┐
-│ apps/integrations/ingest                         │
-│  - normalize → PUBLISH Redis channels            │
-│  - optional SET last-value keys                  │
+│ apps/integrations/ingest/  (Node server process) │
+│  coinbaseFeed + infuraFeed → Redis PUBLISH       │
+│  SET last-value keys                             │
 └──────────────────────────┬───────────────────────┘
                            │
                            ▼
@@ -86,356 +88,471 @@ These feeds are **additive**. They do **not** replace, remove, or change existin
                            │
                            ▼
 ┌──────────────────────────────────────────────────┐
-│ apps/integrations/gateway                        │
-│  - SUBSCRIBE Redis → fan-out to browsers         │
+│ apps/integrations/gateway/  (Node server process)│
+│  SUBSCRIBE Redis → WebSocket fan-out             │
+│  snapshot last-value keys on client connect        │
 └──────────────────────────┬───────────────────────┘
                            │
            ┌───────────────┴───────────────┐
            ▼                               ▼
 ┌─────────────────────┐         ┌─────────────────────┐
-│ New live ticker UI  │         │ OraclePrices        │
-│ (WS client hook)    │         │ (on-chain poll,     │
-│                     │         │  unchanged)         │
+│ LiveTicker + hook   │         │ OraclePrices        │
+│ apps/web            │         │ (unchanged)         │
 └─────────────────────┘         └─────────────────────┘
 ```
 
-**Why Redis pub/sub:** Isolates fragile upstream WS sessions from many browser connections; allows scaling gateway replicas without duplicate Coinbase/Infura clients.
+**Why Redis pub/sub:** Isolates upstream WebSocket sessions from many browser connections; allows multiple gateway replicas without duplicate Coinbase/Infura clients.
+
+**Why not Next.js API routes for upstream WS:** Serverless timeouts and connection limits.
 
 ---
 
-## 5. Data sources (new feeds only)
+## 5. Data sources
 
 ### 5.1 Coinbase Advanced Trade WebSocket — ETH/USD
 
-**Purpose:** Live **spot** ETH/USD for the new ticker — **display only**. Not consumed by smart contracts, MCP tools, or share-purchase flows.
-
-**Reference:** [Coinbase Advanced Trade WebSocket](https://docs.cdp.coinbase.com/advanced-trade/docs/ws-overview) — confirm channel and product IDs at implementation time.
+**Reference:** [Coinbase Advanced Trade WebSocket](https://docs.cdp.coinbase.com/advanced-trade/docs/ws-overview)
 
 **v1 subscription**
 
-- Product: `ETH-USD`
-- Channel: `ticker` (last price; optional 24h change/volume for display)
+- URL: `wss://advanced-trade-ws.coinbase.com` (override via `COINBASE_WS_URL`)
+- Product: `ETH-USD` (override via `COINBASE_PRODUCT_ID`)
+- Channel: `ticker`
 
-**Ingest behavior**
+**Ingest requirements**
 
-- One upstream connection per ingest process; reconnect with exponential backoff (cap ~30 s).
-- Map frames → canonical `TickerMessage` (§6.2).
-- Coalesce publishes to ~4–10/sec max (configurable) while always keeping latest price.
-- Server-side env only for any required credentials (`COINBASE_*`); never `NEXT_PUBLIC_*`.
+- One upstream connection per ingest process; exponential backoff reconnect (cap ~30 s).
+- Parse Advanced Trade ticker channel payloads → `TickerMessage` (§6.2).
+- Coalesce Redis publishes (default 250 ms interval) while always retaining the latest price.
+- Credentials server-side only; never `NEXT_PUBLIC_*` for Coinbase.
 
-### 5.2 Infura WebSocket — blocks (and optional log display)
+### 5.2 Infura WebSocket — block headers
 
-**Purpose:** Live **chain head** for a “chain pulse” in the UI. Optional `logs` subscription in a later phase may surface raw or lightly labeled activity — still **display only**, with **no** Brickbase contract integration requirement.
+**Endpoint:** `wss://<network>.infura.io/ws/v3/<INFURA_PROJECT_ID>`
 
-**Endpoint:** `wss://<network>.infura.io/ws/v3/<INFURA_PROJECT_ID>` where `<network>` aligns with `CHAIN_ID` used for display (e.g. same network as the app’s default RPC).
+Supported `INFURA_WS_NETWORK` values: `mainnet`, `sepolia`, `base-sepolia`, `base`, `base-mainnet` (map to Infura hostnames in ingest config).
 
-**v1 subscription (required)**
+**v1**
 
-| Method | Filter | Output message |
-|--------|--------|----------------|
-| `eth_subscribe` → `newHeads` | — | `ChainHeadMessage` |
+| Method | Params | Output |
+|--------|--------|--------|
+| `eth_subscribe` | `["newHeads"]` | `ChainHeadMessage` |
+
+If `INFURA_PROJECT_ID` is unset, ingest **must still run** the Coinbase feed and log that Infura was skipped.
 
 **Phase 2 (optional)**
 
-| Method | Filter | Output message |
-|--------|--------|----------------|
-| `eth_subscribe` → `logs` | Broad or app-chosen filters | `ChainLogMessage` — block/tx/address/topics for UI only |
+| Method | Params | Output |
+|--------|--------|--------|
+| `eth_subscribe` | `["logs", …]` | `ChainLogMessage` |
 
-If log display is added, decoding with `@brickbase/abi` is **optional** (nicer labels in UI), not required. Do not depend on `NEXT_PUBLIC_ASSET_*` contract env vars for MVP ingest.
-
-**Ingest behavior**
-
-- Re-subscribe after reconnect.
-- Publish only fields needed for display (block number, hash, timestamp; for logs, minimal JSON).
-- `INFURA_PROJECT_ID` server-side only.
-- No contract calls, no event handlers that affect app state beyond the live ticker component.
+ABI decoding via `@brickbase/abi` is optional for log labels only. Do not require `NEXT_PUBLIC_ASSET_*` env vars for MVP ingest.
 
 ---
 
 ## 6. Redis design
 
-### 6.1 Channels (new feed namespace)
+### 6.1 Channels
 
-Prefix: `brickbase:live:` (distinct from any future oracle cache keys)
+Prefix: `brickbase:live:`
 
 | Channel | Publisher | Content |
 |---------|-----------|---------|
 | `brickbase:live:ticker:eth-usd` | Coinbase ingest | `TickerMessage` |
 | `brickbase:live:chain:head` | Infura ingest | `ChainHeadMessage` |
-| `brickbase:live:chain:log` | Infura ingest (phase 2, optional) | `ChainLogMessage` |
+| `brickbase:live:chain:log` | Infura ingest (phase 2) | `ChainLogMessage` |
 
-Use granular channels. Gateway subscribes to ticker + `chain:head` for v1; add `chain:log` when optional log display ships.
+Gateway v1 subscribes to ticker + `chain:head` only. Export channel list as `GATEWAY_SUBSCRIBE_CHANNELS` in `types/channels.ts`.
 
 ### 6.2 Message schemas (JSON)
 
-Every message includes:
+All messages include:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `v` | number | Schema version (`1`) |
-| `type` | string | `ticker` \| `chain_head` \| `chain_log` (optional) |
+| `v` | number | `1` |
+| `type` | string | `ticker` \| `chain_head` \| `chain_log` |
 | `ts` | number | Ingest publish time (Unix ms) |
 | `source` | string | `coinbase` \| `infura` |
 
-**`TickerMessage`** (`type: "ticker"`)
+**`TickerMessage`** — `type: "ticker"`, `source: "coinbase"`
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `symbol` | string | e.g. `ETH-USD` |
-| `price` | string | Decimal string (avoid float in Redis) |
+| `price` | string | Decimal string |
 | `change24h` | string | Optional |
 | `volume24h` | string | Optional |
 
-**`ChainHeadMessage`** (`type: "chain_head"`)
+**`ChainHeadMessage`** — `type: "chain_head"`, `source: "infura"`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `chainId` | number | e.g. `11155111` |
-| `blockNumber` | string | Single convention: decimal or `0x` hex — document in README |
-| `blockHash` | string | |
+| `chainId` | number | From `CHAIN_ID` env |
+| `blockNumber` | string | **Decimal string** (convert from hex in `newHeads`) |
+| `blockHash` | string | `0x…` |
 | `timestamp` | number | Unix seconds |
 
-**`ChainLogMessage`** (`type: "chain_log"`, phase 2, optional)
+**`ChainLogMessage`** (phase 2) — `type: "chain_log"`, `source: "infura"`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `chainId` | number | |
-| `blockNumber` | string | |
-| `transactionHash` | string | |
-| `address` | string | Log contract address |
-| `topics` | string[] | Raw topics for display or optional decode |
-| `label` | string | Optional human-readable line for UI |
+| Field | Type |
+|-------|------|
+| `chainId` | number |
+| `blockNumber` | string |
+| `transactionHash` | string |
+| `address` | string |
+| `topics` | string[] |
+| `label` | string (optional) |
 
 Invalid payloads: log and drop at ingest; never publish.
 
-### 6.3 Last-value cache (recommended)
+### 6.3 Last-value cache
 
-On each publish, `SET brickbase:live:last:<channel-suffix>` with same JSON and TTL (e.g. 24 h). Gateway sends snapshot to new WS clients before live stream so the ticker is not empty on connect.
+On each publish, ingest must `SET brickbase:live:last:<suffix>` where `<suffix>` is the channel name without the `brickbase:live:` prefix (e.g. `ticker:eth-usd`). Use TTL `LIVE_LAST_VALUE_TTL_SECONDS` (default `86400`). Gateway sends all available last-value keys to each new WebSocket client before streaming live messages.
 
 ---
 
-## 7. WebSocket gateway
+## 7. Implementation: `apps/integrations`
 
-### 7.1 Role
+### 7.1 Monorepo conventions (match `apps/web`)
 
-New Nx app at `apps/integrations/gateway`:
+| Rule | Detail |
+|------|--------|
+| One npm package per app folder | `apps/integrations/package.json` only — **no** `package.json` under `ingest/`, `gateway/`, or `types/` |
+| One Nx project per app folder | `apps/integrations/project.json` with `name: "integrations"` — **no** separate `project.json` under `ingest/` or `gateway/` |
+| Shared types | Plain `.ts` files in `apps/integrations/types/` — **no** `src/` wrapper, **no** standalone lib under `libs/` |
+| Dependencies | All runtime deps (`redis`, `ws`, `zod`, `dotenv`) and dev deps (`tsx`, `typescript`, `@types/node`, `@types/ws`) in `apps/integrations/package.json` only — **not** in repo root `package.json` |
+| Import alias | `@brickbase/integrations-types` → `apps/integrations/types/index.ts` via `apps/integrations/tsconfig.json` paths; mirror in `apps/web/tsconfig.json` and `apps/web/next.config.ts` webpack alias (same pattern as `@brickbase/abi`) |
 
-1. Subscribe to Redis channels in §6.1 (and read last-value keys).
-2. Accept browser connections at e.g. `/ws/live`.
-3. Forward JSON text frames to all connected clients.
+**Folder name `integrations`:** This layer connects to external systems; **data** is what it returns upward to `web` and `mcp`, not the folder name.
 
-Do **not** terminate Coinbase/Infura inside Next.js API routes (serverless timeouts, connection limits).
+### 7.2 Target directory layout
 
-### 7.2 Client protocol (v1)
+Create exactly this structure:
 
-**Connect:** `NEXT_PUBLIC_WS_LIVE_URL` → e.g. `wss://<host>/ws/live`
+```
+apps/integrations/
+  package.json              # name: brickbase-integrations, type: module
+  project.json              # Nx project: integrations
+  tsconfig.json
+  types/
+    channels.ts             # LIVE_CHANNELS, GATEWAY_SUBSCRIBE_CHANNELS, lastValueKey()
+    messages.ts             # TypeScript interfaces
+    schemas.ts              # Zod schemas + parseLiveFeedMessage()
+    index.ts                # re-exports
+    __tests__/
+      schemas.test.ts       # node:test via tsx
+  ingest/
+    src/
+      index.ts              # entry: connect Redis, start feeds, SIGINT shutdown
+      config.ts             # dotenv from repo-root ../../.env
+      redisPublisher.ts     # publish + last-value SET
+      coinbaseFeed.ts       # WS client, parse, coalesce, reconnect
+      infuraFeed.ts         # newHeads subscribe, parse, reconnect
+      __tests__/
+        parsers.test.ts     # node:test for parse helpers
+  gateway/
+    src/
+      index.ts              # HTTP /health, WS upgrade, Redis sub, fan-out
+      config.ts
+```
 
-**Server → client:** Envelope optional; minimum is canonical Redis JSON:
+Do **not** create: `libs/live-feed-types`, `apps/integrations/ingest/package.json`, `apps/integrations/gateway/project.json`, or `types/package.json`.
+
+### 7.3 `apps/integrations/package.json`
 
 ```json
 {
-  "v": 1,
-  "type": "ticker",
-  "ts": 1716892800123,
-  "source": "coinbase",
-  "symbol": "ETH-USD",
-  "price": "3456.78"
+  "name": "brickbase-integrations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "tsx ingest/src/index.ts",
+    "gateway": "tsx gateway/src/index.ts",
+    "test": "tsx --test types/__tests__/schemas.test.ts ingest/src/__tests__/parsers.test.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "redis": "^4.7.0",
+    "ws": "^8.18.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
 }
 ```
 
-**On connect:** Burst of last-value messages, then stream.
+### 7.4 `apps/integrations/project.json`
 
-**Client → server (minimal):** `ping` / `pong` only for v1.
+Single Nx project with targets (each runs with `cwd: apps/integrations`):
 
-### 7.3 Operations
+| Target | Command |
+|--------|---------|
+| `ingest` | `npm run ingest` |
+| `gateway` | `npm run gateway` |
+| `test` | `npm run test` |
 
-- Validate `Origin` against `NEXT_PUBLIC_APP_URL` in production.
-- Connection limits per IP; max frame size (e.g. 64 KB).
-- Server heartbeat; idle disconnect after configurable timeout.
-- `GET /health` — Redis up; optional subscriber lag metric.
-
----
-
-## 8. Ingest service
-
-### 8.1 Packaging
-
-New Nx app at `apps/integrations/ingest` with modules:
-
-- `coinbaseFeed` — ETH-USD ticker → Redis  
-- `infuraFeed` — `newHeads` → Redis (`logs` optional in phase 2)  
-
-Single process with two async loops is acceptable for v1. No shared library dependency on `@brickbase/abi` for MVP.
-
-### 8.2 Environment
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `REDIS_URL` | Yes | e.g. `redis://localhost:6379` |
-| `INFURA_PROJECT_ID` | Yes | |
-| `INFURA_WS_NETWORK` | Yes | e.g. `sepolia`, `base-sepolia` |
-| `CHAIN_ID` | Yes | Embedded in outbound messages (display context only) |
-| `COINBASE_PRODUCT_ID` | No | Default `ETH-USD` |
-| `TICKER_PUBLISH_INTERVAL_MS` | No | Coalesce window (default 250) |
-
-Contract deployment addresses are **not** required for this feature in v1.
-
-Extend `.env.example` when implementing; no secrets in repo.
-
-### 8.3 Failure behavior
-
-| Failure | Behavior |
-|---------|----------|
-| Coinbase down | Reconnect; live ticker shows stale + “delayed”; **oracle strip unaffected** |
-| Infura down | Reconnect; block/event indicators stall; **oracle strip unaffected** |
-| Redis down | Ingest drops ticks, retries; gateway health fails |
-| WS gateway down | Live ticker offline; **oracle strip still polls on-chain** |
-
----
-
-## 9. Frontend (`apps/web`)
-
-### 9.1 UI layout (additive)
-
-Keep existing header row:
-
-- **`OraclePrices`** — unchanged: on-chain ETH/USD, GBP/USD, Gold/USD, FTSE 100 every 30 s.
-
-Add a **separate** live strip (or clearly labeled subsection), e.g. `LiveTicker`:
-
-| Field | Source | Label suggestion |
-|-------|--------|------------------|
-| ETH/USD spot | Coinbase `TickerMessage` | “ETH/USD (live)” or icon + price |
-| Block | `ChainHeadMessage` | Block # / pulse dot |
-| Chain logs | `ChainLogMessage` (phase 2) | Optional; display-only, not tied to purchase or admin flows |
-
-Users must be able to distinguish **Chainlink oracle (on-chain poll)** vs **Coinbase spot (live, display only)** via label or tooltip.
-
-### 9.2 New pieces (do not modify oracle fetch path)
-
-| Piece | Responsibility |
-|-------|----------------|
-| `useLiveFeedWebSocket` | Connect, parse, reconnect, merge snapshot |
-| `LiveTicker` | Render live feed state only |
-| `Header` | Compose `OraclePrices` + `LiveTicker` |
-
-**States for live strip:** `live` | `delayed` | `offline` (WS down or no message &gt; 10 s). Offline shows placeholder — **do not** fall back to overwriting oracle values with Coinbase data.
-
-### 9.3 What not to do
-
-- Do not change `fetchOraclePrices`, `refetchInterval`, or MCP oracle/contract tools for this feature.
-- Do not merge Coinbase price into `OraclePrices` or pass live prices into buy-shares / wagmi flows.
-- Do not remove GBP/Gold/FTSE from on-chain poll in favor of external feeds in v1.
-- Do not add smart contract reads/writes in ingest, gateway, or `LiveTicker` beyond what already exists elsewhere in the app.
-
----
-
-## 10. Monorepo layout
-
-New backend apps live under **`apps/integrations/`** — the layer that connects to external systems (streams, APIs, and later DB/GraphQL). **Data** is what this layer returns upward to `web` and `mcp`; the folder name describes the role, not the payload.
-
-```
-apps/
-  web/                          # presentation (unchanged)
-  mcp/                          # AI/automation (unchanged)
-  integrations/
-    ingest/                     # Coinbase + Infura → Redis (this PRD)
-    gateway/                    # Redis → browser WebSockets (this PRD)
-    api/                        # future: GraphQL + DB + external REST (out of scope here)
-libs/
-  live-feed-types/              # optional: shared message types / Zod schemas
+```json
+{
+  "name": "integrations",
+  "projectType": "application",
+  "sourceRoot": "apps/integrations",
+  "targets": {
+    "ingest": { "executor": "nx:run-commands", "options": { "command": "npm run ingest", "cwd": "apps/integrations" } },
+    "gateway": { "executor": "nx:run-commands", "options": { "command": "npm run gateway", "cwd": "apps/integrations" } },
+    "test": { "executor": "nx:run-commands", "options": { "command": "npm run test", "cwd": "apps/integrations" } }
+  },
+  "tags": ["scope:integrations"]
+}
 ```
 
-| Project path | Nx project name (suggested) | Role |
-|--------------|----------------------------|------|
-| `apps/integrations/ingest` | `integrations-ingest` | Coinbase + Infura → Redis |
-| `apps/integrations/gateway` | `integrations-gateway` | Redis → browser WebSockets |
-| `libs/live-feed-types` | `live-feed-types` | Shared TS types (optional) |
-| `apps/web` | `web` | `LiveTicker` + hook only |
+### 7.5 `apps/integrations/tsconfig.json`
 
-**Workspace:** Extend `pnpm-workspace.yaml` so nested packages resolve, e.g. add `apps/integrations/*` alongside existing `apps/*`.
+```json
+{
+  "compilerOptions": {
+    "types": ["node"],
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@brickbase/integrations-types": ["./types/index.ts"]
+    }
+  },
+  "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]
+}
+```
 
-**Suggested Nx targets:** `integrations-ingest:serve`, `integrations-gateway:serve`, plus `test` per project.
+Ingest and gateway source must import shared types via `@brickbase/integrations-types` (not relative `../../types` in production code is acceptable but prefer the alias for consistency with web).
 
-**Local dev order:** Redis → `integrations-ingest` → `integrations-gateway` → `web:serve` with `NEXT_PUBLIC_WS_LIVE_URL`.
+### 7.6 Ingest process requirements
+
+- Long-running Node process (not Next.js).
+- `RedisPublisher`: `createClient`, `publish(channel, json)`, `setEx(lastValueKey(channel), ttl, json)`.
+- `coinbaseFeed`: export `parseCoinbaseTicker(raw, productId)` for tests; `startCoinbaseFeed({ wsUrl, productId, publishIntervalMs, publisher })` returns stop function.
+- `infuraFeed`: export `parseInfuraNewHead(raw, chainId)` for tests; `startInfuraFeed({ wsUrl, chainId, publisher })` returns stop function.
+- `index.ts`: start Coinbase always; start Infura only when `getInfuraWsUrl(projectId, network)` returns a URL.
+
+### 7.7 Gateway process requirements
+
+- HTTP server on `GATEWAY_PORT` (default `8081`).
+- `GET /health` → JSON `{ status, clients, redis }`.
+- WebSocket upgrade on `GATEWAY_WS_PATH` (default `/ws/live`).
+- Validate `Origin` against `GATEWAY_ALLOWED_ORIGINS` (comma-separated, default from `NEXT_PUBLIC_APP_URL`).
+- Limit connections per IP (`GATEWAY_MAX_CONNECTIONS_PER_IP`, default `20`).
+- On connection: read all `lastValueKey` entries for `GATEWAY_SUBSCRIBE_CHANNELS`, send valid JSON to client, then forward Redis messages to all clients.
+- Client `ping` → respond `pong`; server ping/pong heartbeat; idle timeout.
+- Do not expose Redis commands to clients.
+
+### 7.8 Environment variables
+
+Add to repo-root `.env.example` (ingest/gateway load `../../.env` when cwd is `apps/integrations`):
+
+```bash
+# Live feeds (display only) — server-side unless noted
+REDIS_URL=redis://127.0.0.1:6379
+INFURA_PROJECT_ID=
+INFURA_WS_NETWORK=sepolia
+CHAIN_ID=11155111
+COINBASE_PRODUCT_ID=ETH-USD
+COINBASE_WS_URL=wss://advanced-trade-ws.coinbase.com
+TICKER_PUBLISH_INTERVAL_MS=250
+LIVE_LAST_VALUE_TTL_SECONDS=86400
+GATEWAY_PORT=8081
+GATEWAY_WS_PATH=/ws/live
+GATEWAY_ALLOWED_ORIGINS=http://localhost:3000
+GATEWAY_MAX_CONNECTIONS_PER_IP=20
+GATEWAY_MAX_MESSAGE_BYTES=65536
+GATEWAY_HEARTBEAT_INTERVAL_MS=30000
+GATEWAY_IDLE_TIMEOUT_MS=300000
+NEXT_PUBLIC_WS_LIVE_URL=ws://localhost:8081/ws/live
+```
+
+### 7.9 Workspace and root scripts
+
+**`pnpm-workspace.yaml`** must include:
+
+```yaml
+packages:
+  - "apps/*"
+  - "libs/*"
+```
+
+`apps/integrations` is a direct child of `apps/` with its own `package.json`, so it is covered by `apps/*`. Do **not** add `apps/integrations/*` unless you introduce nested packages under `ingest/` or `gateway/`.
+
+**Root `package.json` scripts** (add):
+
+```json
+"integrations:ingest": "nx run integrations:ingest",
+"integrations:gateway": "nx run integrations:gateway",
+"integrations:test": "nx run integrations:test"
+```
+
+### 7.10 Local Redis
+
+Create repo-root `docker-compose.live.yml`:
+
+```yaml
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+```
 
 ---
 
-## 11. Security
+## 8. Implementation: `apps/web`
 
-- All upstream and Redis credentials server-side only.
-- Treat WS stream as **public read** unless auth is added later.
-- Document UX note: Coinbase spot and Infura chain data are **indicative display**; they are not used by smart contracts in this feature. On-chain oracle polling remains separate.
-- Rate-limit WS connections; no arbitrary Redis command exposure via WS.
+### 8.1 UI requirements
+
+Update `apps/web/src/components/Header.tsx`:
+
+- **Row 1 (unchanged):** `OraclePrices` — on-chain ETH/USD, GBP/USD, Gold/USD, FTSE 100 every 30 s.
+- **Row 2 (new):** `LiveTicker` below the oracle strip in the same ticker area (`flex-col`, centered).
+
+Do **not** modify `OraclePrices.tsx`, `fetchOraclePrices`, or `refetchInterval`.
+
+### 8.2 Files to create
+
+| File | Responsibility |
+|------|----------------|
+| `src/hooks/useLiveFeedWebSocket.ts` | Connect to `NEXT_PUBLIC_WS_LIVE_URL` (default `ws://localhost:8081/ws/live`); parse with `parseLiveFeedMessage`; track `ticker` and `chainHead`; reconnect with backoff; derive status `live` \| `delayed` \| `offline` (stale if no message &gt; 10 s while connected) |
+| `src/lib/formatLivePrice.ts` | Format decimal string prices for display |
+| `src/components/LiveTicker.tsx` | Status dot + labels; `ETH/USD (live):` price; `Block: #N`; tooltip stating display-only / not used for on-chain transactions |
+
+### 8.3 `LiveTicker` display rules
+
+| State | UI |
+|-------|-----|
+| `live` | Green dot; show latest price and block |
+| `delayed` | Amber dot; show last values |
+| `offline` | Gray dot; show `--` placeholders |
+
+**Must not** copy Coinbase price into `OraclePrices` or buy-shares / wagmi flows.
+
+### 8.4 Web TypeScript / bundler
+
+In `apps/web/tsconfig.json` paths:
+
+```json
+"@brickbase/integrations-types": ["../integrations/types/index.ts"]
+```
+
+In `apps/web/next.config.ts` webpack `resolve.alias`:
+
+```ts
+"@brickbase/integrations-types": path.resolve(root, "apps/integrations/types/index.ts"),
+```
+
+Web keeps its own `zod` dependency for bundling schemas imported from integrations types.
+
+### 8.5 Web tests (minimal)
+
+Create `apps/web/src/lib/__tests__/formatLivePrice.test.ts` (Jest).
 
 ---
 
-## 12. Observability
+## 9. Testing requirements
 
-- Ingest: upstream connect/disconnect, publish rate, reconnect count, Redis errors.
-- Gateway: active clients, fan-out rate, lag (`ts` → send).
-- Structured logs; optional metrics in phase 2.
+| Layer | Requirement |
+|-------|-------------|
+| Integrations unit | `nx run integrations:test` — `node:test` + `tsx`; schema parse tests; Coinbase/Infura parser fixture tests with **no** live network |
+| Web unit | `formatLivePrice` Jest test |
+| Integration (phase 2) | Redis test container: publish → gateway → WS client |
+| E2E (phase 2) | Cucumber: oracle row still present; live row updates on mock WS |
 
----
-
-## 13. Testing
-
-| Layer | Approach |
-|-------|----------|
-| Unit | Normalization fixtures (Coinbase ticker JSON, Infura `eth_subscription` samples) |
-| Integration | Redis test container: publish → gateway → test WS client |
-| Web | Mock WS in RTL; assert `OraclePrices` still calls `fetchOraclePrices` on interval |
-| Regression | Cucumber: oracle row still present; live row updates on mock WS message |
-
-CI should not depend on live Coinbase/Infura; use recorded fixtures.
+CI must not depend on live Coinbase or Infura.
 
 ---
 
-## 14. Rollout
+## 10. Security
 
-### Phase 1 (MVP)
+- All upstream and Redis credentials server-side only (`apps/integrations` processes).
+- No `INFURA_*` or `COINBASE_*` in the Next.js client bundle.
+- Treat the WS stream as public read unless auth is added later.
+- Rate-limit gateway connections; no Redis command exposure via WebSocket.
 
-- Redis, `apps/integrations/ingest` (Coinbase + `newHeads`), `apps/integrations/gateway`, `LiveTicker` in header
+---
+
+## 11. Observability
+
+Log to stderr with prefixes `[ingest][coinbase]`, `[ingest][infura]`, `[ingest][redis]`, `[gateway]`:
+
+- connect / disconnect / reconnect
+- publish rate (optional)
+- active WS client count on gateway
+
+---
+
+## 12. Rollout phases
+
+### Phase 1 (MVP — build per this PRD)
+
+- `apps/integrations` (types, ingest, gateway) + `docker-compose.live.yml`
+- `LiveTicker` + hook in `apps/web`
 - `OraclePrices` untouched
 
 ### Phase 2
 
-- Optional Infura `logs` channel for display-only activity lines
-- Last-value snapshot on WS connect
+- Infura `logs` → `ChainLogMessage` + optional UI
+- Redis integration test; mocked WS web tests
 
 ### Phase 3
 
-- Extra Coinbase products for display; multiple gateway replicas
-- No MCP or smart-contract coupling unless explicitly scoped in a separate PRD
+- Extra Coinbase products; multiple gateway replicas
+- `apps/integrations/api` (GraphQL + DB + external REST) — separate scope
 
 ---
 
-## 15. Acceptance criteria
+## 13. Acceptance criteria
 
 - [ ] `OraclePrices` still polls `OracleRouter` every 30 s with same fields and formatting.
 - [ ] Live ticker path has no smart contract reads/writes and does not feed buy-shares or MCP tools.
-- [ ] New live strip shows Coinbase ETH/USD updating without full page reload when ingest + gateway run.
-- [ ] `newHeads` updates block indicator within one block of chain progression.
-- [ ] Stopping ingest/gateway does not break oracle row; live strip shows offline/delayed only.
+- [ ] With ingest + gateway running, `LiveTicker` updates ETH/USD without full page reload.
+- [ ] With `INFURA_PROJECT_ID` set, block indicator updates on new heads.
+- [ ] Stopping ingest/gateway leaves oracle row working; live strip shows offline/delayed only.
 - [ ] Two gateway instances receive identical Redis messages from one ingest process.
-- [ ] No `INFURA_*` / `COINBASE_*` in client bundle.
-- [ ] Docs describe dual data planes and local startup order.
+- [ ] Monorepo layout matches §7.2 (single `package.json` / `project.json` under `apps/integrations`).
+- [ ] `nx run integrations:test` passes without live upstreams.
 
 ---
 
-## 16. Open questions
+## 14. Open questions
 
-1. Visual placement: second header row vs compact inline next to oracle strip?
-2. Whether phase 2 log display is needed at all, given display-only / no contract integration scope?
-3. Target chain for Infura when user wallet is on a different chain?
-4. WS gateway auth in production?
-5. Redis host (Docker local, Upstash, ElastiCache) and TLS termination.
+1. Whether phase 2 log display is needed given display-only scope.
+2. Infura network when the user wallet is on a different chain than `CHAIN_ID`.
+3. WS gateway authentication in production.
+4. Managed Redis (Upstash, ElastiCache) and TLS termination for deployment.
 
 ---
 
-## 17. References
+## 15. References
 
 - [Coinbase Advanced Trade WebSocket](https://docs.cdp.coinbase.com/advanced-trade/docs/ws-overview)
 - [Infura WebSockets](https://docs.infura.io/api/networks/ethereum/how-to/use-websockets)
 - [Redis Pub/Sub](https://redis.io/docs/latest/develop/interact/pubsub/)
-- `apps/web/src/components/OraclePrices.tsx` — existing on-chain polling (do not replace; separate from live ticker)
+- Existing: `apps/web/src/components/OraclePrices.tsx` (do not replace)
+
+---
+
+## 16. Local development (after implementation)
+
+```bash
+cd apps/integrations && npm install
+docker compose -f docker-compose.live.yml up -d   # from repo root
+npx nx run integrations:ingest
+npx nx run integrations:gateway
+npx nx run web:serve
+```
+
+Copy `.env.example` → `.env`; set `INFURA_PROJECT_ID` and `NEXT_PUBLIC_WS_LIVE_URL` as needed.

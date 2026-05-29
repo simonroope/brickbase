@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ConnectWallet } from "./ConnectWallet";
+import { LiveTicker } from "./LiveTicker";
 import { OraclePrices } from "./OraclePrices";
 
 export function Header() {
@@ -25,8 +26,9 @@ export function Header() {
           <ConnectWallet />
         </div>
       </div>
-      <div className="flex justify-center border-t border-nav-border bg-nav-bg-dark px-4 py-2">
+      <div className="flex flex-col items-center gap-2 border-t border-nav-border bg-nav-bg-dark px-4 py-2">
         <OraclePrices />
+        <LiveTicker />
       </div>
     </header>
   );

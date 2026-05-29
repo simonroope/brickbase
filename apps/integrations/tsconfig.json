@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "types": ["node"],
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@brickbase/integrations-types": ["./types/index.ts"]
+    }
+  },
+  "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]
+}

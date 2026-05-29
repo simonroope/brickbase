@@ -33,6 +33,9 @@
       "@brickbase/abi": [
         "../../libs/abi/src/index.ts"
       ],
+      "@brickbase/integrations-types": [
+        "../integrations/types/index.ts"
+      ],
       "@brickbase/mcp": [
         "../../apps/mcp/src/index.ts"
       ],
