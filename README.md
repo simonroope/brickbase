@@ -49,11 +49,11 @@ Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root
 | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Repo root**            | Yes            | Nx, Hardhat, OpenZeppelin/Chainlink for `libs/contracts`, TypeScript, `tsx`, ESLint, Cucumber, Playwright, and other shared tooling |
 | `**apps/integrations`**  | Yes            | `redis`, `ws`, `zod`, `dotenv`, `tsx` (ingest + gateway only)                                                                       |
-| `**apps/mcp**`           | No             | MCP SDK, `tsx`, Playwright from **root**; Nx `project.json` only                                                                    |
+| `**apps/mcp`**           | No             | MCP SDK, `tsx`, Playwright from **root**; Nx `project.json` only                                                                    |
 | `**apps/web`**           | Yes            | Next.js, React, wagmi, viem, Jest, Tailwind, web test stack                                                                         |
-| `**libs/contracts**`     | No             | Hardhat toolchain from **root**                                                                                                     |
+| `**libs/contracts`**     | No             | Hardhat toolchain from **root**                                                                                                     |
 | `**libs/abi`**           | No             | None — ABIs are files; import via `@brickbase/abi` paths                                                                            |
-| `**libs/shared-config**` | No             | Chain config source; Nx project via `project.json` only (like `libs/abi`)                                                           |
+| `**libs/shared-config`** | No             | Chain config source; Nx project via `project.json` only (like `libs/abi`)                                                           |
 
 
 **npm (default in this repo)** — run from the repo root:
@@ -72,7 +72,7 @@ cd apps/integrations && npm install
 cd apps/web && npm install
 ```
 
-**pnpm** — `pnpm-workspace.yaml` includes `apps/`* and `libs/*`, so a single install at the root links all workspace packages (including `apps/integrations` via `apps/*`):
+**pnpm** — `pnpm-workspace.yaml` includes `apps/`* and `libs/`*, so a single install at the root links all workspace packages (including `apps/integrations` via `apps/*`):
 
 ```bash
 pnpm install

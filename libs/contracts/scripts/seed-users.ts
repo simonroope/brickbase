@@ -89,8 +89,8 @@ async function main() {
   const usdcUsersToFund: Array<{ address: string; amount: string }> = isLocalNetwork
     ? [
         { address: signer.address, amount: "10000" },
-        ...signers.slice(1, 3).map((s) => ({ address: s.address, amount: "1000" })),
-        { address: "0xC357cfe6f8acDB4e2D0Daa9751F24DB77Bfbfe3e", amount: "1000" },
+        ...signers.slice(1, 3).map((s) => ({ address: s.address, amount: "10000" })),
+        { address: "0xC357cfe6f8acDB4e2D0Daa9751F24DB77Bfbfe3e", amount: "10000" },
       ]
     : deployConfig.seed?.usdcUsersToFund ?? [];
 
