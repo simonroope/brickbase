@@ -1,30 +1,30 @@
 {
-  "name": "integrations",
+  "name": "events",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/integrations",
+  "sourceRoot": "apps/events",
   "targets": {
     "ingest": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run ingest",
-        "cwd": "apps/integrations"
+        "cwd": "apps/events"
       }
     },
     "gateway": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run gateway",
-        "cwd": "apps/integrations"
+        "cwd": "apps/events"
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npm run test",
-        "cwd": "apps/integrations"
+        "cwd": "apps/events"
       }
     }
   },
-  "tags": ["scope:integrations"]
+  "tags": ["scope:events"]
 }

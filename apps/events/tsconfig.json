@@ -9,7 +9,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@brickbase/integrations-types": ["./types/index.ts"]
+      "@brickbase/events-types": ["./types/index.ts"]
     }
   },
   "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]

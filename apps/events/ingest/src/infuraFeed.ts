@@ -3,7 +3,7 @@ import {
   LIVE_CHANNELS,
   LIVE_FEED_SCHEMA_VERSION,
   type ChainHeadMessage,
-} from "@brickbase/integrations-types";
+} from "@brickbase/events-types";
 import type { RedisPublisher } from "./redisPublisher.js";
 
 export interface InfuraFeedOptions {

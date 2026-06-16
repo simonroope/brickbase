@@ -21,9 +21,9 @@ const nextConfig: NextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@brickbase/abi": path.resolve(root, "libs/abi/src/index.ts"),
-      "@brickbase/integrations-types": path.resolve(
+      "@brickbase/events-types": path.resolve(
         root,
-        "apps/integrations/types/index.ts"
+        "apps/events/types/index.ts"
       ),
       // MCP contracts.ts imports libs/abi via relative path
       [path.resolve(root, "libs/abi/src/index.js")]: path.resolve(

@@ -3,7 +3,7 @@ import {
   lastValueKey,
   type LiveChannel,
   type LiveFeedMessage,
-} from "@brickbase/integrations-types";
+} from "@brickbase/events-types";
 
 export class RedisPublisher {
   private client: RedisClientType | null = null;

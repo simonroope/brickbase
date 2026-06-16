@@ -14,9 +14,9 @@
     "web:dev": "nx run web:serve",
     "mcp:dev": "nx run mcp:serve",
     "mcp:test": "nx run mcp:test",
-    "integrations:ingest": "nx run integrations:ingest",
-    "integrations:gateway": "nx run integrations:gateway",
-    "integrations:test": "nx run integrations:test"
+    "events:ingest": "nx run events:ingest",
+    "events:gateway": "nx run events:gateway",
+    "events:test": "nx run events:test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",

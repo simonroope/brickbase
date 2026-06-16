@@ -1,5 +1,5 @@
 /**
- * Brickbase integrations gateway — Redis pub/sub → browser WebSockets.
+ * Brickbase events gateway — Redis pub/sub → browser WebSockets.
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { createClient, type RedisClientType } from "redis";
@@ -8,7 +8,7 @@ import {
   GATEWAY_SUBSCRIBE_CHANNELS,
   lastValueKey,
   parseLiveFeedMessage,
-} from "@brickbase/integrations-types";
+} from "@brickbase/events-types";
 import { gatewayConfig, isOriginAllowed } from "./config.js";
 
 const clients = new Set<WebSocket>();

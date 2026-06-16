@@ -5,7 +5,7 @@ import {
   parseLiveFeedMessage,
   type ChainHeadMessage,
   type TickerMessage,
-} from "@brickbase/integrations-types";
+} from "@brickbase/events-types";
 
 export type LiveFeedStatus = "live" | "delayed" | "offline";
 

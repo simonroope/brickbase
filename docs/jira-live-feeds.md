@@ -2,9 +2,9 @@
 
 **Issue key:** BRICK-XXX  
 **Type:** Story  
-**Epic:** Integrations layer / Investor portal UX  
+**Epic:** Events layer / Investor portal UX  
 **Priority:** Medium  
-**Components:** `apps/integrations`, `apps/web`, `docs`  
+**Components:** `apps/events`, `apps/web`, `docs`  
 **Labels:** `live-feeds`, `redis`, `websocket`, `display-only`  
 **Story points:** 8  
 
@@ -34,8 +34,8 @@ The header has no live market or chain pulse. Coinbase and Infura WebSockets mus
 
 ## Solution
 
-1. **`apps/integrations/ingest`** — Coinbase Advanced Trade WS + Infura `newHeads` → Redis `PUBLISH` + last-value `SET`
-2. **`apps/integrations/gateway`** — Redis `SUBSCRIBE` → WebSocket fan-out to browsers
+1. **`apps/events/ingest`** — Coinbase Advanced Trade WS + Infura `newHeads` → Redis `PUBLISH` + last-value `SET`
+2. **`apps/events/gateway`** — Redis `SUBSCRIBE` → WebSocket fan-out to browsers
 3. **`apps/web`** — `LiveTicker` + `useLiveFeedWebSocket` in `Header`
 4. **`docs/pub-sub.md`** — authoritative PRD / build specification
 
@@ -43,12 +43,12 @@ The header has no live market or chain pulse. Coinbase and Infura WebSockets mus
 
 ## Scope (Phase 1 / MVP)
 
-- Shared types in `apps/integrations/types/` (`channels`, `messages`, Zod `schemas`)
+- Shared types in `apps/events/types/` (`channels`, `messages`, Zod `schemas`)
 - Ingest with reconnect, coalesced ticker publish (250 ms), graceful shutdown
 - Gateway with `GET /health`, WS `/ws/live`, origin check, last-value snapshot on connect
 - `LiveTicker` UI with `live` / `delayed` / `offline` states
 - `docker-compose.live.yml` for local Redis
-- Nx targets: `integrations:ingest`, `integrations:gateway`, `integrations:test`
+- Nx targets: `events:ingest`, `events:gateway`, `events:test`
 - Unit tests (schema parsers, `formatLivePrice`) — no live Coinbase/Infura in CI
 - README updates for install and run order
 
@@ -69,17 +69,17 @@ The header has no live market or chain pulse. Coinbase and Infura WebSockets mus
 | Deliverable | Description |
 |-------------|-------------|
 | `docs/pub-sub.md` | PRD / build spec for the feature |
-| `apps/integrations/` | `types/`, `ingest/src/`, `gateway/src/`, single `package.json` + `project.json` |
+| `apps/events/` | `types/`, `ingest/src/`, `gateway/src/`, single `package.json` + `project.json` |
 | `apps/web` | `LiveTicker`, `useLiveFeedWebSocket`, `formatLivePrice`; `Header` composition |
 | Config | `.env.example` live-feed variables; root npm scripts |
-| Tests | `nx run integrations:test`; Jest for `formatLivePrice` |
+| Tests | `nx run events:test`; Jest for `formatLivePrice` |
 
 ---
 
 ## Technical constraints
 
-- One `package.json` per app folder under `apps/integrations` (no nested package manifests)
-- Import alias: `@brickbase/integrations-types` (mirrored in web `tsconfig` + `next.config.ts`)
+- One `package.json` per app folder under `apps/events` (no nested package manifests)
+- Import alias: `@brickbase/events-types` (mirrored in web `tsconfig` + `next.config.ts`)
 - All Coinbase/Infura/Redis credentials server-side only — no secrets in client bundle
 - Ingest must run Coinbase even when `INFURA_PROJECT_ID` is unset
 
@@ -224,19 +224,19 @@ Scenario: Header layout preserves oracle row
 ### Monorepo and documentation
 
 ```gherkin
-Scenario: Integrations monorepo layout matches specification
+Scenario: Events monorepo layout matches specification
   Given the feature branch is checked out
-  When I inspect apps/integrations
-  Then there is a single package.json and project.json at apps/integrations
-  And types live in apps/integrations/types/ without a nested package.json
+  When I inspect apps/events
+  Then there is a single package.json and project.json at apps/events
+  And types live in apps/events/types/ without a nested package.json
   And ingest/ and gateway/ have no separate package.json or project.json
   And docs/pub-sub.md exists as the implementation specification
 ```
 
 ```gherkin
 Scenario: Unit tests pass without live upstreams
-  Given dependencies are installed in apps/integrations
-  When I run nx run integrations:test
+  Given dependencies are installed in apps/events
+  When I run nx run events:test
   Then schema and parser tests pass
   And no live Coinbase or Infura connection is required
 
@@ -261,8 +261,8 @@ Scenario: Upstream credentials stay server-side
 
 - [ ] `docs/pub-sub.md` merged and matches implemented layout
 - [ ] Phase 1 acceptance scenarios pass locally (Redis + ingest + gateway + web)
-- [ ] `nx run integrations:test` passes in CI without external WS dependencies
-- [ ] README documents install and run order for integrations before web
+- [ ] `nx run events:test` passes in CI without external WS dependencies
+- [ ] README documents install and run order for events before web
 - [ ] No changes to `OraclePrices` polling behavior or MCP oracle tools
 
 ---
@@ -271,9 +271,9 @@ Scenario: Upstream credentials stay server-side
 
 | Phase | Scope |
 |-------|--------|
-| **1 (MVP)** | `apps/integrations`, `LiveTicker`, `docker-compose.live.yml`, unit tests |
+| **1 (MVP)** | `apps/events`, `LiveTicker`, `docker-compose.live.yml`, unit tests |
 | **2** | Infura `logs`, Redis integration test, mocked WS web tests |
-| **3** | Extra Coinbase products, gateway replicas, `apps/integrations/api` |
+| **3** | Extra Coinbase products, gateway replicas, `apps/events/api` |
 
 ---
 

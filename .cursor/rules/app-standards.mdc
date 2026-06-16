@@ -9,7 +9,7 @@ alwaysApply: true
 
 - `apps/web` – Next.js app (property assets trading UI)
 - `apps/mcp` – MCP server for AI/automation
-- `apps/integrations` – Live feeds (`ingest`, `gateway`, `types/`); one `package.json` + `project.json` per app
+- `apps/events` – Live feeds (`ingest`, `gateway`, `types/`); one `package.json` + `project.json` per app
 - `libs/contracts` – Solidity smart contracts (Hardhat)
 - `libs/abi` – Shared ABIs (`@brickbase/abi`)
 - `libs/shared-config` – Chain config, env
@@ -18,5 +18,5 @@ alwaysApply: true
 
 - Use `@brickbase/abi` for contract ABIs in web and mcp
 - Contract addresses via `NEXT_PUBLIC_*` env vars
-- Nx targets: `nx run web:build`, `nx run contracts:compile`, `nx run mcp:serve`, `nx run integrations:ingest`, `nx run integrations:gateway`
-- Shared lib imports via tsconfig paths (`@brickbase/abi`, `@brickbase/integrations-types`); no per-lib `package.json` unless the lib is published
+- Nx targets: `nx run web:build`, `nx run contracts:compile`, `nx run mcp:serve`, `nx run events:ingest`, `nx run events:gateway`
+- Shared lib imports via tsconfig paths (`@brickbase/abi`, `@brickbase/events-types`); no per-lib `package.json` unless the lib is published

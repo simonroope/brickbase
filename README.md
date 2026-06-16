@@ -1,13 +1,13 @@
 # Brickbase
 
-Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, an **integrations** layer for external data streams, and a **Next.js** investor portal for tokenised commercial real estate.
+Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, an **events** layer for external data streams, and a **Next.js** investor portal for tokenised commercial real estate.
 
 ## Structure
 
 
 | Path                 | Description                                                      |
 | -------------------- | ---------------------------------------------------------------- |
-| `apps/integrations`  | Integrations : live feeds (`ingest`, `gateway`,`types`)          |
+| `apps/events`  | Events: live feeds (`ingest`, `gateway`, `types`)          |
 | `apps/mcp`           | MCP server for AI/automation (smart contracts, tools, resources) |
 | `apps/web`           | Next.js web app (display & trade properties)                     |
 | `libs/contracts`     | Solidity smart contracts (Hardhat)                               |
@@ -38,17 +38,17 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 ### Prerequisites
 
 - Node.js ≥ 18
-- Docker (optional; required for local Redis when running integrations live feeds)
+- Docker (optional; required for local Redis when running events live feeds)
 
 ### Install dependencies
 
-Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root** — apps with their own runtime deps declare a `package.json` (`apps/web`, `apps/integrations`). `apps/mcp` and `libs/abi`, `libs/shared-config`, and `libs/contracts` have no `package.json`; they use the root toolchain and Nx `project.json`.
+Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root** — apps with their own runtime deps declare a `package.json` (`apps/web`, `apps/events`). `apps/mcp` and `libs/abi`, `libs/shared-config`, and `libs/contracts` have no `package.json`; they use the root toolchain and Nx `project.json`.
 
 
 | Location                 | `package.json` | What gets installed there                                                                                                           |
 | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Repo root**            | Yes            | Nx, Hardhat, OpenZeppelin/Chainlink for `libs/contracts`, TypeScript, `tsx`, ESLint, Cucumber, Playwright, and other shared tooling |
-| `**apps/integrations`**  | Yes            | `redis`, `ws`, `zod`, `dotenv`, `tsx` (ingest + gateway only)                                                                       |
+| `**apps/events`**  | Yes            | `redis`, `ws`, `zod`, `dotenv`, `tsx` (ingest + gateway only)                                                                       |
 | `**apps/mcp`**           | No             | MCP SDK, `tsx`, Playwright from **root**; Nx `project.json` only                                                                    |
 | `**apps/web`**           | Yes            | Next.js, React, wagmi, viem, Jest, Tailwind, web test stack                                                                         |
 | `**libs/contracts`**     | No             | Hardhat toolchain from **root**                                                                                                     |
@@ -60,7 +60,7 @@ Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root
 
 ```bash
 npm install
-npm install --prefix apps/integrations
+npm install --prefix apps/events
 npm install --prefix apps/web
 ```
 
@@ -68,11 +68,11 @@ Or install from each package folder:
 
 ```bash
 npm install
-cd apps/integrations && npm install
+cd apps/events && npm install
 cd apps/web && npm install
 ```
 
-**pnpm** — `pnpm-workspace.yaml` includes `apps/`* and `libs/`*, so a single install at the root links all workspace packages (including `apps/integrations` via `apps/*`):
+**pnpm** — `pnpm-workspace.yaml` includes `apps/`* and `libs/`*, so a single install at the root links all workspace packages (including `apps/events` via `apps/*`):
 
 ```bash
 pnpm install
@@ -81,13 +81,13 @@ pnpm install
 With pnpm, one root install covers workspace packages with a `package.json` (`apps/*`, and any `libs/*` that define one) — no separate `cd` into each app required.
 
 ```bash
-rm -rf node_modules apps/web/node_modules apps/integrations/node_modules
+rm -rf node_modules apps/web/node_modules apps/events/node_modules
 pnpm install
 ```
 
 ### Environment
 
-Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `NEXT_PUBLIC_RPC_URL`, `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, and integrations variables (see [Environment](#environment) below). ABIs live in `libs/abi` and are imported as `@brickbase/abi`.
+Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `NEXT_PUBLIC_RPC_URL`, `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `libs/abi` and are imported as `@brickbase/abi`.
 
 ---
 
@@ -117,9 +117,9 @@ npx nx run contracts:seed-assets
 npx nx reset
 ```
 
-## Integration layer
+## Events layer
 
-`apps/integrations` connects Brickbase to **external systems** (market and chain WebSockets today; GraphQL/API/DB later). It returns **data** upward to `apps/web` and `apps/mcp` — the folder name describes the role, not the payload.
+`apps/events` connects Brickbase to **external systems** (market and chain WebSockets today; GraphQL/API/DB later). It returns **data** upward to `apps/web` and `apps/mcp` — the folder name describes the role, not the payload.
 
 **Live feeds (MVP):** display-only ticker in the web header — Coinbase ETH/USD spot + latest block from Infura. This is separate from on-chain oracle polling in `OraclePrices` (Chainlink via `OracleRouter`, still every 30 s). See [docs/pub-sub.md](docs/pub-sub.md) for the full specification.
 
@@ -132,38 +132,38 @@ Coinbase WS + Infura WS  →  ingest  →  Redis pub/sub  →  gateway  →  bro
 **Layout** (one `package.json` + one Nx `project.json` per app, same pattern as `web`):
 
 ```
-apps/integrations/
-  package.json          # brickbase-integrations — redis, ws, zod, dotenv, tsx
-  project.json          # Nx project: integrations
+apps/events/
+  package.json          # brickbase-events — redis, ws, zod, dotenv, tsx
+  project.json          # Nx project: events
   types/                # channels, message schemas, Zod (no package.json)
   ingest/src/           # upstream → Redis
   gateway/src/          # Redis → WebSocket clients
 ```
 
 
-| Process | Nx command                        | npm script (`apps/integrations`) |
+| Process | Nx command                        | npm script (`apps/events`) |
 | ------- | --------------------------------- | -------------------------------- |
-| Ingest  | `npx nx run integrations:ingest`  | `npm run ingest`                 |
-| Gateway | `npx nx run integrations:gateway` | `npm run gateway`                |
-| Tests   | `npx nx run integrations:test`    | `npm run test`                   |
+| Ingest  | `npx nx run events:ingest`  | `npm run ingest`                 |
+| Gateway | `npx nx run events:gateway` | `npm run gateway`                |
+| Tests   | `npx nx run events:test`    | `npm run test`                   |
 
 
-**Run locally** (requires `apps/integrations` install; use with web for the live ticker UI):
+**Run locally** (requires `apps/events` install; use with web for the live ticker UI):
 
 ```bash
 # Redis (from repo root)
 docker compose -f docker-compose.live.yml up -d
 
 # Ingest — Coinbase ticker + Infura newHeads → Redis
-npx nx run integrations:ingest
+npx nx run events:ingest
 
 # Gateway — ws://localhost:8081/ws/live (default)
-npx nx run integrations:gateway
+npx nx run events:gateway
 ```
 
 Set `INFURA_PROJECT_ID` in `.env` for chain blocks; `NEXT_PUBLIC_WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
 
-Root shortcuts: `npm run integrations:ingest`, `npm run integrations:gateway`, `npm run integrations:test`.
+Root shortcuts: `npm run events:ingest`, `npm run events:gateway`, `npm run events:test`.
 
 ## MCP Server
 
@@ -222,7 +222,7 @@ Next.js application to **display and trade** commercial real estate RWAs.
 | `NEXT_PUBLIC_USDC_ADDRESS`             | USDC token address             |
 
 
-### Integrations (live feeds, server-side unless noted)
+### Events (live feeds, server-side unless noted)
 
 
 | Env var                   | Description                                                               |

@@ -27,7 +27,7 @@ These feeds are **additive**. They **must not** replace, remove, or change exist
 
 - Header oracle data refreshes only every 30 seconds; users have no live market or chain pulse without leaving the app.
 - Long-lived connections to Coinbase and Infura must not run inside the Next.js process.
-- Future consumers (admin UI, alerts, `apps/integrations/api`) need a bus decoupled from the web server.
+- Future consumers (admin UI, alerts, `apps/events/api`) need a bus decoupled from the web server.
 
 ### Goals
 
@@ -54,7 +54,7 @@ These feeds are **additive**. They **must not** replace, remove, or change exist
 |-----------|----------|-------------|
 | `OraclePrices` | `useQuery` → `fetchOraclePrices` → `OracleRouter`, `refetchInterval: 30_000` | Do not modify |
 | MCP | `get_oracle_prices` reads chain | Do not modify for this feature |
-| Infra | HTTP RPC via `NEXT_PUBLIC_RPC_URL` | Extend with Redis + integrations processes |
+| Infra | HTTP RPC via `NEXT_PUBLIC_RPC_URL` | Extend with Redis + events processes |
 
 **Two parallel data planes:**
 
@@ -75,7 +75,7 @@ These feeds are **additive**. They **must not** replace, remove, or change exist
            │                           │
            ▼                           ▼
 ┌──────────────────────────────────────────────────┐
-│ apps/integrations/ingest/  (Node server process) │
+│ apps/events/ingest/  (Node server process) │
 │  coinbaseFeed + infuraFeed → Redis PUBLISH       │
 │  SET last-value keys                             │
 └──────────────────────────┬───────────────────────┘
@@ -88,7 +88,7 @@ These feeds are **additive**. They **must not** replace, remove, or change exist
                            │
                            ▼
 ┌──────────────────────────────────────────────────┐
-│ apps/integrations/gateway/  (Node server process)│
+│ apps/events/gateway/  (Node server process)│
 │  SUBSCRIBE Redis → WebSocket fan-out             │
 │  snapshot last-value keys on client connect        │
 └──────────────────────────┬───────────────────────┘
@@ -212,28 +212,28 @@ On each publish, ingest must `SET brickbase:live:last:<suffix>` where `<suffix>`
 
 ---
 
-## 7. Implementation: `apps/integrations`
+## 7. Implementation: `apps/events`
 
 ### 7.1 Monorepo conventions (match `apps/web`)
 
 | Rule | Detail |
 |------|--------|
-| One npm package per app folder | `apps/integrations/package.json` only — **no** `package.json` under `ingest/`, `gateway/`, or `types/` |
-| One Nx project per app folder | `apps/integrations/project.json` with `name: "integrations"` — **no** separate `project.json` under `ingest/` or `gateway/` |
-| Shared types | Plain `.ts` files in `apps/integrations/types/` — **no** `src/` wrapper, **no** standalone lib under `libs/` |
-| Dependencies | All runtime deps (`redis`, `ws`, `zod`, `dotenv`) and dev deps (`tsx`, `typescript`, `@types/node`, `@types/ws`) in `apps/integrations/package.json` only — **not** in repo root `package.json` |
-| Import alias | `@brickbase/integrations-types` → `apps/integrations/types/index.ts` via `apps/integrations/tsconfig.json` paths; mirror in `apps/web/tsconfig.json` and `apps/web/next.config.ts` webpack alias (same pattern as `@brickbase/abi`) |
+| One npm package per app folder | `apps/events/package.json` only — **no** `package.json` under `ingest/`, `gateway/`, or `types/` |
+| One Nx project per app folder | `apps/events/project.json` with `name: "events"` — **no** separate `project.json` under `ingest/` or `gateway/` |
+| Shared types | Plain `.ts` files in `apps/events/types/` — **no** `src/` wrapper, **no** standalone lib under `libs/` |
+| Dependencies | All runtime deps (`redis`, `ws`, `zod`, `dotenv`) and dev deps (`tsx`, `typescript`, `@types/node`, `@types/ws`) in `apps/events/package.json` only — **not** in repo root `package.json` |
+| Import alias | `@brickbase/events-types` → `apps/events/types/index.ts` via `apps/events/tsconfig.json` paths; mirror in `apps/web/tsconfig.json` and `apps/web/next.config.ts` webpack alias (same pattern as `@brickbase/abi`) |
 
-**Folder name `integrations`:** This layer connects to external systems; **data** is what it returns upward to `web` and `mcp`, not the folder name.
+**Folder name `events`:** This layer connects to external systems and publishes live data upward to `web` and `mcp`.
 
 ### 7.2 Target directory layout
 
 Create exactly this structure:
 
 ```
-apps/integrations/
-  package.json              # name: brickbase-integrations, type: module
-  project.json              # Nx project: integrations
+apps/events/
+  package.json              # name: brickbase-events, type: module
+  project.json              # Nx project: events
   tsconfig.json
   types/
     channels.ts             # LIVE_CHANNELS, GATEWAY_SUBSCRIBE_CHANNELS, lastValueKey()
@@ -257,13 +257,13 @@ apps/integrations/
       config.ts
 ```
 
-Do **not** create: `libs/live-feed-types`, `apps/integrations/ingest/package.json`, `apps/integrations/gateway/project.json`, or `types/package.json`.
+Do **not** create: `libs/live-feed-types`, `apps/events/ingest/package.json`, `apps/events/gateway/project.json`, or `types/package.json`.
 
-### 7.3 `apps/integrations/package.json`
+### 7.3 `apps/events/package.json`
 
 ```json
 {
-  "name": "brickbase-integrations",
+  "name": "brickbase-events",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -287,9 +287,9 @@ Do **not** create: `libs/live-feed-types`, `apps/integrations/ingest/package.jso
 }
 ```
 
-### 7.4 `apps/integrations/project.json`
+### 7.4 `apps/events/project.json`
 
-Single Nx project with targets (each runs with `cwd: apps/integrations`):
+Single Nx project with targets (each runs with `cwd: apps/events`):
 
 | Target | Command |
 |--------|---------|
@@ -299,19 +299,19 @@ Single Nx project with targets (each runs with `cwd: apps/integrations`):
 
 ```json
 {
-  "name": "integrations",
+  "name": "events",
   "projectType": "application",
-  "sourceRoot": "apps/integrations",
+  "sourceRoot": "apps/events",
   "targets": {
-    "ingest": { "executor": "nx:run-commands", "options": { "command": "npm run ingest", "cwd": "apps/integrations" } },
-    "gateway": { "executor": "nx:run-commands", "options": { "command": "npm run gateway", "cwd": "apps/integrations" } },
-    "test": { "executor": "nx:run-commands", "options": { "command": "npm run test", "cwd": "apps/integrations" } }
+    "ingest": { "executor": "nx:run-commands", "options": { "command": "npm run ingest", "cwd": "apps/events" } },
+    "gateway": { "executor": "nx:run-commands", "options": { "command": "npm run gateway", "cwd": "apps/events" } },
+    "test": { "executor": "nx:run-commands", "options": { "command": "npm run test", "cwd": "apps/events" } }
   },
-  "tags": ["scope:integrations"]
+  "tags": ["scope:events"]
 }
 ```
 
-### 7.5 `apps/integrations/tsconfig.json`
+### 7.5 `apps/events/tsconfig.json`
 
 ```json
 {
@@ -325,14 +325,14 @@ Single Nx project with targets (each runs with `cwd: apps/integrations`):
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@brickbase/integrations-types": ["./types/index.ts"]
+      "@brickbase/events-types": ["./types/index.ts"]
     }
   },
   "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]
 }
 ```
 
-Ingest and gateway source must import shared types via `@brickbase/integrations-types` (not relative `../../types` in production code is acceptable but prefer the alias for consistency with web).
+Ingest and gateway source must import shared types via `@brickbase/events-types` (not relative `../../types` in production code is acceptable but prefer the alias for consistency with web).
 
 ### 7.6 Ingest process requirements
 
@@ -355,7 +355,7 @@ Ingest and gateway source must import shared types via `@brickbase/integrations-
 
 ### 7.8 Environment variables
 
-Add to repo-root `.env.example` (ingest/gateway load `../../.env` when cwd is `apps/integrations`):
+Add to repo-root `.env.example` (ingest/gateway load `../../.env` when cwd is `apps/events`):
 
 ```bash
 # Live feeds (display only) — server-side unless noted
@@ -387,14 +387,14 @@ packages:
   - "libs/*"
 ```
 
-`apps/integrations` is a direct child of `apps/` with its own `package.json`, so it is covered by `apps/*`. Do **not** add `apps/integrations/*` unless you introduce nested packages under `ingest/` or `gateway/`.
+`apps/events` is a direct child of `apps/` with its own `package.json`, so it is covered by `apps/*`. Do **not** add `apps/events/*` unless you introduce nested packages under `ingest/` or `gateway/`.
 
 **Root `package.json` scripts** (add):
 
 ```json
-"integrations:ingest": "nx run integrations:ingest",
-"integrations:gateway": "nx run integrations:gateway",
-"integrations:test": "nx run integrations:test"
+"events:ingest": "nx run events:ingest",
+"events:gateway": "nx run events:gateway",
+"events:test": "nx run events:test"
 ```
 
 ### 7.10 Local Redis
@@ -445,16 +445,16 @@ Do **not** modify `OraclePrices.tsx`, `fetchOraclePrices`, or `refetchInterval`.
 In `apps/web/tsconfig.json` paths:
 
 ```json
-"@brickbase/integrations-types": ["../integrations/types/index.ts"]
+"@brickbase/events-types": ["../events/types/index.ts"]
 ```
 
 In `apps/web/next.config.ts` webpack `resolve.alias`:
 
 ```ts
-"@brickbase/integrations-types": path.resolve(root, "apps/integrations/types/index.ts"),
+"@brickbase/events-types": path.resolve(root, "apps/events/types/index.ts"),
 ```
 
-Web keeps its own `zod` dependency for bundling schemas imported from integrations types.
+Web keeps its own `zod` dependency for bundling schemas imported from events types.
 
 ### 8.5 Web tests (minimal)
 
@@ -466,7 +466,7 @@ Create `apps/web/src/lib/__tests__/formatLivePrice.test.ts` (Jest).
 
 | Layer | Requirement |
 |-------|-------------|
-| Integrations unit | `nx run integrations:test` — `node:test` + `tsx`; schema parse tests; Coinbase/Infura parser fixture tests with **no** live network |
+| Events unit | `nx run events:test` — `node:test` + `tsx`; schema parse tests; Coinbase/Infura parser fixture tests with **no** live network |
 | Web unit | `formatLivePrice` Jest test |
 | Integration (phase 2) | Redis test container: publish → gateway → WS client |
 | E2E (phase 2) | Cucumber: oracle row still present; live row updates on mock WS |
@@ -477,7 +477,7 @@ CI must not depend on live Coinbase or Infura.
 
 ## 10. Security
 
-- All upstream and Redis credentials server-side only (`apps/integrations` processes).
+- All upstream and Redis credentials server-side only (`apps/events` processes).
 - No `INFURA_*` or `COINBASE_*` in the Next.js client bundle.
 - Treat the WS stream as public read unless auth is added later.
 - Rate-limit gateway connections; no Redis command exposure via WebSocket.
@@ -498,7 +498,7 @@ Log to stderr with prefixes `[ingest][coinbase]`, `[ingest][infura]`, `[ingest][
 
 ### Phase 1 (MVP — build per this PRD)
 
-- `apps/integrations` (types, ingest, gateway) + `docker-compose.live.yml`
+- `apps/events` (types, ingest, gateway) + `docker-compose.live.yml`
 - `LiveTicker` + hook in `apps/web`
 - `OraclePrices` untouched
 
@@ -510,7 +510,7 @@ Log to stderr with prefixes `[ingest][coinbase]`, `[ingest][infura]`, `[ingest][
 ### Phase 3
 
 - Extra Coinbase products; multiple gateway replicas
-- `apps/integrations/api` (GraphQL + DB + external REST) — separate scope
+- `apps/events/api` (GraphQL + DB + external REST) — separate scope
 
 ---
 
@@ -522,8 +522,8 @@ Log to stderr with prefixes `[ingest][coinbase]`, `[ingest][infura]`, `[ingest][
 - [ ] With `INFURA_PROJECT_ID` set, block indicator updates on new heads.
 - [ ] Stopping ingest/gateway leaves oracle row working; live strip shows offline/delayed only.
 - [ ] Two gateway instances receive identical Redis messages from one ingest process.
-- [ ] Monorepo layout matches §7.2 (single `package.json` / `project.json` under `apps/integrations`).
-- [ ] `nx run integrations:test` passes without live upstreams.
+- [ ] Monorepo layout matches §7.2 (single `package.json` / `project.json` under `apps/events`).
+- [ ] `nx run events:test` passes without live upstreams.
 
 ---
 
@@ -548,10 +548,10 @@ Log to stderr with prefixes `[ingest][coinbase]`, `[ingest][infura]`, `[ingest][
 ## 16. Local development (after implementation)
 
 ```bash
-cd apps/integrations && npm install
+cd apps/events && npm install
 docker compose -f docker-compose.live.yml up -d   # from repo root
-npx nx run integrations:ingest
-npx nx run integrations:gateway
+npx nx run events:ingest
+npx nx run events:gateway
 npx nx run web:serve
 ```
 

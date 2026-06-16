@@ -1,5 +1,5 @@
 /**
- * Brickbase integrations ingest — Coinbase + Infura → Redis pub/sub.
+ * Brickbase events ingest — Coinbase + Infura → Redis pub/sub.
  * Display-only live feeds; no smart contract integration.
  */
 import { ingestConfig, getInfuraWsUrl } from "./config.js";
