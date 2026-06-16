@@ -1,0 +1,9 @@
+# syntax=docker/dockerfile:1
+FROM node:20-alpine
+WORKDIR /app
+COPY apps/events/package.json apps/events/package-lock.json ./apps/events/
+RUN npm ci --prefix apps/events
+COPY apps/events ./apps/events
+WORKDIR /app/apps/events
+ENV NODE_ENV=production
+CMD ["npx", "tsx", "ingest/src/index.ts"]

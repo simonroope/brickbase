@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars (gitignored) and set real values before apply.
+#
+# production_hostname     = "app.brickbase.com"
+# acm_certificate_arn     = "arn:aws:acm:eu-west-2:ACCOUNT_ID:certificate/UUID"
+#
+# github_oidc_provider_arn = "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+# github_oidc_subjects = [
+#   "repo:YOUR_ORG/brickbase:environment:production",
+# ]
+#
+# automated_trust_principal_arns = []
+
+production_hostname   = "app.brickbase.com"
+acm_certificate_arn   = "arn:aws:acm:eu-west-2:000000000000:certificate/00000000-0000-0000-0000-000000000000"
+
+github_oidc_provider_arn = null
+github_oidc_subjects     = []
+
+automated_trust_principal_arns = []

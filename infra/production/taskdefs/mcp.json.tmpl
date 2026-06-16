@@ -1,0 +1,30 @@
+{
+  "family": "brickbase-mcp-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "__EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "brickbase-mcp",
+      "image": "__IMAGE__",
+      "essential": true,
+      "portMappings": [{ "containerPort": 3100, "protocol": "tcp" }],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "MCP_TRANSPORT", "value": "http" },
+        { "name": "MCP_PORT", "value": "3100" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/brickbase-uk-production/brickbase-mcp",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "brickbase-mcp"
+        }
+      }
+    }
+  ]
+}

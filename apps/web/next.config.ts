@@ -4,6 +4,7 @@ import path from "path";
 const monorepoRoot = path.resolve(__dirname, "../..");
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // Monorepo: trace deps from repo root (avoids multi-lockfile root warning)
   outputFileTracingRoot: monorepoRoot,
   turbopack: {},

@@ -1,0 +1,32 @@
+{
+  "family": "brickbase-gateway-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "__EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "brickbase-gateway",
+      "image": "__IMAGE__",
+      "essential": true,
+      "portMappings": [{ "containerPort": 8081, "protocol": "tcp" }],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "REDIS_URL", "value": "__REDIS_URL__" },
+        { "name": "GATEWAY_PORT", "value": "8081" },
+        { "name": "GATEWAY_WS_PATH", "value": "/ws/live" },
+        { "name": "GATEWAY_ALLOWED_ORIGINS", "value": "__PRODUCTION_URL__" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/brickbase-uk-production/brickbase-gateway",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "brickbase-gateway"
+        }
+      }
+    }
+  ]
+}

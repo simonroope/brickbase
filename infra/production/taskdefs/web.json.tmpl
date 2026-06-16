@@ -1,0 +1,29 @@
+{
+  "family": "brickbase-web-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "__EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "brickbase-web",
+      "image": "__IMAGE__",
+      "essential": true,
+      "portMappings": [{ "containerPort": 3000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/brickbase-uk-production/brickbase-web",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "brickbase-web"
+        }
+      }
+    }
+  ]
+}

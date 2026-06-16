@@ -1,27 +1,23 @@
 /**
- * Brickbase MCP Server (stdio)
- * Exposes smart contracts, config, and property data via Model Context Protocol.
+ * Brickbase MCP Server
+ * stdio for local dev; HTTP (Streamable HTTP) when MCP_TRANSPORT=http (production ECS).
  */
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { registerBrickbaseTools } from "./registerTools.js";
-
-const server = new McpServer(
-  {
-    name: "brickbase",
-    version: "1.0.0",
-  },
-  {
-    capabilities: { tools: {}, resources: {} },
-  }
-);
-
-registerBrickbaseTools(server);
+import { createBrickbaseMcpServer } from "./createServer.js";
+import { startHttpServer } from "./httpServer.js";
 
 async function main() {
+  const transportMode = process.env.MCP_TRANSPORT ?? "stdio";
+
+  if (transportMode === "http") {
+    await startHttpServer(createBrickbaseMcpServer);
+    return;
+  }
+
+  const server = createBrickbaseMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Brickbase MCP server connected");
+  console.error("Brickbase MCP server connected (stdio)");
 }
 
 main().catch((err) => {

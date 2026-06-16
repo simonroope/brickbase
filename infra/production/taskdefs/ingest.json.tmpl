@@ -1,0 +1,37 @@
+{
+  "family": "brickbase-ingest-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "__EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "brickbase-ingest",
+      "image": "__IMAGE__",
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "REDIS_URL", "value": "__REDIS_URL__" },
+        { "name": "INFURA_WS_NETWORK", "value": "mainnet" },
+        { "name": "CHAIN_ID", "value": "1" },
+        { "name": "COINBASE_PRODUCT_ID", "value": "ETH-USD" }
+      ],
+      "secrets": [
+        {
+          "name": "INFURA_PROJECT_ID",
+          "valueFrom": "__SSM_INFURA_ARN__"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/brickbase-uk-production/brickbase-ingest",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "brickbase-ingest"
+        }
+      }
+    }
+  ]
+}

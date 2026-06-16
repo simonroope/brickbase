@@ -17,3 +17,11 @@ libs/contracts/typechain-types
 # Test results
 test-results
 apps/mcp/test-results
+
+# Terraform / production deploy
+infra/production/.terraform/
+infra/production/.render/
+infra/production/terraform.tfvars
+infra/production/.env.production
+infra/production/tfplan
+infra/production/*.tfplan
