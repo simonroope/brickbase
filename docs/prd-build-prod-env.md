@@ -5,7 +5,7 @@
 Provision the AWS infrastructure required to run **all Brickbase monorepo applications** in a **single production environment** on **Amazon ECS with Fargate** (no Kubernetes):
 
 1. Build and push Docker images to ECR on CI (one repository per app).
-2. Deploy task definitions and ECS services via `make -C infra/production deploy` (no `kubectl`).
+2. Deploy task definitions and ECS services via `make -C infra/production deploy` (ECS API only — no Kubernetes/kubectl).
 3. Expose the web app, MCP server, and events gateway over HTTPS through an ALB.
 4. Run events ingest and gateway with **Amazon ElastiCache for Redis** for the live-feed pub/sub pipeline.
 
@@ -773,7 +773,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
 ```
 
-**CI must not:** run `terraform apply`, use `kubectl`, or deploy images built with non-production `NEXT_PUBLIC_*` values.
+**CI must not:** run `terraform apply`, use Kubernetes for deploy or runtime, or deploy images built with non-production `NEXT_PUBLIC_*` values.
 
 ## Configuration and secrets
 
@@ -962,7 +962,7 @@ ${IMAGE_ACC}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
 
 **Parameterization:** Makefile and `deploy.sh` read **`ENVIRONMENT=production`** and **`SSM_PREFIX=/brickbase/production`**.
 
-**No `kubectl`, no `kubeconfig`, no Kubernetes manifests.**
+**ECS deploy only** — production does not use Kubernetes, Helm, Ingress, or cluster manifests of any kind.
 
 ## Per-application deployment notes
 
@@ -1017,7 +1017,7 @@ ${IMAGE_ACC}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
 7. **`NEXT_PUBLIC_WS_LIVE_URL`** connects (WebSocket) and receives ticker and block-head messages.
 8. MCP HTTP endpoint responds behind ALB (when HTTP transport is shipped).
 9. CI pushes four images → **`make -C infra/production deploy`** → services stable.
-10. No EKS cluster, `kubectl`, or Kubernetes manifests in production.
+10. Production uses **ECS Fargate only** — no Kubernetes orchestration (EKS, `kubectl`, Helm, or Ingress).
 
 ## Acceptance test plan
 
