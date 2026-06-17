@@ -8,7 +8,7 @@ export const ingestConfig = {
   redisUrl: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
   infuraProjectId: process.env.INFURA_PROJECT_ID ?? "",
   infuraWsNetwork: process.env.INFURA_WS_NETWORK ?? "sepolia",
-  chainId: Number(process.env.CHAIN_ID ?? process.env.NEXT_PUBLIC_CHAIN_ID ?? "11155111"),
+  chainId: Number(process.env.CHAIN_ID ?? "11155111"),
   coinbaseWsUrl:
     process.env.COINBASE_WS_URL ?? "wss://advanced-trade-ws.coinbase.com",
   coinbaseProductId: process.env.COINBASE_PRODUCT_ID ?? "ETH-USD",

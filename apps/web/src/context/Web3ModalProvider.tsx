@@ -27,7 +27,7 @@ export default function Web3ModalProvider({
     import("@/config/wagmi").then(({ getWagmiConfig, projectId }) => {
       if (!projectId) {
         console.warn(
-          "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. WalletConnect may not work."
+          "WALLETCONNECT_PROJECT_ID is not set. WalletConnect may not work."
         );
       }
       const cfg = getWagmiConfig();

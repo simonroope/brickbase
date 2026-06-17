@@ -1,0 +1,87 @@
+name: Deploy to environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: environment
+      image_tag:
+        description: "ECR image tag (git SHA) to deploy to ECS"
+        required: true
+        type: string
+      deploy_contracts:
+        description: "Deploy smart contracts (only needed when contracts have changed)"
+        required: false
+        type: boolean
+        default: false
+      contracts_network:
+        description: "Hardhat network to deploy contracts to (e.g. sepolia, mainnet, baseSepolia)"
+        required: false
+        type: string
+        default: "sepolia"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  deploy-contracts:
+    if: ${{ inputs.deploy_contracts }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Compile contracts
+        run: npx nx run contracts:compile
+      - name: Deploy contracts
+        run: npx hardhat run libs/contracts/scripts/deploy.ts --network ${{ inputs.contracts_network }}
+        env:
+          ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.CONTRACTS_DEPLOYER_PRIVATE_KEY }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
+          CHAINLINK_USD_GBP_ADDRESS: ${{ vars.CHAINLINK_USD_GBP_ADDRESS }}
+          CHAINLINK_XAU_USD_ADDRESS: ${{ vars.CHAINLINK_XAU_USD_ADDRESS }}
+          CHAINLINK_FTSE100_ADDRESS: ${{ vars.CHAINLINK_FTSE100_ADDRESS }}
+          DEPLOY_ADMIN_DEFAULT: ${{ vars.DEPLOY_ADMIN_DEFAULT }}
+          DEPLOY_ADMIN_ASSET_MANAGER: ${{ vars.DEPLOY_ADMIN_ASSET_MANAGER }}
+          DEPLOY_ADMIN_COMPLIANCE_OFFICER: ${{ vars.DEPLOY_ADMIN_COMPLIANCE_OFFICER }}
+
+  deploy-ecs:
+    needs: deploy-contracts
+    if: ${{ always() && (needs.deploy-contracts.result == 'success' || needs.deploy-contracts.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - run: make -C infra/production deploy wait-stable
+        env:
+          IMAGE_ACC: ${{ vars.ECR_REGISTRY_ID }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
+          TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
+          REDIS_URL: ${{ vars.REDIS_URL }}
+          APP_URL: ${{ vars.APP_URL }}
+          SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
+          CHAIN_ID: ${{ vars.CHAIN_ID }}
+          ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
+          ASSET_VAULT_ADDRESS: ${{ vars.ASSET_VAULT_ADDRESS }}
+          ASSET_SHARES_ADDRESS: ${{ vars.ASSET_SHARES_ADDRESS }}
+          ORACLE_ROUTER_ADDRESS: ${{ vars.ORACLE_ROUTER_ADDRESS }}
+          USER_ALLOWLIST_ADDRESS: ${{ vars.USER_ALLOWLIST_ADDRESS }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}

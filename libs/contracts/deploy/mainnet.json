@@ -1,0 +1,15 @@
+{
+  "network": "mainnet",
+  "usdc": "",
+  "chainlink": {
+    "ethUsd": "",
+    "usdGbp": "",
+    "goldUsd": "",
+    "ftse100": ""
+  },
+  "admins": {
+    "defaultAdmin": "",
+    "assetManager": "",
+    "complianceOfficer": ""
+  }
+}

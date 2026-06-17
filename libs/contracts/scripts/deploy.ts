@@ -18,16 +18,42 @@ type DeployConfig = {
   };
 };
 
-async function main() {
-  const networkName = hre.network.name;
+function loadConfig(networkName: string): DeployConfig {
+  // Env vars take precedence over the JSON file — set them in CI to avoid
+  // committing sensitive addresses. All DEPLOY_* vars are optional; any
+  // field not overridden falls back to the JSON file value.
   const configPath = path.join(__dirname, "..", "deploy", `${networkName}.json`);
 
-  if (!fs.existsSync(configPath)) {
-    throw new Error(`No deploy config found for network ${networkName} at ${configPath}`);
-  }
+  const base: DeployConfig = fs.existsSync(configPath)
+    ? (JSON.parse(fs.readFileSync(configPath, "utf8")) as DeployConfig)
+    : {
+        network: networkName,
+        usdc: "",
+        chainlink: { ethUsd: "", usdGbp: "", goldUsd: "", ftse100: "" },
+        admins: { defaultAdmin: "", assetManager: "", complianceOfficer: "" },
+      };
 
-  const raw = fs.readFileSync(configPath, "utf8");
-  const deployConfig = JSON.parse(raw) as DeployConfig;
+  return {
+    network: networkName,
+    usdc: process.env.USDC_ADDRESS || base.usdc,
+    chainlink: {
+      ethUsd: process.env.CHAINLINK_ETH_USD_ADDRESS || base.chainlink.ethUsd,
+      usdGbp: process.env.CHAINLINK_USD_GBP_ADDRESS || base.chainlink.usdGbp,
+      goldUsd: process.env.CHAINLINK_XAU_USD_ADDRESS || base.chainlink.goldUsd,
+      ftse100: process.env.CHAINLINK_FTSE100_ADDRESS || base.chainlink.ftse100,
+    },
+    admins: {
+      defaultAdmin: process.env.DEPLOY_ADMIN_DEFAULT || base.admins.defaultAdmin,
+      assetManager: process.env.DEPLOY_ADMIN_ASSET_MANAGER || base.admins.assetManager,
+      complianceOfficer:
+        process.env.DEPLOY_ADMIN_COMPLIANCE_OFFICER || base.admins.complianceOfficer,
+    },
+  };
+}
+
+async function main() {
+  const networkName = hre.network.name;
+  const deployConfig = loadConfig(networkName);
 
   const [deployer] = await ethers.getSigners();
   console.log(`Deploying with ${deployer.address} to network ${networkName}`);

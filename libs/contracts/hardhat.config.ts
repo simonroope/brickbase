@@ -22,15 +22,19 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
     },
     sepolia: {
-      url: process.env.SEPOLIA_RPC_URL || "",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
-    },
-    baseSepolia: {
-      url: process.env.BASE_SEPOLIA_RPC_URL || "",
+      url: process.env.ETHEREUM_RPC_URL || "",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
     },
     mainnet: {
-      url: process.env.ETH_MAINNET_RPC_URL || "",
+      url: process.env.ETHEREUM_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+    },
+    baseSepolia: {
+      url: process.env.BASE_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+    },
+    base: {
+      url: process.env.BASE_RPC_URL || "",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
     }
   },
