@@ -14,7 +14,7 @@ RENDER_DIR="${RENDER_DIR:-${SCRIPT_DIR}/.render}"
 EXECUTION_ROLE_ARN="${EXECUTION_ROLE_ARN:-}"
 TASK_ROLE_ARN="${TASK_ROLE_ARN:-}"
 REDIS_URL="${REDIS_URL:-}"
-PRODUCTION_URL="${PRODUCTION_URL:-}"
+APP_URL="${APP_URL:-}"
 
 usage() {
   cat <<EOF
@@ -24,7 +24,7 @@ Required env for register/deploy:
   IMAGE_ACC, IMAGE_TAG
   EXECUTION_ROLE_ARN, TASK_ROLE_ARN (from terraform output or .env.production)
 Optional:
-  REDIS_URL, PRODUCTION_URL (defaults from terraform output when set in .env.production)
+  REDIS_URL, APP_URL (defaults from terraform output when set in .env.production)
 EOF
 }
 
@@ -54,9 +54,17 @@ render_service() {
     -e "s|__EXECUTION_ROLE_ARN__|${EXECUTION_ROLE_ARN}|g" \
     -e "s|__TASK_ROLE_ARN__|${TASK_ROLE_ARN}|g" \
     -e "s|__AWS_REGION__|${AWS_REGION}|g" \
+    -e "s|__APP_URL__|${APP_URL}|g" \
+    -e "s|__WS_LIVE_URL__|${WS_LIVE_URL:-}|g" \
     -e "s|__REDIS_URL__|${REDIS_URL}|g" \
-    -e "s|__PRODUCTION_URL__|${PRODUCTION_URL}|g" \
     -e "s|__SSM_INFURA_ARN__|${SSM_INFURA_ARN:-}|g" \
+    -e "s|__CHAIN_ID__|${CHAIN_ID:-1}|g" \
+    -e "s|__ETHEREUM_RPC_URL__|${ETHEREUM_RPC_URL:-}|g" \
+    -e "s|__ASSET_VAULT_ADDRESS__|${ASSET_VAULT_ADDRESS:-}|g" \
+    -e "s|__ASSET_SHARES_ADDRESS__|${ASSET_SHARES_ADDRESS:-}|g" \
+    -e "s|__ORACLE_ROUTER_ADDRESS__|${ORACLE_ROUTER_ADDRESS:-}|g" \
+    -e "s|__USER_ALLOWLIST_ADDRESS__|${USER_ALLOWLIST_ADDRESS:-}|g" \
+    -e "s|__USDC_ADDRESS__|${USDC_ADDRESS:-}|g" \
     "$template" > "$out"
   echo "$out"
 }

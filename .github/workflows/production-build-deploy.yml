@@ -16,8 +16,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
@@ -34,24 +34,24 @@ jobs:
     outputs:
       image_tag: ${{ github.sha }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/amazon-ecr-login@v2
       - run: |
           docker build -f infra/docker/Dockerfile.web \
-            --build-arg NEXT_PUBLIC_APP_URL="${{ vars.NEXT_PUBLIC_APP_URL }}" \
-            --build-arg NEXT_PUBLIC_CHAIN_ID="${{ vars.NEXT_PUBLIC_CHAIN_ID }}" \
-            --build-arg NEXT_PUBLIC_RPC_URL="${{ vars.NEXT_PUBLIC_RPC_URL }}" \
-            --build-arg NEXT_PUBLIC_ASSET_VAULT_ADDRESS="${{ vars.NEXT_PUBLIC_ASSET_VAULT_ADDRESS }}" \
-            --build-arg NEXT_PUBLIC_ASSET_SHARES_ADDRESS="${{ vars.NEXT_PUBLIC_ASSET_SHARES_ADDRESS }}" \
-            --build-arg NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS="${{ vars.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS }}" \
-            --build-arg NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS="${{ vars.NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS }}" \
-            --build-arg NEXT_PUBLIC_USDC_ADDRESS="${{ vars.NEXT_PUBLIC_USDC_ADDRESS }}" \
-            --build-arg NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}" \
-            --build-arg NEXT_PUBLIC_WS_LIVE_URL="${{ vars.NEXT_PUBLIC_WS_LIVE_URL }}" \
+            --build-arg APP_URL="${{ vars.APP_URL }}" \
+            --build-arg CHAIN_ID="${{ vars.CHAIN_ID }}" \
+            --build-arg ETHEREUM_RPC_URL="${{ vars.ETHEREUM_RPC_URL }}" \
+            --build-arg ASSET_VAULT_ADDRESS="${{ vars.ASSET_VAULT_ADDRESS }}" \
+            --build-arg ASSET_SHARES_ADDRESS="${{ vars.ASSET_SHARES_ADDRESS }}" \
+            --build-arg ORACLE_ROUTER_ADDRESS="${{ vars.ORACLE_ROUTER_ADDRESS }}" \
+            --build-arg USER_ALLOWLIST_ADDRESS="${{ vars.USER_ALLOWLIST_ADDRESS }}" \
+            --build-arg USDC_ADDRESS="${{ vars.USDC_ADDRESS }}" \
+            --build-arg WALLETCONNECT_PROJECT_ID="${{ secrets.WALLETCONNECT_PROJECT_ID }}" \
+            --build-arg WS_LIVE_URL="${{ vars.WS_LIVE_URL }}" \
             -t "${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-web:${{ github.sha }}" .
           docker push "${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-web:${{ github.sha }}"
 
@@ -60,8 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -76,8 +76,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -92,8 +92,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -112,8 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -124,5 +124,12 @@ jobs:
           EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
           TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
           REDIS_URL: ${{ vars.REDIS_URL }}
-          PRODUCTION_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          APP_URL: ${{ vars.APP_URL }}
           SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
+          CHAIN_ID: ${{ vars.CHAIN_ID }}
+          ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
+          ASSET_VAULT_ADDRESS: ${{ vars.NEXT_PUBLIC_ASSET_VAULT_ADDRESS }}
+          ASSET_SHARES_ADDRESS: ${{ vars.NEXT_PUBLIC_ASSET_SHARES_ADDRESS }}
+          ORACLE_ROUTER_ADDRESS: ${{ vars.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS }}
+          USER_ALLOWLIST_ADDRESS: ${{ vars.NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS }}
+          USDC_ADDRESS: ${{ vars.NEXT_PUBLIC_USDC_ADDRESS }}

@@ -114,7 +114,7 @@ aws ssm put-parameter --name /brickbase/production/infura/project_id \
 
 ```bash
 cp .env.production.example .env.production
-# Fill IMAGE_ACC, EXECUTION_ROLE_ARN, TASK_ROLE_ARN, REDIS_URL, PRODUCTION_URL, SSM_INFURA_ARN from terraform output
+# Fill IMAGE_ACC, EXECUTION_ROLE_ARN, TASK_ROLE_ARN, REDIS_URL, APP_URL, SSM_INFURA_ARN from terraform output
 ```
 
 ## Deploy applications (CI or manual)
@@ -139,9 +139,38 @@ Set variables (from `terraform output`):
 | `ECS_TASK_ROLE_ARN` | `ecs_task_role_arn` |
 | `REDIS_URL` | `redis_url` |
 | `SSM_INFURA_ARN` | `arn:aws:ssm:eu-west-2:<account>:parameter/brickbase/production/infura/project_id` |
-| `NEXT_PUBLIC_*` | Production app config |
+| `ETHEREUM_RPC_URL` | Ethereum mainnet RPC endpoint (Infura/Alchemy) |
+| `CHAIN_ID` | `1` (mainnet) |
+| `NEXT_PUBLIC_APP_URL` | `https://briqbase.com` |
+| `NEXT_PUBLIC_WS_LIVE_URL` | `wss://briqbase.com/ws/live` |
+| `NEXT_PUBLIC_ASSET_VAULT_ADDRESS` | From contract deployment |
+| `NEXT_PUBLIC_ASSET_SHARES_ADDRESS` | From contract deployment |
+| `NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS` | From contract deployment |
+| `NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS` | From contract deployment |
+| `NEXT_PUBLIC_USDC_ADDRESS` | Mainnet USDC address |
 
 Secret: `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
+
+### Contract deployment variables (only required when `deploy_contracts=true`)
+
+Set these in the GitHub `production` environment before running the deploy workflow with contracts enabled:
+
+| Variable | Type | Value |
+|----------|------|-------|
+| `USDC_ADDRESS` | Variable | USDC token address |
+| `CHAINLINK_ETH_USD_ADDRESS` | Variable | Chainlink ETH/USD feed address |
+| `CHAINLINK_USD_GBP_ADDRESS` | Variable | Chainlink USD/GBP feed address |
+| `CHAINLINK_XAU_USD_ADDRESS` | Variable | Chainlink XAU/USD feed address |
+| `CHAINLINK_FTSE100_ADDRESS` | Variable | Chainlink FTSE 100 feed address |
+| `DEPLOY_ADMIN_DEFAULT` | Variable | Default admin / multisig address |
+| `DEPLOY_ADMIN_ASSET_MANAGER` | Variable | Asset manager wallet address |
+| `DEPLOY_ADMIN_COMPLIANCE_OFFICER` | Variable | Compliance officer wallet address |
+| `BASE_RPC_URL` | **Secret** | Base RPC endpoint — Base mainnet URL in production, Base Sepolia URL in staging |
+| `CONTRACTS_DEPLOYER_PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
+
+The `contracts_network` workflow input selects the Hardhat network (`sepolia`, `mainnet`, `baseSepolia`). Default is `sepolia` — use `mainnet` only when ready for production contract deployment.
+
+After a contract deploy the new addresses must be updated in the `production` environment as `NEXT_PUBLIC_*` vars and a new ECR image rebuild/deploy triggered so the web app picks them up.
 
 ## Destroy
 

@@ -12,12 +12,12 @@ const localhost = defineChain({
 
 // WalletConnect Cloud project ID
 export const projectId =
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
+  process.env.WALLETCONNECT_PROJECT_ID ?? "";
 
 const metadata = {
   name: "Property Assets",
   description: "Trade commercial real estate Real World Assets on Ethereum",
-  url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  url: process.env.APP_URL ?? "http://localhost:3000",
   icons: ["https://avatars.githubusercontent.com/u/37784886"],
 };
 

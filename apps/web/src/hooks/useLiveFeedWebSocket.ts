@@ -31,9 +31,9 @@ export function useLiveFeedWebSocket(): LiveFeedState {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const wsUrl =
-    typeof process.env.NEXT_PUBLIC_WS_LIVE_URL === "string" &&
-    process.env.NEXT_PUBLIC_WS_LIVE_URL.length > 0
-      ? process.env.NEXT_PUBLIC_WS_LIVE_URL
+    typeof process.env.WS_LIVE_URL === "string" &&
+    process.env.WS_LIVE_URL.length > 0
+      ? process.env.WS_LIVE_URL
       : DEFAULT_WS_URL;
 
   const handleMessage = useCallback((raw: string) => {

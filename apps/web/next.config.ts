@@ -5,6 +5,20 @@ const monorepoRoot = path.resolve(__dirname, "../..");
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Expose canonical env var names to the browser bundle at build time.
+  // Avoids NEXT_PUBLIC_* prefixes in source code; values are baked in by `next build`.
+  env: {
+    APP_URL: process.env.APP_URL ?? "http://localhost:3000",
+    CHAIN_ID: process.env.CHAIN_ID ?? "11155111",
+    ETHEREUM_RPC_URL: process.env.ETHEREUM_RPC_URL ?? "https://rpc.sepolia.org",
+    ASSET_VAULT_ADDRESS: process.env.ASSET_VAULT_ADDRESS ?? "",
+    ASSET_SHARES_ADDRESS: process.env.ASSET_SHARES_ADDRESS ?? "",
+    ORACLE_ROUTER_ADDRESS: process.env.ORACLE_ROUTER_ADDRESS ?? "",
+    USER_ALLOWLIST_ADDRESS: process.env.USER_ALLOWLIST_ADDRESS ?? "",
+    USDC_ADDRESS: process.env.USDC_ADDRESS ?? "",
+    WALLETCONNECT_PROJECT_ID: process.env.WALLETCONNECT_PROJECT_ID ?? "",
+    WS_LIVE_URL: process.env.WS_LIVE_URL ?? "",
+  },
   // Monorepo: trace deps from repo root (avoids multi-lockfile root warning)
   outputFileTracingRoot: monorepoRoot,
   turbopack: {},

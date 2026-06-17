@@ -1,6 +1,7 @@
 /**
  * Contract read client for MCP server.
- * Uses same env vars as web app (NEXT_PUBLIC_*) for consistency.
+ * Reads runtime env vars (CHAIN_ID, ETHEREUM_RPC_URL, *_ADDRESS).
+ * The web app uses NEXT_PUBLIC_* equivalents baked into its browser bundle.
  */
 import * as dotenv from "dotenv";
 import { resolve, dirname } from "node:path";
@@ -24,8 +25,8 @@ import {
   assetUserAllowListAbi,
 } from "../../../libs/abi/src/index.js";
 
-const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "31337", 10);
-const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "http://127.0.0.1:8545";
+const chainId = parseInt(process.env.CHAIN_ID || "31337", 10);
+const rpcUrl = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545";
 
 const localhost = defineChain({
   id: 31337,
@@ -59,11 +60,11 @@ export type AssetSummary = {
 export const config = {
   chainId,
   rpcUrl,
-  assetVaultAddress: (process.env.NEXT_PUBLIC_ASSET_VAULT_ADDRESS || "") as `0x${string}`,
-  assetSharesAddress: (process.env.NEXT_PUBLIC_ASSET_SHARES_ADDRESS || "") as `0x${string}`,
-  oracleRouterAddress: (process.env.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS || "") as `0x${string}`,
-  userAllowListAddress: (process.env.NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS || "") as `0x${string}`,
-  usdcAddress: (process.env.NEXT_PUBLIC_USDC_ADDRESS || "") as `0x${string}`,
+  assetVaultAddress: (process.env.ASSET_VAULT_ADDRESS || "") as `0x${string}`,
+  assetSharesAddress: (process.env.ASSET_SHARES_ADDRESS || "") as `0x${string}`,
+  oracleRouterAddress: (process.env.ORACLE_ROUTER_ADDRESS || "") as `0x${string}`,
+  userAllowListAddress: (process.env.USER_ALLOWLIST_ADDRESS || "") as `0x${string}`,
+  usdcAddress: (process.env.USDC_ADDRESS || "") as `0x${string}`,
 };
 
 const publicClient = createPublicClient({
