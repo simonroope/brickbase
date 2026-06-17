@@ -14,6 +14,7 @@
     "web:dev": "nx run web:serve",
     "mcp:dev": "nx run mcp:serve",
     "mcp:test": "nx run mcp:test",
+    "web:build": "nx run web:build",
     "events:ingest": "nx run events:ingest",
     "events:gateway": "nx run events:gateway",
     "events:test": "nx run events:test"
