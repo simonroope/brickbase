@@ -19,7 +19,7 @@ variable "aws_region" {
 
 variable "state_bucket_name" {
   type    = string
-  default = "brickbase"
+  default = "brickbase-531767776154"
 }
 
 resource "aws_s3_bucket" "terraform_state" {

@@ -18,20 +18,23 @@ Terraform and deploy tooling for the production environment defined in `docs/prd
 
 1. AWS CLI + Terraform `>= 1.5`
 2. IAM user `brickbase` (or equivalent) with permissions to create the resources above
-3. Issued ACM certificate in **eu-west-2** for `production_hostname`
-4. S3 bucket **`brickbase`** for remote state (see bootstrap below)
+3. Issued ACM SSL/TLS certificate in **eu-west-2** for `production_hostname`
+4. S3 bucket **`brickbase-531767776154`** for remote state (see bootstrap below)
 5. GitHub OIDC provider + `terraform.tfvars` trust subjects before CI deploy
 
 ## Bootstrap remote state (once)
 
 ```bash
+export AWS_PROFILE=brickbase;
+aws s3 ls
+
 aws s3api create-bucket \
-  --bucket brickbase \
+  --bucket brickbase-531767776154 \
   --region eu-west-2 \
   --create-bucket-configuration LocationConstraint=eu-west-2
 
 aws s3api put-bucket-versioning \
-  --bucket brickbase \
+  --bucket brickbase-531767776154 \
   --versioning-configuration Status=Enabled
 ```
 
@@ -55,14 +58,52 @@ terraform output
 
 ## Operator DNS (after apply)
 
-Create a Route 53 alias record:
+Create a Route 53 **alias A** record (apex domains cannot use CNAME):
 
 - **Name:** `production_hostname` (from tfvars)
 - **Target:** `terraform output -raw alb_dns_name`
 
+### CLI (from repo root)
+
+```bash
+export AWS_PROFILE=brickbase
+cd infra/production
+
+HOSTNAME=$(terraform output -raw production_hostname)
+ALB_DNS=$(terraform output -raw alb_dns_name)
+ALB_ARN=$(terraform output -raw alb_arn)
+ALB_ZONE_ID=$(aws elbv2 describe-load-balancers \
+  --load-balancer-arns "$ALB_ARN" --region eu-west-2 \
+  --query 'LoadBalancers[0].CanonicalHostedZoneId' --output text)
+HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name "$HOSTNAME" \
+  --query 'HostedZones[0].Id' --output text | sed 's|/hostedzone/||')
+
+aws route53 change-resource-record-sets \
+  --hosted-zone-id "$HOSTED_ZONE_ID" \
+  --change-batch "$(cat <<EOF
+{
+  "Changes": [{
+    "Action": "UPSERT",
+    "ResourceRecordSet": {
+      "Name": "${HOSTNAME}",
+      "Type": "A",
+      "AliasTarget": {
+        "HostedZoneId": "${ALB_ZONE_ID}",
+        "DNSName": "${ALB_DNS}",
+        "EvaluateTargetHealth": true
+      }
+    }
+  }]
+}
+EOF
+)"
+```
+
+Verify: `dig +short "$HOSTNAME"` and `curl -I "https://${HOSTNAME}"` => (502/503 is OK until images are deployed).
+
 ## SSM bootstrap
 
-Replace `CHANGE_ME` values:
+Replace <value> with infura id value.
 
 ```bash
 aws ssm put-parameter --name /brickbase/production/infura/project_id \

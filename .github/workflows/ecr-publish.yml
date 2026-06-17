@@ -1,0 +1,97 @@
+name: Publish images to ECR
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "libs/**"
+      - "infra/docker/**"
+      - "package.json"
+      - "package-lock.json"
+      - "nx.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ecr-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: eu-west-2
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  publish-web:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-web:${{ env.IMAGE_TAG }}"
+          docker build -f infra/docker/Dockerfile.web \
+            --build-arg NEXT_PUBLIC_APP_URL="${{ vars.NEXT_PUBLIC_APP_URL }}" \
+            --build-arg NEXT_PUBLIC_CHAIN_ID="${{ vars.NEXT_PUBLIC_CHAIN_ID }}" \
+            --build-arg NEXT_PUBLIC_RPC_URL="${{ vars.NEXT_PUBLIC_RPC_URL }}" \
+            --build-arg NEXT_PUBLIC_ASSET_VAULT_ADDRESS="${{ vars.NEXT_PUBLIC_ASSET_VAULT_ADDRESS }}" \
+            --build-arg NEXT_PUBLIC_ASSET_SHARES_ADDRESS="${{ vars.NEXT_PUBLIC_ASSET_SHARES_ADDRESS }}" \
+            --build-arg NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS="${{ vars.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS }}" \
+            --build-arg NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS="${{ vars.NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS }}" \
+            --build-arg NEXT_PUBLIC_USDC_ADDRESS="${{ vars.NEXT_PUBLIC_USDC_ADDRESS }}" \
+            --build-arg NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}" \
+            --build-arg NEXT_PUBLIC_WS_LIVE_URL="${{ vars.NEXT_PUBLIC_WS_LIVE_URL }}" \
+            -t "$IMAGE" .
+          docker push "$IMAGE"
+
+  publish-mcp:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-mcp:${{ env.IMAGE_TAG }}"
+          docker build -f infra/docker/Dockerfile.mcp -t "$IMAGE" .
+          docker push "$IMAGE"
+
+  publish-ingest:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-ingest:${{ env.IMAGE_TAG }}"
+          docker build -f infra/docker/Dockerfile.ingest -t "$IMAGE" .
+          docker push "$IMAGE"
+
+  publish-gateway:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-gateway:${{ env.IMAGE_TAG }}"
+          docker build -f infra/docker/Dockerfile.gateway -t "$IMAGE" .
+          docker push "$IMAGE"

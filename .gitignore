@@ -17,6 +17,8 @@ libs/contracts/typechain-types
 # Test results
 test-results
 apps/mcp/test-results
+playwright-report
+apps/web/playwright-report
 
 # Terraform / production deploy
 infra/production/.terraform/

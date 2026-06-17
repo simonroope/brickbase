@@ -435,7 +435,7 @@ infra/
 
 **MVP:** `backend.tf` uses **S3 backend only** (no `dynamodb_table`). State key: `production/terraform.tfstate`.
 
-Bootstrap: create S3 bucket `brickbase` (versioning, encryption) once per account/region before first `terraform init`.
+Bootstrap: create S3 bucket `brickbase-531767776154` (versioning, encryption) once per account/region before first `terraform init`.
 
 ## Variables (Terraform)
 
@@ -524,7 +524,7 @@ Application CI: build 4 images → make -C infra/production deploy
 
 ### Phase A — Bootstrap remote state (once)
 
-1. Create S3 bucket `brickbase` (versioning, encryption). No DynamoDB lock table for MVP.
+1. Create S3 bucket `brickbase-531767776154` (versioning, encryption). No DynamoDB lock table for MVP.
 2. Commit `backend.tf` under `infra/production/` pointing at `production/terraform.tfstate`.
 3. Document bucket name in `infra/production/README.md`.
 
