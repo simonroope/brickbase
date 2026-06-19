@@ -115,6 +115,7 @@ resource "aws_iam_role_policy" "automated_production" {
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
           "ecr:CompleteLayerUpload",
+          "ecr:DescribeImages",
         ]
         Resource = [for repo in aws_ecr_repository.apps : repo.arn]
       },

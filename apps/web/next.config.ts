@@ -3,14 +3,21 @@ import path from "path";
 
 const monorepoRoot = path.resolve(__dirname, "../..");
 
+/** Append INFURA_PROJECT_ID to the base RPC URL — same logic as shared-config. */
+function buildRpcUrl(base: string): string {
+  const projectId = process.env.INFURA_PROJECT_ID ?? "";
+  return projectId ? `${base}${projectId}` : base;
+}
+
 const nextConfig: NextConfig = {
   output: "standalone",
   // Expose canonical env var names to the browser bundle at build time.
   // Avoids NEXT_PUBLIC_* prefixes in source code; values are baked in by `next build`.
+  // ETHEREUM_RPC_URL is always the base URL; INFURA_PROJECT_ID is always appended here.
   env: {
-    APP_URL: process.env.APP_URL ?? "http://localhost:3000",
-    CHAIN_ID: process.env.CHAIN_ID ?? "11155111",
-    ETHEREUM_RPC_URL: process.env.ETHEREUM_RPC_URL ?? "https://rpc.sepolia.org",
+    APP_URL: process.env.APP_URL ?? "",
+    CHAIN_ID: process.env.CHAIN_ID ?? "",
+    ETHEREUM_RPC_URL: buildRpcUrl(process.env.ETHEREUM_RPC_URL ?? ""),
     ASSET_VAULT_ADDRESS: process.env.ASSET_VAULT_ADDRESS ?? "",
     ASSET_SHARES_ADDRESS: process.env.ASSET_SHARES_ADDRESS ?? "",
     ORACLE_ROUTER_ADDRESS: process.env.ORACLE_ROUTER_ADDRESS ?? "",

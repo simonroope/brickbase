@@ -24,6 +24,12 @@
         { "name": "USER_ALLOWLIST_ADDRESS", "value": "__USER_ALLOWLIST_ADDRESS__" },
         { "name": "USDC_ADDRESS", "value": "__USDC_ADDRESS__" }
       ],
+      "secrets": [
+        {
+          "name": "INFURA_PROJECT_ID",
+          "valueFrom": "__SSM_INFURA_ARN__"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {

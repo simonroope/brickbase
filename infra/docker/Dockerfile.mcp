@@ -7,9 +7,8 @@ COPY libs/abi libs/abi
 COPY libs/shared-config libs/shared-config
 COPY apps/mcp apps/mcp
 WORKDIR /app/apps/mcp
-RUN npx tsc
 ENV NODE_ENV=production
 ENV MCP_TRANSPORT=http
 ENV MCP_PORT=3100
 EXPOSE 3100
-CMD ["node", "dist/index.js"]
+CMD ["npx", "tsx", "src/index.ts"]
