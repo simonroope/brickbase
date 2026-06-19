@@ -162,9 +162,9 @@ Set these in the GitHub `production` environment before running the deploy workf
 | `CHAINLINK_USD_GBP_ADDRESS` | Variable | Chainlink USD/GBP feed address |
 | `CHAINLINK_XAU_USD_ADDRESS` | Variable | Chainlink XAU/USD feed address |
 | `CHAINLINK_FTSE100_ADDRESS` | Variable | Chainlink FTSE 100 feed address |
-| `DEPLOY_ADMIN_DEFAULT` | Variable | Default admin / multisig address |
-| `DEPLOY_ADMIN_ASSET_MANAGER` | Variable | Asset manager wallet address |
-| `DEPLOY_ADMIN_COMPLIANCE_OFFICER` | Variable | Compliance officer wallet address |
+| `ADMIN_ADDRESS` | Variable | Default admin / multisig address |
+| `ADMIN_ASSET_MANAGER_ADDRESS` | Variable | Asset manager wallet address |
+| `ADMIN_COMPLIANCE_ADDRESS` | Variable | Compliance officer wallet address |
 | `BASE_RPC_URL` | **Secret** | Base RPC endpoint — Base mainnet URL in production, Base Sepolia URL in staging |
 | `CONTRACTS_DEPLOYER_PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
 

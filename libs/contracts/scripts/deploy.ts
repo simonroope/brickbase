@@ -43,10 +43,10 @@ function loadConfig(networkName: string): DeployConfig {
       ftse100: process.env.CHAINLINK_FTSE100_ADDRESS || base.chainlink.ftse100,
     },
     admins: {
-      defaultAdmin: process.env.DEPLOY_ADMIN_DEFAULT || base.admins.defaultAdmin,
-      assetManager: process.env.DEPLOY_ADMIN_ASSET_MANAGER || base.admins.assetManager,
+      defaultAdmin: process.env.ADMIN_ADDRESS || base.admins.defaultAdmin,
+      assetManager: process.env.ADMIN_ASSET_MANAGER_ADDRESS || base.admins.assetManager,
       complianceOfficer:
-        process.env.DEPLOY_ADMIN_COMPLIANCE_OFFICER || base.admins.complianceOfficer,
+        process.env.ADMIN_COMPLIANCE_ADDRESS || base.admins.complianceOfficer,
     },
   };
 }
@@ -213,16 +213,11 @@ async function main() {
     addressesPath,
     JSON.stringify(
       {
-        NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS: assetUserAllowListAddress,
-        NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS: oracleRouterAddress,
-        NEXT_PUBLIC_ASSET_VAULT_ADDRESS:assetVaultAddress,
-        NEXT_PUBLIC_ASSET_SHARES_ADDRESS: assetSharesAddress,
-        NEXT_PUBLIC_USDC_ADDRESS: usdcAddress,
-        assetUserAllowList: assetUserAllowListAddress,
-        oracleRouter: oracleRouterAddress,
-        assetVault: assetVaultAddress,
-        assetShares: assetSharesAddress,
-        usdc: usdcAddress,
+        USER_ALLOWLIST_ADDRESS: assetUserAllowListAddress,
+        ORACLE_ROUTER_ADDRESS: oracleRouterAddress,
+        ASSET_VAULT_ADDRESS: assetVaultAddress,
+        ASSET_SHARES_ADDRESS: assetSharesAddress,
+        USDC_ADDRESS: usdcAddress,
       },
       null,
       2

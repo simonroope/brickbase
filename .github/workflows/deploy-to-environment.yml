@@ -44,19 +44,20 @@ jobs:
       - name: Compile contracts
         run: npx nx run contracts:compile
       - name: Deploy contracts
-        run: npx hardhat run libs/contracts/scripts/deploy.ts --network ${{ inputs.contracts_network }}
+        working-directory: libs/contracts
+        run: npx hardhat run scripts/deploy.ts --network ${{ inputs.contracts_network }}
         env:
           ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
-          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+          BASE_RPC_URL: ${{ vars.BASE_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.CONTRACTS_DEPLOYER_PRIVATE_KEY }}
           USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
           CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
           CHAINLINK_USD_GBP_ADDRESS: ${{ vars.CHAINLINK_USD_GBP_ADDRESS }}
           CHAINLINK_XAU_USD_ADDRESS: ${{ vars.CHAINLINK_XAU_USD_ADDRESS }}
           CHAINLINK_FTSE100_ADDRESS: ${{ vars.CHAINLINK_FTSE100_ADDRESS }}
-          DEPLOY_ADMIN_DEFAULT: ${{ vars.DEPLOY_ADMIN_DEFAULT }}
-          DEPLOY_ADMIN_ASSET_MANAGER: ${{ vars.DEPLOY_ADMIN_ASSET_MANAGER }}
-          DEPLOY_ADMIN_COMPLIANCE_OFFICER: ${{ vars.DEPLOY_ADMIN_COMPLIANCE_OFFICER }}
+          ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
+          ADMIN_ASSET_MANAGER_ADDRESS: ${{ vars.ADMIN_ASSET_MANAGER_ADDRESS }}
+          ADMIN_COMPLIANCE_ADDRESS: ${{ vars.ADMIN_COMPLIANCE_ADDRESS }}
 
   deploy-ecs:
     needs: deploy-contracts
