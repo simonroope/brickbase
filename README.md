@@ -87,7 +87,7 @@ pnpm install
 
 ### Environment
 
-Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `NEXT_PUBLIC_RPC_URL`, `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `libs/abi` and are imported as `@brickbase/abi`.
+Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `ETHEREUM_RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `libs/abi` and are imported as `@brickbase/abi`.
 
 ---
 
@@ -161,7 +161,7 @@ npx nx run events:ingest
 npx nx run events:gateway
 ```
 
-Set `INFURA_PROJECT_ID` in `.env` for chain blocks; `NEXT_PUBLIC_WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
+Set `INFURA_PROJECT_ID` in `.env` for chain blocks; `WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
 
 Root shortcuts: `npm run events:ingest`, `npm run events:gateway`, `npm run events:test`.
 
@@ -210,16 +210,19 @@ Next.js application to **display and trade** commercial real estate RWAs.
 ### Web & contracts
 
 
-| Env var                                | Description                    |
-| -------------------------------------- | ------------------------------ |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID |
-| `NEXT_PUBLIC_RPC_URL`                  | Ethereum RPC URL               |
-| `NEXT_PUBLIC_CHAIN_ID`                 | Chain ID (e.g. 11155111)       |
-| `NEXT_PUBLIC_ASSET_VAULT_ADDRESS`      | AssetVault contract            |
-| `NEXT_PUBLIC_ASSET_SHARES_ADDRESS`     | AssetShares contract           |
-| `NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS`    | OracleRouter contract          |
-| `NEXT_PUBLIC_USER_ALLOWLIST_ADDRESS`   | AllowList contract             |
-| `NEXT_PUBLIC_USDC_ADDRESS`             | USDC token address             |
+| Env var                       | Description                                              |
+| ----------------------------- | -------------------------------------------------------- |
+| `WALLETCONNECT_PROJECT_ID`    | WalletConnect Cloud project ID                           |
+| `APP_URL`                     | Application URL (e.g. `https://brickbase.com`)           |
+| `CHAIN_ID`                    | Chain ID (e.g. `11155111` for Sepolia)                   |
+| `ETHEREUM_RPC_URL`            | Ethereum RPC base URL (e.g. `https://sepolia.infura.io/v3/`) |
+| `BASE_RPC_URL`                | Base RPC base URL (e.g. `https://base-sepolia.infura.io/v3/`) |
+| `INFURA_PROJECT_ID`           | Infura project ID — appended to RPC URLs at runtime      |
+| `ASSET_VAULT_ADDRESS`         | AssetVault contract                                      |
+| `ASSET_SHARES_ADDRESS`        | AssetShares contract                                     |
+| `ORACLE_ROUTER_ADDRESS`       | OracleRouter contract                                    |
+| `USER_ALLOWLIST_ADDRESS`      | AllowList contract                                       |
+| `USDC_ADDRESS`                | USDC token address                                       |
 
 
 ### Events (live feeds, server-side unless noted)
@@ -229,12 +232,11 @@ Next.js application to **display and trade** commercial real estate RWAs.
 | ------------------------- | ------------------------------------------------------------------------- |
 | `REDIS_URL`               | Redis for pub/sub (e.g. `redis://127.0.0.1:6379`)                         |
 | `INFURA_PROJECT_ID`       | Infura project ID for `newHeads` (optional; ingest skips Infura if unset) |
-| `INFURA_WS_NETWORK`       | e.g. `sepolia`, `base-sepolia`                                            |
 | `CHAIN_ID`                | Chain ID in outbound messages                                             |
 | `COINBASE_PRODUCT_ID`     | Default `ETH-USD`                                                         |
 | `GATEWAY_PORT`            | Default `8081`                                                            |
 | `GATEWAY_WS_PATH`         | Default `/ws/live`                                                        |
-| `NEXT_PUBLIC_WS_LIVE_URL` | Browser WebSocket URL (e.g. `ws://localhost:8081/ws/live`)                |
+| `WS_LIVE_URL`             | Browser WebSocket URL (e.g. `ws://localhost:8081/ws/live`)                |
 
 
 Full list in `.env.example`.

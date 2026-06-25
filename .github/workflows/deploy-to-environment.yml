@@ -26,6 +26,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  actions: write
 
 env:
   AWS_REGION: eu-west-2
@@ -35,6 +36,12 @@ jobs:
     if: ${{ inputs.deploy_contracts }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    outputs:
+      asset_vault_address: ${{ steps.addresses.outputs.ASSET_VAULT_ADDRESS }}
+      asset_shares_address: ${{ steps.addresses.outputs.ASSET_SHARES_ADDRESS }}
+      oracle_router_address: ${{ steps.addresses.outputs.ORACLE_ROUTER_ADDRESS }}
+      user_allowlist_address: ${{ steps.addresses.outputs.USER_ALLOWLIST_ADDRESS }}
+      usdc_address: ${{ steps.addresses.outputs.USDC_ADDRESS }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -59,6 +66,30 @@ jobs:
           ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
           ADMIN_ASSET_MANAGER_ADDRESS: ${{ vars.ADMIN_ASSET_MANAGER_ADDRESS }}
           ADMIN_COMPLIANCE_ADDRESS: ${{ vars.ADMIN_COMPLIANCE_ADDRESS }}
+      - name: Capture deployed addresses
+        id: addresses
+        run: |
+          FILE="libs/contracts/deploy/${{ inputs.contracts_network }}-addresses.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Address file not found: $FILE"
+            exit 1
+          fi
+          cat "$FILE"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" >> $GITHUB_OUTPUT
+      - name: Update GitHub Environment variables
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FILE="libs/contracts/deploy/${{ inputs.contracts_network }}-addresses.json"
+          ENV="${{ inputs.environment }}"
+          REPO="${{ github.repository }}"
+          for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
+            VALUE=$(jq -r --arg k "$KEY" '.[$k]' "$FILE")
+            if [ -n "$VALUE" ] && [ "$VALUE" != "null" ]; then
+              gh variable set "$KEY" --env "$ENV" --repo "$REPO" --body "$VALUE"
+              echo "Updated $KEY=$VALUE in $ENV environment"
+            fi
+          done
 
   deploy-ecs:
     needs: deploy-contracts
@@ -95,8 +126,8 @@ jobs:
           SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
           CHAIN_ID: ${{ vars.CHAIN_ID }}
           ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
-          ASSET_VAULT_ADDRESS: ${{ vars.ASSET_VAULT_ADDRESS }}
-          ASSET_SHARES_ADDRESS: ${{ vars.ASSET_SHARES_ADDRESS }}
-          ORACLE_ROUTER_ADDRESS: ${{ vars.ORACLE_ROUTER_ADDRESS }}
-          USER_ALLOWLIST_ADDRESS: ${{ vars.USER_ALLOWLIST_ADDRESS }}
-          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          ASSET_VAULT_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_vault_address || vars.ASSET_VAULT_ADDRESS }}
+          ASSET_SHARES_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_shares_address || vars.ASSET_SHARES_ADDRESS }}
+          ORACLE_ROUTER_ADDRESS: ${{ needs.deploy-contracts.outputs.oracle_router_address || vars.ORACLE_ROUTER_ADDRESS }}
+          USER_ALLOWLIST_ADDRESS: ${{ needs.deploy-contracts.outputs.user_allowlist_address || vars.USER_ALLOWLIST_ADDRESS }}
+          USDC_ADDRESS: ${{ needs.deploy-contracts.outputs.usdc_address || vars.USDC_ADDRESS }}

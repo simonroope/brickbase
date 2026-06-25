@@ -27,7 +27,7 @@ stops.push(
 
 const infuraWsUrl = getInfuraWsUrl(
   ingestConfig.infuraProjectId,
-  ingestConfig.infuraWsNetwork
+  ingestConfig.ethereumRpcUrl
 );
 
 if (infuraWsUrl) {
@@ -40,7 +40,7 @@ if (infuraWsUrl) {
   );
 } else {
   console.error(
-    "[ingest][infura] skipped — set INFURA_PROJECT_ID and INFURA_WS_NETWORK"
+    "[ingest][infura] skipped — set INFURA_PROJECT_ID and ETHEREUM_RPC_URL"
   );
 }
 

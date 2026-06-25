@@ -68,7 +68,6 @@ locals {
       environment = [
         { name = "NODE_ENV", value = "production" },
         { name = "REDIS_URL", value = local.redis_url },
-        { name = "INFURA_WS_NETWORK", value = "mainnet" },
         { name = "CHAIN_ID", value = "1" },
         { name = "COINBASE_PRODUCT_ID", value = "ETH-USD" },
       ]

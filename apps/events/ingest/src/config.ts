@@ -7,7 +7,7 @@ loadEnv();
 export const ingestConfig = {
   redisUrl: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
   infuraProjectId: process.env.INFURA_PROJECT_ID ?? "",
-  infuraWsNetwork: process.env.INFURA_WS_NETWORK ?? "sepolia",
+  ethereumRpcUrl: process.env.ETHEREUM_RPC_URL ?? "",
   chainId: Number(process.env.CHAIN_ID ?? "11155111"),
   coinbaseWsUrl:
     process.env.COINBASE_WS_URL ?? "wss://advanced-trade-ws.coinbase.com",
@@ -16,16 +16,16 @@ export const ingestConfig = {
   lastValueTtlSeconds: Number(process.env.LIVE_LAST_VALUE_TTL_SECONDS ?? "86400"),
 };
 
-const INFURA_NETWORK_HOSTS: Record<string, string> = {
-  mainnet: "mainnet.infura.io",
-  sepolia: "sepolia.infura.io",
-  "base-mainnet": "base-mainnet.infura.io",
-  base: "base-mainnet.infura.io",
-  "base-sepolia": "base-sepolia.infura.io",
-};
-
-export function getInfuraWsUrl(projectId: string, network: string): string | null {
-  const host = INFURA_NETWORK_HOSTS[network];
-  if (!host || !projectId) return null;
-  return `wss://${host}/ws/v3/${projectId}`;
+/**
+ * Derives the Infura WebSocket URL from the HTTP RPC URL.
+ * https://sepolia.infura.io/v3/ → wss://sepolia.infura.io/ws/v3/{projectId}
+ */
+export function getInfuraWsUrl(projectId: string, rpcUrl: string): string | null {
+  if (!projectId || !rpcUrl) return null;
+  try {
+    const { hostname } = new URL(rpcUrl);
+    return `wss://${hostname}/ws/v3/${projectId}`;
+  } catch {
+    return null;
+  }
 }

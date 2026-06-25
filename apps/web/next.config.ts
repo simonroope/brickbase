@@ -12,7 +12,6 @@ function buildRpcUrl(base: string): string {
 const nextConfig: NextConfig = {
   output: "standalone",
   // Expose canonical env var names to the browser bundle at build time.
-  // Avoids NEXT_PUBLIC_* prefixes in source code; values are baked in by `next build`.
   // ETHEREUM_RPC_URL is always the base URL; INFURA_PROJECT_ID is always appended here.
   env: {
     APP_URL: process.env.APP_URL ?? "",
