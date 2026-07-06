@@ -17,7 +17,8 @@
     "web:build": "nx run web:build",
     "events:ingest": "nx run events:ingest",
     "events:gateway": "nx run events:gateway",
-    "events:test": "nx run events:test"
+    "events:test": "nx run events:test",
+    "skills:sync": "bash scripts/skills-sync.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
