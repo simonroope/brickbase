@@ -1,6 +1,8 @@
 # Brickbase
 
-Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, an **events** layer for external data streams, and a **Next.js** investor portal for tokenised commercial real estate.
+Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, an **events** layer for external data streams, a **Next.js** investor portal for tokenised commercial real estate, and **agentic AI** development workflows powered by Claude Code and Codex.
+
+Development is supported by **agent skills** — structured instruction files for Claude Code and Codex that guide common workflows (requirements elicitation, PRD creation, ticket generation, TDD build, architecture review). See [Agent skills](#agent-skills).
 
 ## Structure
 
@@ -251,7 +253,7 @@ npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts
 
 ## Agent skills
 
-Skills live in `.claude/skills/` and are available to Claude Code and Codex. Each skill is a self-contained instruction file invoked by name.
+Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cursor. Each skill is a self-contained instruction file invoked by name.
 
 | Skill | Claude Code | Codex | Description |
 |---|---|---|---|
