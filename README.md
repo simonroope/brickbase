@@ -249,6 +249,29 @@ npx nx run web:test:integration # Cucumber BDD integration tests (mock data, sta
 npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts dev server)
 ```
 
+## Agent skills
+
+Skills live in `.claude/skills/` and are available to Claude Code and Codex. Each skill is a self-contained instruction file invoked by name.
+
+| Skill | Claude Code | Codex | Description |
+|---|---|---|---|
+| `elicit` | `/elicit` | `$elicit` | Interview to sharpen a design or plan |
+| `elicit-requirements` | `/elicit-requirements` | `$elicit-requirements` | Requirements elicitation using the domain model |
+| `domain-modeling` | `/domain-modeling` | `$domain-modeling` | Build and maintain `CONTEXT.md` and ADRs |
+| `improve-codebase-architecture` | `/improve-codebase-architecture` | `$improve-codebase-architecture` | Surface architectural friction, generate HTML report |
+| `build-with-tdd` | `/build-with-tdd` | `$build-with-tdd` | TDD loop — red → green → refactor |
+| `handoff` | `/handoff` | `$handoff` | Generate a session handoff document |
+| `create-prd` | `/create-prd` | `$create-prd` | Synthesise conversation into a PRD |
+| `create-tickets` | `/create-tickets` | `$create-tickets` | Break a plan into GitHub issues |
+
+Add new skills to `.claude/skills/<name>/SKILL.md`, then run:
+
+```bash
+npm run skills:sync
+```
+
+This registers the skill in `.codex/skills/` and `~/.codex/skills/` so both agents can invoke it.
+
 ## ToDo
 
 - Account Abstraction
