@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Sync .agents/skills/ → .claude/skills/, .codex/skills/, ~/.codex/skills/
+# Sync .claude/skills/ → .codex/skills/ and ~/.codex/skills/
+# .claude/skills/ is the source of truth — add new skills there directly.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-for d in "$REPO"/.agents/skills/*/; do
+for d in "$REPO"/.claude/skills/*/; do
   skill=$(basename "$d")
   if [ ! -f "$d/SKILL.md" ]; then continue; fi
 
   for dest in \
-    "$REPO/.claude/skills/$skill" \
     "$REPO/.codex/skills/$skill" \
     "$HOME/.codex/skills/$skill"; do
     mkdir -p "$dest"
@@ -20,4 +20,4 @@ for d in "$REPO"/.agents/skills/*/; do
   echo "Synced: $skill"
 done
 
-echo "Done — skills synced to .claude/skills/ .codex/skills/ ~/.codex/skills/"
+echo "Done — skills synced to .codex/skills/ and ~/.codex/skills/"

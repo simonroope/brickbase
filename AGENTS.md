@@ -1,40 +1,44 @@
-# AGENTS.md
+# Brickbase — Agent Guide
 
-## Agent skills
+Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP server, events layer (live feeds), and a Next.js investor portal.
 
-### Skill commands
+See `README.md` for full project documentation.
 
-Skills live in `.agents/skills/`. To run a skill, read the corresponding `SKILL.md` and follow its instructions:
+## Skills
+
+Skills live in `.claude/skills/` (source of truth). Invocation:
+
+| Agent | Prefix | Example |
+|---|---|---|
+| Claude Code | `/` | `/handoff` |
+| Codex | `$` | `$handoff` |
+
+Available skills:
 
 ```
-.agents/skills/
+.claude/skills/
   domain-modeling/SKILL.md
-  grill-me/SKILL.md
-  grill-with-docs/SKILL.md
-  grilling/SKILL.md
+  elicit-requirements/SKILL.md
+  elicit/SKILL.md
   handoff/SKILL.md
   improve-codebase-architecture/SKILL.md
-  tdd/SKILL.md
-  to-issues/SKILL.md
-  to-prd/SKILL.md
+  build-with-tdd/SKILL.md
+  create-tickets/SKILL.md — requires docs/agents/issue-tracker.md + triage-labels.md
+  create-prd/SKILL.md    — requires docs/agents/issue-tracker.md + triage-labels.md
 ```
 
-Invoke a skill using the `$` prefix:
+Codex reads skills from `.codex/skills/` (pointer files that reference `.claude/skills/`).
 
-```
-$handoff
-$tdd
-$domain-modeling
-```
+Run `npm run skills:sync` after adding a new skill to `.claude/skills/` to register it in `.codex/skills/`.
 
-### Issue tracker
+## Issue tracker
 
-Issues are tracked in GitHub Issues (repo `simonroope/brickbase`) via the `gh` CLI. External PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues via the `gh` CLI. Infer the repo from `git remote -v`. External PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
 
-### Triage labels
+## Triage labels
 
 Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
 
-### Domain docs
+## Domain docs
 
 Multi-context (monorepo) — `CONTEXT-MAP.md` at the repo root points to per-context `CONTEXT.md` files under each `apps/*` and `libs/*`. See `docs/agents/domain.md`.
