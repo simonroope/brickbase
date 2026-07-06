@@ -54,6 +54,8 @@ Iterate until the user approves the breakdown.
 
 For each approved slice, publish a new issue to the issue tracker. Use the issue body template below. These issues are considered ready for AFK agents, so publish them with the correct triage label unless instructed otherwise.
 
+Write acceptance criteria as BDD scenarios (Given/When/Then). Each scenario should be concrete enough to map directly to a Cucumber feature file — an agent or developer should be able to implement a step definition from it without ambiguity. Cover the happy path first, then edge cases and error paths.
+
 Publish issues in dependency order (blockers first) so you can reference real issue identifiers in the "Blocked by" field.
 
 <issue-template>
@@ -69,9 +71,15 @@ Avoid specific file paths or code snippets — they go stale fast. Exception: if
 
 ## Acceptance criteria
 
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
+Write each criterion as a BDD scenario in Given/When/Then format. Use the project's domain vocabulary from `CONTEXT.md`. Each scenario maps directly to a Cucumber feature file test.
+
+**Scenario: [descriptive name]**
+- **Given** [precondition or system state]
+- **When** [actor takes an action]
+- **Then** [observable outcome]
+- **And** [additional outcome, if needed]
+
+Add further scenarios for edge cases, error paths, and negative cases.
 
 ## Blocked by
 
