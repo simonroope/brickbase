@@ -6,13 +6,13 @@ See `README.md` for full project documentation.
 
 ## Structure
 
-| Path | Description |
-|---|---|
-| `apps/web` | Next.js investor portal (App Router, Tailwind, wagmi, viem) |
-| `apps/mcp` | MCP server — AI agent tools + resources for smart contracts |
+| Path          | Description                                                 |
+|---------------|-------------------------------------------------------------|
+| `apps/web`    | Next.js investor portal (App Router, Tailwind, wagmi, viem) |
+| `apps/mcp`    | MCP server — AI agent tools + resources for smart contracts |
 | `apps/events` | Live feeds: `ingest/` (upstream → Redis), `gateway/` (Redis → browser), `types/` |
 | `libs/contracts` | Solidity smart contracts (Hardhat): AssetVault, AssetShares, OracleRouter, AssetUserAllowList |
-| `libs/abi` | Compiled ABIs — import as `@brickbase/abi` |
+| `libs/abi`    | Compiled ABIs — import as `@brickbase/abi` |
 | `libs/shared-config` | Chain config, RPC helpers — import as `@brickbase/shared-config` |
 
 ## Conventions
@@ -29,24 +29,27 @@ See `README.md` for full project documentation.
 
 Skills live in `.claude/skills/` (source of truth). Invocation:
 
-| Agent | Prefix | Example |
-|---|---|---|
-| Claude Code | `/` | `/handoff` |
-| Codex | `$` | `$handoff` |
+| Agent       | Prefix | Example |
+|-------------|--------|-----------|
+| Claude Code | `/`    | `/handoff` |
+| Codex       | `$`    | `$handoff` |
 
 Available skills:
 
-```
-.claude/skills/
-  domain-modeling/SKILL.md
-  elicit-requirements/SKILL.md
-  elicit/SKILL.md
-  handoff/SKILL.md
-  improve-codebase-architecture/SKILL.md
-  build-with-tdd/SKILL.md
-  create-tickets/SKILL.md — requires docs/agents/issue-tracker.md + triage-labels.md
-  create-prd/SKILL.md    — requires docs/agents/issue-tracker.md + triage-labels.md
-```
+| Skill             | Description                                         |
+|-------------------|-----------------------------------------------------|
+| `elicit` | Interview to sharpen a design or plan                        |
+| `elicit-requirements` | Requirements elicitation using the domain model |
+| `domain-modeling` | Build and maintain `CONTEXT.md` and ADRs            |
+| `codebase-design` | Deep-module vocabulary — design and improve module interfaces, find seams, improve testability |
+| `improve-codebase-architecture` | Surface architectural friction, generate HTML report |
+| `build-with-tdd`  | TDD loop — red → green → refactor                   |
+| `handoff`         | Generate a session handoff document                 |
+| `create-prd`      | Synthesise conversation into a PRD (requires `docs/agents/issue-tracker.md`) |
+| `create-tickets`  | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/issue-tracker.md`) |
+| `triage`          | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs |
+
+Skill files live at `.claude/skills/<name>/SKILL.md`.
 
 Codex reads skills from `.codex/skills/` (pointer files that reference `.claude/skills/`).
 

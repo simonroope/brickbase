@@ -255,16 +255,18 @@ npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts
 
 Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cursor. Each skill is a self-contained instruction file invoked by name.
 
-| Skill | Claude Code | Codex | Description |
-|---|---|---|---|
-| `elicit` | `/elicit` | `$elicit` | Interview to sharpen a design or plan |
+| Skill                 | Claude Code   | Codex      | Description |
+|-----------------------|---------------|------------|-------------|
+| `elicit`              | `/elicit`     | `$elicit`  | Interview to sharpen a design or plan |
 | `elicit-requirements` | `/elicit-requirements` | `$elicit-requirements` | Requirements elicitation using the domain model |
-| `domain-modeling` | `/domain-modeling` | `$domain-modeling` | Build and maintain `CONTEXT.md` and ADRs |
+| `domain-modeling`     | `/domain-modeling` | `$domain-modeling` | Build and maintain `CONTEXT.md` and ADRs |
+| `codebase-design`     | `/codebase-design` | `$codebase-design` | Deep-module vocabulary — design and improve module interfaces, find seams, improve testability |
 | `improve-codebase-architecture` | `/improve-codebase-architecture` | `$improve-codebase-architecture` | Surface architectural friction, generate HTML report |
-| `build-with-tdd` | `/build-with-tdd` | `$build-with-tdd` | TDD loop — red → green → refactor |
-| `handoff` | `/handoff` | `$handoff` | Generate a session handoff document |
-| `create-prd` | `/create-prd` | `$create-prd` | Synthesise conversation into a PRD |
-| `create-tickets` | `/create-tickets` | `$create-tickets` | Break a plan into GitHub issues |
+| `build-with-tdd`      | `/build-with-tdd` | `$build-with-tdd` | TDD loop — red → green → refactor |
+| `handoff`             | `/handoff`      | `$handoff` | Generate a session handoff document |
+| `create-prd`          | `/create-prd`   | `$create-prd` | Synthesise conversation into a PRD |
+| `create-tickets`      | `/create-tickets` | `$create-tickets` | Break a plan into GitHub issues with BDD acceptance criteria |
+| `triage`              | `/triage` | `$triage` | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs |
 
 Add new skills to `.claude/skills/<name>/SKILL.md`, then run:
 

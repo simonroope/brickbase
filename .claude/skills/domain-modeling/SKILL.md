@@ -9,45 +9,44 @@ Actively build and sharpen the project's domain model as you design. This is the
 
 ## File structure
 
-Most repos have a single context:
+Brickbase is a **multi-context monorepo**. `CONTEXT-MAP.md` at the repo root points to each context:
 
 ```
 /
-├── CONTEXT.md
+├── CONTEXT-MAP.md                        ← index of all contexts
 ├── docs/
-│   └── adr/
-│       ├── 0001-event-sourced-orders.md
-│       └── 0002-postgres-for-write-model.md
-└── src/
-```
-
-If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The map points to where each one lives:
-
-```
-/
-├── CONTEXT-MAP.md
-├── docs/
-│   └── adr/                          ← system-wide decisions
-├── src/
-│   ├── ordering/
-│   │   ├── CONTEXT.md
-│   │   └── docs/adr/                 ← context-specific decisions
-│   └── billing/
-│       ├── CONTEXT.md
+│   └── adr/                              ← system-wide decisions
+├── apps/
+│   ├── web/
+│   │   ├── CONTEXT.md                    ← Next.js investor portal domain
+│   │   └── docs/adr/
+│   ├── mcp/
+│   │   ├── CONTEXT.md                    ← MCP server / AI agent tools domain
+│   │   └── docs/adr/
+│   └── events/
+│       ├── CONTEXT.md                    ← live feeds pipeline domain
 │       └── docs/adr/
+└── libs/
+    ├── contracts/
+    │   ├── CONTEXT.md                    ← smart contract domain (AssetVault, AssetShares, OracleRouter, AssetUserAllowList)
+    │   └── docs/adr/
+    ├── abi/
+    │   └── CONTEXT.md                    ← ABI types and import conventions
+    └── shared-config/
+        └── CONTEXT.md                    ← chain config, RPC URL conventions
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Create files lazily — only when you have something to write. If no `CONTEXT.md` exists for a context, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
 
 ## During the session
 
 ### Challenge against the glossary
 
-When the user uses a term that conflicts with the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
+When the user uses a term that conflicts with the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'asset' as a vaulted property NFT, but you seem to mean the ERC-1155 share token — which is it?"
 
 ### Sharpen fuzzy language
 
-When the user uses vague or overloaded terms, propose a precise canonical term. "You're saying 'account' — do you mean the Customer or the User? Those are different things."
+When the user uses vague or overloaded terms, propose a precise canonical term. "You're saying 'token' — do you mean the AssetVault NFT (ERC-721), the AssetShares balance (ERC-1155), or the USDC payment token (ERC-20)? Those are different things."
 
 ### Discuss concrete scenarios
 
@@ -55,7 +54,7 @@ When domain relationships are being discussed, stress-test them with specific sc
 
 ### Cross-reference with code
 
-When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
+When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code calls `setAuthorizedCaller` on AssetUserAllowList for both AssetVault and AssetShares, but you said only AssetVault checks allowlist membership — which is right?"
 
 ### Update CONTEXT.md inline
 
