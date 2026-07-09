@@ -36,24 +36,31 @@ Skills live in `.claude/skills/` (source of truth). Invocation:
 
 Available skills:
 
-| Skill             | Description                                         |
-|-------------------|-----------------------------------------------------|
-| `elicit` | Interview to sharpen a design or plan                        |
-| `elicit-requirements` | Requirements elicitation using the domain model |
-| `domain-modeling` | Build and maintain `CONTEXT.md` and ADRs            |
-| `codebase-design` | Deep-module vocabulary — design and improve module interfaces, find seams, improve testability |
-| `improve-codebase-architecture` | Surface architectural friction, generate HTML report |
-| `build-with-tdd`  | TDD loop — red → green → refactor                   |
-| `handoff`         | Generate a session handoff document                 |
-| `create-prd`      | Synthesise conversation into a PRD (requires `docs/agents/issue-tracker.md`) |
-| `create-tickets`  | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/issue-tracker.md`) |
-| `triage`          | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs |
+| Skill                           | Description                                                                                                     |
+|---------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `build-code`                    | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
+| `codebase-design`               | Deep-module vocabulary — design and improve module interfaces, find seams, improve testability                  |
+| `code-review`                   | Review changes since a fixed point (commit, branch, tag) against coding standards and the originating issue/PRD |
+| `create-prd`                    | Synthesise conversation into a PRD (requires `docs/agents/issue-tracker.md`)                                   |
+| `create-tickets`                | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/issue-tracker.md`)         |
+| `domain-modeling`               | Build and maintain `CONTEXT.md` and ADRs                                                                        |
+| `elicit`                        | Interview to sharpen a design or plan                                                                           |
+| `elicit-requirements`           | Requirements elicitation using the domain model                                                                 |
+| `handoff`                       | Generate a session handoff document                                                                             |
+| `improve-codebase-architecture` | Surface architectural friction, generate HTML report                                                            |
+| `research`                      | Investigate a question against primary sources and capture findings as a Markdown file in the repo              |
+| `tdd`                           | TDD loop — red → green → refactor                                                                               |
+| `triage`                        | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs                 |
 
 Skill files live at `.claude/skills/<name>/SKILL.md`.
 
 Codex reads skills from `.codex/skills/` (pointer files that reference `.claude/skills/`).
 
 Run `npm run skills:sync` after adding a new skill to `.claude/skills/` to register it in `.codex/skills/`.
+
+## Coding standards
+
+Full standards by layer (imports, env vars, Next.js, MCP, events, contracts, testing) are in `docs/agents/coding-standards.md`. The `code-review` skill reads this file as its primary standards source.
 
 ## Issue tracker
 

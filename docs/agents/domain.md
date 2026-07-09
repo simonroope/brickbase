@@ -11,7 +11,7 @@ This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/e
 - **`docs/adr/`** — system-wide architectural decisions. Read ADRs that touch the area you're about to work in.
 - **`<context>/docs/adr/`** — context-scoped decisions under the relevant `apps/*` or `libs/*` directory.
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/elicit-requirements` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
 
 ## File structure
 
