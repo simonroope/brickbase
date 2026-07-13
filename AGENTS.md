@@ -60,7 +60,11 @@ Run `npm run skills:sync` after adding a new skill to `.claude/skills/` to regis
 
 ## Coding standards
 
-Full standards by layer (imports, env vars, Next.js, MCP, events, contracts, testing) are in `docs/agents/coding-standards.md`. The `code-review` skill reads this file as its primary standards source.
+Full standards by pillar (Foundations, Architecture, Style, Types & Schemas, Tooling) and by layer are in `docs/agents/coding-standards.md`. The `code-review` and `tdd` skills read this file as their primary standards source.
+
+## Process
+
+Workflow disciplines — spec first, definition of done, continuous quality feedback, shift left, leave it better, short-lived branches — are in `docs/agents/process.md`. Read it at the start of any implementation session.
 
 ## Issue tracker
 

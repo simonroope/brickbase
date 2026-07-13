@@ -1,3 +1,51 @@
+# Testing
+
+Probes and proofs. The instruments that keep the canon honest. Eight tenets carry the load — five about what tests prove, three about how they are isolated.
+
+## Living documentation
+
+Tests are the first document a new engineer reads. A test suite that requires source code to understand is a failed test suite. Test names read as specifications: `"AssetDetail shows the oracle price for a listed asset"`, not `"renders correctly"`. The describe/it hierarchy forms a table of contents for the feature. When a test fails, the name alone should tell the reader what capability is broken — without opening the implementation.
+
+## Specification by example
+
+Requirements are expressed as concrete examples, not abstract rules. Instead of "the system shall format USDC amounts correctly", write `expect(formatUsdc(1_500_000n)).toBe("1.50")`. Instead of "the allowlist gate shall reject unauthorised users", write the specific revert scenario with a real address and a real error. Concrete examples are unambiguous; abstract rules are not.
+
+## Parametrised scenarios
+
+When the same behaviour holds across multiple inputs, express it once with a table of cases — not as duplicated test blocks. Use `it.each` in Jest or a data table in Cucumber. Each row is a worked example; the test body is the behaviour.
+
+```typescript
+it.each([
+  [1_500_000n, "1.50"],
+  [0n,         "0.00"],
+  [999n,       "0.00"],  // below 1 cent — rounds to zero
+])("formatUsdc(%s) === %s", (raw, expected) => {
+  expect(formatUsdc(raw)).toBe(expected);
+});
+```
+
+## Real dependency E2E
+
+End-to-end tests use real dependencies — a real browser (Playwright), a real running Next.js dev server, and real contract state on a local Hardhat node. No mocks at the E2E boundary. If a test cannot run without mocking infrastructure, it is an integration test, not an E2E test. Cucumber feature files under `apps/web/tests/features/e2e/` describe user journeys in plain language; the steps drive Playwright against a live stack.
+
+## Structural assertions
+
+Assert on the observable structure of outputs, not on implementation details. For a React component, assert that the DOM contains the expected text or element — not that a specific function was called. For a contract, assert on the resulting on-chain state via public view functions — not on raw storage slots. Structural assertions survive refactors; implementation assertions do not.
+
+## Behaviour testing
+
+Tests verify what the system does, not how it does it. "BuyShares shows updated share balance after purchase" tests behaviour. "BuyShares calls writeContract with args [1n, 100n]" tests implementation. The distinction: if you refactor the internals without changing the observable outcome, behaviour tests stay green and implementation tests break.
+
+## Test isolation
+
+Each test starts from a known, independent state. In Jest, use `beforeEach` to construct fresh instances — never share mutable state across tests. In Hardhat, deploy the full contract graph in `beforeEach` so each test gets a clean chain. In Playwright, each scenario gets its own browser context. A test that passes in isolation but fails in a suite has a shared-state bug.
+
+## One concept per test
+
+Each test asserts one logical thing. If a test has multiple `expect` calls that could independently fail for different reasons, split it. "AssetDetail shows the asset name and price" should be two tests — or the two assertions should be so tightly coupled that they describe a single concept. When a test fails, the name should pinpoint the problem without reading the assertions.
+
+---
+
 # Good and Bad Tests
 
 ## Good Tests

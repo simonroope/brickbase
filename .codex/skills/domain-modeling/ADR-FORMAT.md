@@ -4,6 +4,15 @@ ADRs live in `docs/adr/` (system-wide) or `<context>/docs/adr/` (context-scoped)
 
 Create the `docs/adr/` directory lazily — only when the first ADR is needed.
 
+## Two modes
+
+ADRs serve two equally valid purposes:
+
+- **Prospective** — written *before* implementation to give direction and constrain the work ahead. Use `status: proposed` or `status: accepted`. This is the record that says "build it this way" before a line of code is written.
+- **Retrospective** — written *after* to explain a decision already baked into the code. Prevents future engineers from "helpfully" reversing it without understanding why.
+
+Both modes use the same format. The difference is timing and status, not structure.
+
 ## Template
 
 ```md
@@ -18,7 +27,7 @@ That's it. An ADR can be a single paragraph. The value is in recording *that* a 
 
 Only include these when they add genuine value. Most ADRs won't need them.
 
-- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — useful when decisions are revisited
+- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — use `proposed` for prospective ADRs awaiting confirmation, `accepted` once the direction is confirmed
 - **Considered Options** — only when the rejected alternatives are worth remembering
 - **Consequences** — only when non-obvious downstream effects need to be called out
 

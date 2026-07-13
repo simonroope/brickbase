@@ -38,6 +38,19 @@ Brickbase is a **multi-context monorepo**. `CONTEXT-MAP.md` at the repo root poi
 
 Create files lazily — only when you have something to write. If no `CONTEXT.md` exists for a context, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
 
+## Before the session
+
+### Read existing ADRs first
+
+Before doing anything else, scan for existing ADRs:
+
+- `docs/adr/` — system-wide decisions
+- `apps/*/docs/adr/` and `libs/*/docs/adr/` — context-scoped decisions
+
+These are architectural directions set by architects or prior decisions. Treat `accepted` ADRs as hard constraints — do not propose designs that contradict them. If a user request conflicts with an accepted ADR, surface the conflict immediately: "ADR-0003 says MCP never holds private keys, but what you're describing would require the MCP server to sign transactions — that contradicts the ADR. Do you want to revisit the ADR or change the approach?"
+
+`proposed` ADRs are directions awaiting confirmation — flag them if relevant but they don't carry the same weight as `accepted`.
+
 ## During the session
 
 ### Challenge against the glossary
@@ -64,10 +77,12 @@ When a term is resolved, update `CONTEXT.md` right there. Don't batch these up �
 
 ### Offer ADRs sparingly
 
+ADRs can be **prospective** (written before implementation to give direction) or **retrospective** (written after to explain a decision already in the code). Both are valid — offer whichever fits the moment.
+
 Only offer to create an ADR when all three are true:
 
 1. **Hard to reverse** — the cost of changing your mind later is meaningful
 2. **Surprising without context** — a future reader will wonder "why did they do it this way?"
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
-If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+If any of the three is missing, skip the ADR. Use `status: proposed` for prospective ADRs; `status: accepted` once the direction is confirmed. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
