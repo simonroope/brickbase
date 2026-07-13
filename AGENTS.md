@@ -2,8 +2,6 @@
 
 Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP server, events layer (live feeds), and a Next.js investor portal.
 
-See `README.md` for full project documentation.
-
 ## Structure
 
 | Path          | Description                                                 |
@@ -17,13 +15,7 @@ See `README.md` for full project documentation.
 
 ## Conventions
 
-- Use `@brickbase/abi` for contract ABIs in `apps/web` and `apps/mcp` — never import by relative path
-- Contract addresses use canonical names (`ASSET_VAULT_ADDRESS` etc.)
-- `ETHEREUM_RPC_URL` is the base URL ending with `/`; `INFURA_PROJECT_ID` is appended at runtime
-- Nx targets: `nx run web:build`, `nx run contracts:compile`, `nx run mcp:serve`, `nx run events:ingest`, `nx run events:gateway`
-- Shared lib imports via tsconfig paths (`@brickbase/abi`, `@brickbase/events-types`); no per-lib `package.json` unless the lib is published
-- `tsx` is the runtime for `apps/mcp`, `ingest`, and `gateway` — no compile step
-- Dynamic API routes in Next.js must export `export const dynamic = "force-dynamic"`
+Conventions (imports and paths, env vars, and per-layer rules) live in `docs/agents/coding-standards.md`.
 
 ## Skills
 

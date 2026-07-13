@@ -1,5 +1,7 @@
 # Brickbase
 
+> _Standalone overview of Brickbase — self-contained by design. It restates key facts (structure, commands, skills) so it can be read on its own; that is intentional, not accidental duplication._
+
 Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, an **events** layer for external data streams, a **Next.js** investor portal for tokenised commercial real estate, and **agentic AI** development workflows powered by Claude Code and Codex.
 
 Development is supported by **agent skills** — structured instruction files for Claude Code and Codex that guide common workflows (requirements elicitation, PRD creation, ticket generation, TDD build, architecture review). See [Agent skills](#agent-skills).

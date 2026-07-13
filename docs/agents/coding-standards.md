@@ -20,6 +20,8 @@ Names are the primary documentation. A name that requires a comment to explain i
 
 Every piece of knowledge has one authoritative location. Duplicated logic means two places to update and one place forgotten. Extract shared behaviour to a function, hook, or library. In contracts, shared validation lives in `AssetUserAllowList` — other contracts call it, never replicate it.
 
+This governs code and logic. Standalone overview docs (e.g. `README.md`) may deliberately restate facts to stay self-contained — that duplication is intentional and out of scope for this rule.
+
 ### Simplicity (KISS / YAGNI)
 
 Write the simplest thing that satisfies the current requirement. Don't add abstraction layers, config switches, or extension points for imagined future needs. If a future need arises, add the abstraction then. Speculative generality is a code smell (see `code-review` skill).
