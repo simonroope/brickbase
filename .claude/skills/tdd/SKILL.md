@@ -7,7 +7,7 @@ description: Test-driven development. Use when the user wants to build features 
 
 TDD is the red → green loop. This skill is the reference that makes that loop produce tests worth keeping: what a good test is, where tests go, the anti-patterns, and the rules of the loop. Every section applies on every cycle — consult them before and during the loop, not after.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) so test names and interface vocabulary match the project's domain language. Before writing any code: read `docs/agents/process.md` for the workflow disciplines that frame this session; scan `docs/adr/` and the relevant `<context>/docs/adr/` for existing ADRs — treat `accepted` ADRs as hard constraints that the implementation must not contradict; read `docs/agents/coding-standards.md` for the testing conventions and layer-specific rules that apply to the code being built.
+When exploring the codebase, read `CONTEXT.md` (if it exists) so test names and interface vocabulary match the project's domain language. Read `docs/agents/coding-standards.md` for the testing conventions and layer-specific rules that apply to the code being built.
 
 ## What a good test is
 

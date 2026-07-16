@@ -31,7 +31,6 @@ Available skills:
 | Skill                           | Description                                                                                                     |
 |---------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `build-code`                    | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
-| `codebase-design`               | Deep-module vocabulary — design and improve module interfaces, find seams, improve testability                  |
 | `code-review`                   | Review changes since a fixed point (commit, branch, tag) against coding standards and the originating issue/PRD |
 | `create-prd`                    | Synthesise conversation into a PRD (requires `docs/agents/issue-tracker.md`)                                   |
 | `create-tickets`                | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/issue-tracker.md`)         |
@@ -39,8 +38,6 @@ Available skills:
 | `elicit`                        | Interview to sharpen a design or plan                                                                           |
 | `elicit-requirements`           | Requirements elicitation using the domain model                                                                 |
 | `handoff`                       | Generate a session handoff document                                                                             |
-| `improve-codebase-architecture` | Surface architectural friction, generate HTML report                                                            |
-| `research`                      | Investigate a question against primary sources and capture findings as a Markdown file in the repo              |
 | `tdd`                           | TDD loop — red → green → refactor                                                                               |
 | `triage`                        | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs                 |
 

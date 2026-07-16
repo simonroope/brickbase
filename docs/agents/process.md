@@ -8,13 +8,14 @@ Read this file at the start of any implementation session. It sets the condition
 
 ## Spec First Execution
 
-Implementation does not start until a spec exists. A spec is one of:
+Implementation does not start until the domain is established, requirements are gathered, a spec is written, and tickets are created:
 
-- An accepted ADR (architectural directive)
-- A GitHub issue with BDD acceptance criteria (produced by `/create-tickets`)
-- A PRD section that has been agreed with the user (produced by `/create-prd`)
+1. `/domain-modeling` — establish the domain model: read existing `CONTEXT.md` and ADRs, challenge fuzzy terms, and record the glossary before any work starts. Skip if `/domain-modeling` has already been run in this session and the model is current. If `accepted` ADRs constrain the area of work, surface any conflicts immediately.
+2. `/elicit-requirements` — gather and sharpen requirements with the user; calls `/elicit` (relentless interview) and `/domain-modeling` (to update the glossary and raise ADRs as terms crystallise during the interview).
+3. `/create-prd` — synthesise the agreed requirements into a PRD.
+4. `/create-tickets` — break the PRD into GitHub issues with BDD acceptance criteria.
 
-If none of these exist, run `/elicit-requirements` then `/create-tickets` before touching code. Writing code against a vague description is the fastest way to build the wrong thing. If a spec conflicts with an accepted ADR, surface the conflict and resolve it before starting — see `docs/adr/` and `<context>/docs/adr/`.
+Each step is a prerequisite for the next.
 
 ---
 

@@ -161,6 +161,34 @@ Start with the simplest inline implementation. Extract to a named function only 
 
 Boundaries before patterns. Coupling is the only metric that matters at the system level.
 
+### Module design vocabulary
+
+Use these terms exactly when discussing or reviewing architecture. Don't substitute "component," "service," "API," or "boundary."
+
+**Module** — anything with an interface and an implementation. Scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
+
+**Interface** — everything a caller must know to use the module correctly: type signature, invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API, signature (too narrow).
+
+**Seam** _(Feathers)_ — a place where you can alter behaviour without editing in that place; the location at which a module's interface lives. _Avoid_: boundary (overloaded with DDD's bounded context).
+
+**Adapter** — a concrete thing that satisfies an interface at a seam. Describes role (what slot it fills), not substance (what's inside).
+
+**Depth** — the amount of behaviour a caller can exercise per unit of interface they must learn. A **deep module** hides a large implementation behind a small interface. A **shallow module** has an interface nearly as complex as its implementation — avoid.
+
+**Leverage** — what callers get from depth: more capability per unit of interface learned.
+
+**Locality** — what maintainers get from depth: change, bugs, and verification concentrate in one place.
+
+Key principles:
+
+- **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If it reappears across N callers, it was earning its keep.
+- **The interface is the test surface.** Callers and tests cross the same seam. If you want to test past the interface, the module is the wrong shape.
+- **One adapter = hypothetical seam. Two adapters = real seam.** Don't introduce a seam unless something actually varies across it.
+- **Accept dependencies, don't create them.** Pass collaborators in; don't instantiate them inside. Testable by construction.
+- **Return results, don't produce side effects.** Functions that return values are easier to test and compose than functions that mutate state as a side effect.
+
+---
+
 ### Streaming architecture
 
 The events layer is a unidirectional pipeline: upstream source → `ingest` → Redis pub/sub → `gateway` → browser WebSocket. No step writes back up the chain. `ingest` never reads from Redis; `gateway` never writes to upstream. New data types flow through by adding a channel to the pipeline, not by adding a new service.

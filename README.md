@@ -260,7 +260,6 @@ Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cur
 | Skill                           | Claude Code                       | Codex                             | Description |
 |---------------------------------|-----------------------------------|-----------------------------------|-------------|
 | `build-code`                    | `/build-code`                     | `$build-code`                     | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
-| `codebase-design`               | `/codebase-design`                | `$codebase-design`                | Deep-module vocabulary — design and improve module interfaces, find seams, improve testability |
 | `code-review`                   | `/code-review`                    | `$code-review`                    | Review changes since a fixed point against coding standards and the originating issue/PRD |
 | `create-prd`                    | `/create-prd`                     | `$create-prd`                     | Synthesise conversation into a PRD |
 | `create-tickets`                | `/create-tickets`                 | `$create-tickets`                 | Break a plan into GitHub issues with BDD acceptance criteria |
@@ -268,8 +267,6 @@ Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cur
 | `elicit`                        | `/elicit`                         | `$elicit`                         | Interview to sharpen a design or plan |
 | `elicit-requirements`           | `/elicit-requirements`            | `$elicit-requirements`            | Requirements elicitation using the domain model |
 | `handoff`                       | `/handoff`                        | `$handoff`                        | Generate a session handoff document |
-| `improve-codebase-architecture` | `/improve-codebase-architecture`  | `$improve-codebase-architecture`  | Surface architectural friction, generate HTML report |
-| `research`                      | `/research`                       | `$research`                       | Investigate a question against primary sources and capture findings as a Markdown file in the repo |
 | `tdd`                           | `/tdd`                            | `$tdd`                            | TDD loop — red → green → refactor |
 | `triage`                        | `/triage`                         | `$triage`                         | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs |
 
