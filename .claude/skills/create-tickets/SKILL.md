@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Break a plan into independently-grabbable issues using vertical slices (tracer bullets).
 
-The issue tracker and triage label vocabulary should have been provided to you — see `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`.
+The issue tracker config and label vocabulary are in `docs/agents/issue-tracker.md` and `AGENTS.md` (Issue tracker section).
 
 ## Process
 

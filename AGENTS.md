@@ -38,8 +38,6 @@ Available skills:
 | `elicit`                        | Interview to sharpen a design or plan                                                                           |
 | `elicit-requirements`           | Requirements elicitation using the domain model                                                                 |
 | `tdd`                           | TDD loop — red → green → refactor                                                                               |
-| `triage`                        | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs                 |
-
 Skill files live at `.claude/skills/<name>/SKILL.md`.
 
 Codex reads skills from `.codex/skills/` (pointer files that reference `.claude/skills/`).
@@ -58,9 +56,16 @@ Workflow disciplines — spec first, definition of done, continuous quality feed
 
 Issues are tracked in GitHub Issues via the `gh` CLI. Infer the repo from `git remote -v`. External PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
 
-## Triage labels
+Label vocabulary:
 
-Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+| Label               | Meaning                                  |
+|---------------------|------------------------------------------|
+| `needs-triage`      | Maintainer needs to evaluate this issue  |
+| `needs-info`        | Waiting on reporter for more information |
+| `ready-for-agent`   | Fully specified, ready for an AFK agent  |
+| `ready-for-human`   | Requires human implementation            |
+| `wontfix`           | Will not be actioned                     |
+
 
 ## Domain docs
 

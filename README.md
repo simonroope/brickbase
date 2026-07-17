@@ -257,6 +257,8 @@ npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts
 
 Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cursor. Each skill is a self-contained instruction file invoked by name.
 
+Issues are tracked in GitHub Issues (`gh` CLI). Issue tracker config is in `docs/agents/issue-tracker.md`. Label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) is in `AGENTS.md` under the Issue tracker section.
+
 | Skill                           | Claude Code                       | Codex                             | Description |
 |---------------------------------|-----------------------------------|-----------------------------------|-------------|
 | `build-code`                    | `/build-code`                     | `$build-code`                     | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
@@ -267,8 +269,6 @@ Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cur
 | `elicit`                        | `/elicit`                         | `$elicit`                         | Interview to sharpen a design or plan |
 | `elicit-requirements`           | `/elicit-requirements`            | `$elicit-requirements`            | Requirements elicitation using the domain model |
 | `tdd`                           | `/tdd`                            | `$tdd`                            | TDD loop — red → green → refactor |
-| `triage`                        | `/triage`                         | `$triage`                         | Move issues through the triage state machine — categorise, verify, and write agent-ready briefs |
-
 Add new skills to `.claude/skills/<name>/SKILL.md`, then run:
 
 ```bash
