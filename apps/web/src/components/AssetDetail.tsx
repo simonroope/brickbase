@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Property details are viewable by all users (signed, unsigned, whitelisted or not).
- * Whitelist is only enforced when attempting to purchase shares (see BuyShares).
+ * Property details are viewable by all users (signed, unsigned, allowlisted or not).
+ * Allowlist is only enforced when attempting to purchase shares (see BuyShares).
  */
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";

@@ -96,7 +96,7 @@ export async function purchaseShares(
 }
 
 /**
- * Add user to whitelist (requires COMPLIANCE_OFFICER_ROLE).
+ * Add user to allowlist (requires COMPLIANCE_OFFICER_ROLE).
  */
 export async function setUserAllowed(
   userAddress: Address,

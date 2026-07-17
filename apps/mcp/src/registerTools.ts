@@ -9,8 +9,8 @@ import {
   getAssetList,
   getAssetDetail,
   getUserShareBalance,
-  isUserWhitelisted,
-  getWhitelistedUsers,
+  isUserAllowlisted,
+  getAllowlistedUsers,
   preparePurchaseTransactions,
   config,
 } from "./contracts";
@@ -97,16 +97,16 @@ export function registerBrickbaseTools(server: McpServer): void {
     };
   });
 
-  server.registerTool("get_user_whitelist_status", {
-    title: "Get User Whitelist Status",
-    description: "Check if an Ethereum address is whitelisted to interact with assets",
+  server.registerTool("get_user_allowlist_status", {
+    title: "Get User Allowlist Status",
+    description: "Check if an Ethereum address is allowlisted to interact with assets",
     inputSchema: {
       address: z.string().describe("Ethereum address (0x...)"),
     },
   }, async ({ address }) => {
-    const allowed = await isUserWhitelisted(address as `0x${string}`);
+    const allowed = await isUserAllowlisted(address as `0x${string}`);
     return {
-      content: [{ type: "text", text: JSON.stringify({ address, whitelisted: allowed }) }],
+      content: [{ type: "text", text: JSON.stringify({ address, allowlisted: allowed }) }],
     };
   });
 
@@ -129,12 +129,12 @@ export function registerBrickbaseTools(server: McpServer): void {
     };
   });
 
-  server.registerTool("get_whitelisted_users", {
-    title: "Get Whitelisted Users",
-    description: "List all currently whitelisted user addresses",
+  server.registerTool("get_allowlisted_users", {
+    title: "Get Allowlisted Users",
+    description: "List all currently allowlisted user addresses",
     inputSchema: {},
   }, async () => {
-    const users = await getWhitelistedUsers();
+    const users = await getAllowlistedUsers();
     return {
       content: [{ type: "text", text: JSON.stringify(users, null, 2) }],
     };
@@ -143,7 +143,7 @@ export function registerBrickbaseTools(server: McpServer): void {
   server.registerTool("purchase_asset_shares", {
     title: "Purchase Shares",
     description:
-      "Prepare unsigned transactions to purchase property shares. Returns transaction payloads (approve USDC, then purchaseAssetShares) for the agent to sign with its own private key. The agent's wallet must be whitelisted and have sufficient USDC. For web users, use the web app to sign directly.",
+      "Prepare unsigned transactions to purchase property shares. Returns transaction payloads (approve USDC, then purchaseAssetShares) for the agent to sign with its own private key. The agent's wallet must be allowlisted and have sufficient USDC. For web users, use the web app to sign directly.",
     inputSchema: {
       assetId: z.number().int().min(0).describe("Asset ID to purchase shares for"),
       amount: z.string().describe("Number of shares to purchase (e.g. '100' for 100 shares)"),

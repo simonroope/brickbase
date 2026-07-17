@@ -239,7 +239,7 @@ export async function getUserShareBalance(userAddress: Address, assetId: number)
   }
 }
 
-export async function isUserWhitelisted(userAddress: Address): Promise<boolean> {
+export async function isUserAllowlisted(userAddress: Address): Promise<boolean> {
   if (!config.assetVaultAddress) return false;
   try {
     return (await publicClient.readContract({
@@ -253,7 +253,7 @@ export async function isUserWhitelisted(userAddress: Address): Promise<boolean> 
   }
 }
 
-export async function getWhitelistedUsers(): Promise<string[]> {
+export async function getAllowlistedUsers(): Promise<string[]> {
   if (!config.userAllowListAddress || config.userAllowListAddress === "0x")
     return [];
   try {

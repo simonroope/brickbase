@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { purchaseShares } from "@/lib/transactions";
-import { isUserWhitelisted } from "@/lib/contracts";
+import { isUserAllowlisted } from "@/lib/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { formatInt, formatUsdc } from "@/lib/format";
 
@@ -21,16 +21,16 @@ export function BuyShares({ assetId, sharePrice, availableSupply }: BuySharesPro
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { data: whitelisted } = useQuery({
-    queryKey: ["whitelist", address],
-    queryFn: () => (address ? isUserWhitelisted(address as `0x${string}`) : Promise.resolve(false)),
+  const { data: allowlisted } = useQuery({
+    queryKey: ["allowlist", address],
+    queryFn: () => (address ? isUserAllowlisted(address as `0x${string}`) : Promise.resolve(false)),
     enabled: !!address,
   });
 
   const handlePurchase = async () => {
     if (!address || !amount || BigInt(amount) <= BigInt(0)) return;
-    if (whitelisted === false) {
-      setErrorMessage("Your address is not on the whitelist. Contact the compliance officer to be added.");
+    if (allowlisted === false) {
+      setErrorMessage("Your address is not on the allowlist. Contact the compliance officer to be added.");
       setStatus("error");
       return;
     }

@@ -4,32 +4,32 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { setUserAllowed } from "@/lib/transactions";
-import { WhitelistedUsersGrid } from "./WhitelistedUsersGrid";
+import { AllowlistedUsersGrid } from "./AllowlistedUsersGrid";
 
 export function AdminPanel() {
   const { isConnected } = useWallet();
   const queryClient = useQueryClient();
-  const [whitelistAddress, setWhitelistAddress] = useState("");
-  const [whitelistAllowed, setWhitelistAllowed] = useState(true);
-  const [whitelistStatus, setWhitelistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [whitelistError, setWhitelistError] = useState("");
+  const [allowlistAddress, setAllowlistAddress] = useState("");
+  const [allowlistAllowed, setAllowlistAllowed] = useState(true);
+  const [allowlistStatus, setAllowlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [allowlistError, setAllowlistError] = useState("");
 
-  const handleWhitelist = async () => {
-    if (!whitelistAddress || !/^0x[a-fA-F0-9]{40}$/.test(whitelistAddress)) {
-      setWhitelistError("Enter a valid Ethereum address");
-      setWhitelistStatus("error");
+  const handleAllowlist = async () => {
+    if (!allowlistAddress || !/^0x[a-fA-F0-9]{40}$/.test(allowlistAddress)) {
+      setAllowlistError("Enter a valid Ethereum address");
+      setAllowlistStatus("error");
       return;
     }
-    setWhitelistStatus("loading");
-    setWhitelistError("");
-    const result = await setUserAllowed(whitelistAddress as `0x${string}`, whitelistAllowed);
+    setAllowlistStatus("loading");
+    setAllowlistError("");
+    const result = await setUserAllowed(allowlistAddress as `0x${string}`, allowlistAllowed);
     if (result.success) {
-      setWhitelistStatus("success");
-      setWhitelistAddress("");
-      queryClient.invalidateQueries({ queryKey: ["whitelist"] });
+      setAllowlistStatus("success");
+      setAllowlistAddress("");
+      queryClient.invalidateQueries({ queryKey: ["allowlist"] });
     } else {
-      setWhitelistStatus("error");
-      setWhitelistError(result.error ?? "Transaction failed");
+      setAllowlistStatus("error");
+      setAllowlistError(result.error ?? "Transaction failed");
     }
   };
 
@@ -43,44 +43,44 @@ export function AdminPanel() {
 
   return (
     <div className="space-y-8">
-      <WhitelistedUsersGrid />
+      <AllowlistedUsersGrid />
 
-      {/* Whitelist section */}
+      {/* Allowlist section */}
       <div className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">Whitelist Management</h2>
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">Allowlist Management</h2>
         <p className="mb-4 text-sm text-text-secondary">
           Add or remove addresses from the allowlist. Requires COMPLIANCE_OFFICER_ROLE.
         </p>
         <div className="flex flex-wrap gap-4">
           <input
             type="text"
-            value={whitelistAddress}
-            onChange={(e) => setWhitelistAddress(e.target.value)}
+            value={allowlistAddress}
+            onChange={(e) => setAllowlistAddress(e.target.value)}
             placeholder="0x..."
             className="min-w-[320px] rounded-md border border-border-strong px-3 py-2 text-sm font-mono"
           />
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={whitelistAllowed}
-              onChange={(e) => setWhitelistAllowed(e.target.checked)}
+              checked={allowlistAllowed}
+              onChange={(e) => setAllowlistAllowed(e.target.checked)}
             />
             <span className="text-sm">Allowed</span>
           </label>
           <button
             type="button"
-            onClick={handleWhitelist}
-            disabled={whitelistStatus === "loading"}
+            onClick={handleAllowlist}
+            disabled={allowlistStatus === "loading"}
             className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
-            {whitelistStatus === "loading" ? "Processing..." : whitelistAllowed ? "Add to Whitelist" : "Remove from Whitelist"}
+            {allowlistStatus === "loading" ? "Processing..." : allowlistAllowed ? "Add to Allowlist" : "Remove from Allowlist"}
           </button>
         </div>
-        {whitelistStatus === "success" && (
+        {allowlistStatus === "success" && (
           <p className="mt-2 text-sm text-success">Transaction successful.</p>
         )}
-        {whitelistStatus === "error" && whitelistError && (
-          <p className="mt-2 text-sm text-error">{whitelistError}</p>
+        {allowlistStatus === "error" && allowlistError && (
+          <p className="mt-2 text-sm text-error">{allowlistError}</p>
         )}
       </div>
 

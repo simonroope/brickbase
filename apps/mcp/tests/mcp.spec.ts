@@ -77,7 +77,7 @@ test.describe("MCP Server Tools", () => {
       "get_asset_list",
       "get_asset_detail",
       "purchase_asset_shares",
-      "get_user_whitelist_status",
+      "get_user_allowlist_status",
       "get_user_shares",
     ];
     for (const name of expectedTools) {

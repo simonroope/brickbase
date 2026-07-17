@@ -1,23 +1,23 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchWhitelistedUsers } from "@/lib/contracts";
+import { fetchAllowlistedUsers } from "@/lib/contracts";
 import type { Address } from "viem";
 
 function formatAddress(addr: Address) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-export function WhitelistedUsersGrid() {
+export function AllowlistedUsersGrid() {
   const { data: users, isLoading, error } = useQuery({
-    queryKey: ["whitelist", "all"],
-    queryFn: fetchWhitelistedUsers,
+    queryKey: ["allowlist", "all"],
+    queryFn: fetchAllowlistedUsers,
   });
 
   if (isLoading) {
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">Whitelisted Users</h2>
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">Allowlisted Users</h2>
         <p className="text-sm text-text-muted">Loading…</p>
       </div>
     );
@@ -26,8 +26,8 @@ export function WhitelistedUsersGrid() {
   if (error) {
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">Whitelisted Users</h2>
-        <p className="text-sm text-error">Failed to load whitelist.</p>
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">Allowlisted Users</h2>
+        <p className="text-sm text-error">Failed to load allowlist.</p>
       </div>
     );
   }
@@ -35,15 +35,15 @@ export function WhitelistedUsersGrid() {
   if (!users?.length) {
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">Whitelisted Users</h2>
-        <p className="text-sm text-text-muted">No whitelisted users yet.</p>
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">Allowlisted Users</h2>
+        <p className="text-sm text-text-muted">No allowlisted users yet.</p>
       </div>
     );
   }
 
   return (
     <div className="rounded-xl border border-border bg-surface p-6">
-      <h2 className="mb-2 text-lg font-semibold text-text-primary">Whitelisted Users</h2>
+      <h2 className="mb-2 text-lg font-semibold text-text-primary">Allowlisted Users</h2>
       <div className="grid grid-cols-1 gap-2">
         {users.map((address) => (
           <div
