@@ -10,8 +10,8 @@ Read this file at the start of any implementation session. It sets the condition
 
 Implementation does not start until the domain is established, requirements are gathered, a spec is written, and tickets are created:
 
-1. `/domain-modeling` — establish the domain model: read existing `CONTEXT.md` and ADRs, challenge fuzzy terms, and record the glossary before any work starts. Skip if `/domain-modeling` has already been run in this session and the model is current. If `accepted` ADRs constrain the area of work, surface any conflicts immediately.
-2. `/elicit-requirements` — gather and sharpen requirements with the user; calls `/elicit` (relentless interview) and `/domain-modeling` (to update the glossary and raise ADRs as terms crystallise during the interview).
+1. `/model-domain` — establish the domain model: read existing `CONTEXT.md` and ADRs, challenge fuzzy terms, and record the glossary before any work starts. Skip if `/model-domain` has already been run in this session and the model is current. If `accepted` ADRs constrain the area of work, surface any conflicts immediately.
+2. `/elicit-requirements` — gather and sharpen requirements with the user; calls `/elicit` (relentless interview) and `/model-domain` (to update the glossary and raise ADRs as terms crystallise during the interview).
 3. `/create-prd` — synthesise the agreed requirements into a PRD.
 4. `/create-tickets` — break the PRD into GitHub issues with BDD acceptance criteria.
 
