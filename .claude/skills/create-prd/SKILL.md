@@ -16,7 +16,9 @@ The issue tracker config and label vocabulary are in `docs/agents/issue-tracker.
 
 Check with the user that these seams match their expectations.
 
-3. Write the PRD using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. Write the PRD using the template below, then:
+   - Save a local copy to `docs/prd/<kebab-case-title>.md`.
+   - Publish it to the project issue tracker. Apply the `ready-for-agent` triage label — no need for additional triage.
 
 <prd-template>
 
@@ -35,7 +37,7 @@ A LONG, numbered list of user stories. Each user story should be in the format o
 1. As an <actor>, I want a <feature>, so that <benefit>
 
 <user-story-example>
-1. As a mobile bank customer, I want to see balance on my accounts, so that I can make better informed decisions about my spending
+1. As a retail investor, I want to purchase fractional shares in a vaulted commercial property using USDC, so that I can gain real estate exposure without buying the whole asset.
 </user-story-example>
 
 This list of user stories should be extremely extensive and cover all aspects of the feature.
