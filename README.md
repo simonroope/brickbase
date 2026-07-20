@@ -179,9 +179,9 @@ The MCP server exposes smart contract data via tools and resources. Uses stdio (
 - `get_asset_list` – list all tokenized assets
 - `get_asset_detail` – detail for asset ID
 - `get_oracle_prices` – ETH/USD, GBP/USD, Gold/USD, FTSE 100
-- `get_user_whitelist_status` – check if address is whitelisted
+- `get_user_allowlist_status` – check if address is allowlisted
 - `get_user_shares` – user's share balance for an asset
-- `get_whitelisted_users` – list all whitelisted addresses
+- `get_allowlisted_users` – list all allowlisted addresses
 
 **Resources:**
 
