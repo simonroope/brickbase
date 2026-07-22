@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Break a plan, spec, PRD, or conversation into a set of **tickets** — tracer-bullet vertical slices, each declaring the tickets that **block** it.
 
-The issue tracker config and label vocabulary are in `docs/agents/issue-tracker.md` and `AGENTS.md` (Issue tracker section).
+The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracker.md` and `AGENTS.md` (Ticket tracker section).
 
 ## Process
 

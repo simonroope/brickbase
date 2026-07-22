@@ -257,7 +257,7 @@ npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts
 
 Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cursor. Each skill is a self-contained instruction file invoked by name.
 
-Issues are tracked in GitHub Issues (`gh` CLI). Issue tracker config is in `docs/agents/issue-tracker.md`. Label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) is in `AGENTS.md` under the Issue tracker section.
+Issues are tracked in GitHub Issues (`gh` CLI). Ticket tracker config is in `docs/agents/ticket-tracker.md`. Label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) is in `AGENTS.md` under the Ticket tracker section.
 
 | Skill                           | Claude Code                       | Codex                             | Description |
 |---------------------------------|-----------------------------------|-----------------------------------|-------------|

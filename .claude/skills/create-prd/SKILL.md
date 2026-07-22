@@ -1,12 +1,12 @@
 ---
 name: create-prd
-description: Turn the current conversation into a PRD and publish it to the project issue tracker — no interview, just synthesis of what you've already discussed.
+description: Turn the current conversation into a PRD and publish it to the project ticket tracker — no interview, just synthesis of what you've already discussed.
 disable-model-invocation: true
 ---
 
 This skill takes the current conversation context and codebase understanding and produces a PRD. Do NOT interview the user — just synthesize what you already know.
 
-The issue tracker config and label vocabulary are in `docs/agents/issue-tracker.md` and `AGENTS.md` (Issue tracker section).
+The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracker.md` and `AGENTS.md` (Ticket tracker section).
 
 ## Process
 
@@ -18,7 +18,7 @@ Check with the user that these seams match their expectations.
 
 3. Write the PRD using the template below, then:
    - Save a local copy to `docs/prd/<kebab-case-title>.md`.
-   - Publish it to the project issue tracker. Apply the `ready-for-agent` triage label — no need for additional triage.
+   - Publish it to the project ticket tracker. Apply the `ready-for-agent` triage label — no need for additional triage.
 
 <prd-template>
 
