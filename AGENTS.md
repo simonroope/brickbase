@@ -31,9 +31,9 @@ Available skills:
 | Skill                           | Description                                                                                                     |
 |---------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `build-code`                    | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
-| `code-review`                   | Review changes since a fixed point (commit, branch, tag) against coding standards and the originating issue/PRD |
+| `code-review`                   | Review changes since a fixed point (commit, branch, tag) against coding standards and the originating ticket/PRD |
 | `create-prd`                    | Synthesise conversation into a PRD (requires `docs/agents/ticket-tracker.md`)                                  |
-| `create-tickets`                | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/ticket-tracker.md`)        |
+| `create-tickets`                | Break a plan into GitHub ticket with BDD acceptance criteria (requires `docs/agents/ticket-tracker.md`)        |
 | `model-domain`                  | Build and maintain `CONTEXT.md` and ADRs                                                                        |
 | `elicit`                        | Interview to sharpen a design or plan                                                                           |
 | `elicit-requirements`           | Requirements elicitation using the domain model                                                                 |
@@ -54,13 +54,13 @@ Workflow disciplines — spec first, definition of done, continuous quality feed
 
 ## Ticket tracker
 
-Issues are tracked in GitHub Issues via the `gh` CLI. Infer the repo from `git remote -v`. External PRs are not a triage surface. See `docs/agents/ticket-tracker.md`.
+Tickets are tracked in GitHub Issues via the `gh` CLI. Infer the repo from `git remote -v`. External PRs are not a triage surface. See `docs/agents/ticket-tracker.md`.
 
 Label vocabulary:
 
 | Label               | Meaning                                  |
 |---------------------|------------------------------------------|
-| `needs-triage`      | Maintainer needs to evaluate this issue  |
+| `needs-triage`      | Maintainer needs to evaluate this ticket |
 | `needs-info`        | Waiting on reporter for more information |
 | `ready-for-agent`   | Fully specified, ready for an AFK agent  |
 | `ready-for-human`   | Requires human implementation            |

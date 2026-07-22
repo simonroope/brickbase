@@ -4,9 +4,9 @@ description: Break a plan, spec, or PRD into independently-grabbable tickets on 
 disable-model-invocation: true
 ---
 
-# To Issues
+# To Tickets
 
-Break a plan into independently-grabbable issues using vertical slices (tracer bullets).
+Break a plan into independently-grabbable ticketss using vertical slices (tracer bullets).
 
 The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracker.md` and `AGENTS.md` (Ticket tracker section).
 
@@ -14,17 +14,17 @@ The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracke
 
 ### 1. Gather context
 
-Work from whatever is already in the conversation context. If the user passes an issue reference (issue number, URL, or path) as an argument, fetch it from the ticket tracker and read its full body and comments.
+Work from whatever is already in the conversation context. If the user passes an ticket reference (ticket number, URL, or path) as an argument, fetch it from the ticket tracker and read its full body and comments.
 
 ### 2. Explore the codebase (optional)
 
-If you have not already explored the codebase, do so to understand the current state of the code. Issue titles and descriptions should use the project's domain glossary vocabulary, and respect ADRs in the area you're touching.
+If you have not already explored the codebase, do so to understand the current state of the code. Ticket titles and descriptions should use the project's domain glossary vocabulary, and respect ADRs in the area you're touching.
 
 Look for opportunities to prefactor the code to make the implementation easier. "Make the change easy, then make the easy change."
 
 ### 3. Draft vertical slices
 
-Break the plan into **tracer bullet** issues. Each issue is a thin vertical slice that cuts through ALL integration layers end-to-end, NOT a horizontal slice of one layer.
+Break the plan into **tracer bullet** tickets. Each ticket is a thin vertical slice that cuts through ALL integration layers end-to-end, NOT a horizontal slice of one layer.
 
 <vertical-slice-rules>
 
@@ -56,12 +56,12 @@ For each approved slice, publish a new ticket to the ticket tracker. Use the tic
 
 Write acceptance criteria as BDD scenarios (Given/When/Then). Each scenario should be concrete enough to map directly to a Cucumber feature file — an agent or developer should be able to implement a step definition from it without ambiguity. Cover the happy path first, then edge cases and error paths.
 
-Publish issues in dependency order (blockers first) so you can reference real issue identifiers in the "Blocked by" field.
+Publish tickets in dependency order (blockers first) so you can reference real ticket identifiers in the "Blocked by" field.
 
-<issue-template>
+<Ticket-template>
 ## Parent
 
-A reference to the parent issue on the ticket tracker (if the source was an existing issue, otherwise omit this section).
+A reference to the parent ticket on the ticket tracker (if the source was an existing ticket, otherwise omit this section).
 
 ## What to build
 
@@ -87,6 +87,6 @@ Add further scenarios for edge cases, error paths, and negative cases.
 
 Or "None - can start immediately" if no blockers.
 
-</issue-template>
+</ticket-template>
 
-Do NOT close or modify any parent issue.
+Do NOT close or modify any parent ticket.
