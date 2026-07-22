@@ -1,6 +1,6 @@
 ---
 name: create-tickets
-description: Break a plan, spec, or PRD into independently-grabbable issues on the project ticket tracker using tracer-bullet vertical slices.
+description: Break a plan, spec, or PRD into independently-grabbable tickets on the project ticket tracker using tracer-bullet vertical slices.
 disable-model-invocation: true
 ---
 
