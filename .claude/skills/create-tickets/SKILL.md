@@ -1,6 +1,6 @@
 ---
 name: create-tickets
-description: Break a plan, spec, or PRD into independently-grabbable issues on the project issue tracker using tracer-bullet vertical slices.
+description: Break a plan, spec, or PRD into independently-grabbable issues on the project ticket tracker using tracer-bullet vertical slices.
 disable-model-invocation: true
 ---
 
@@ -8,13 +8,13 @@ disable-model-invocation: true
 
 Break a plan into independently-grabbable issues using vertical slices (tracer bullets).
 
-The issue tracker config and label vocabulary are in `docs/agents/issue-tracker.md` and `AGENTS.md` (Issue tracker section).
+The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracker.md` and `AGENTS.md` (Ticket tracker section).
 
 ## Process
 
 ### 1. Gather context
 
-Work from whatever is already in the conversation context. If the user passes an issue reference (issue number, URL, or path) as an argument, fetch it from the issue tracker and read its full body and comments.
+Work from whatever is already in the conversation context. If the user passes an issue reference (issue number, URL, or path) as an argument, fetch it from the ticket tracker and read its full body and comments.
 
 ### 2. Explore the codebase (optional)
 
@@ -50,9 +50,9 @@ Ask the user:
 
 Iterate until the user approves the breakdown.
 
-### 5. Publish the issues to the issue tracker
+### 5. Publish a new ticket to the ticket tracker
 
-For each approved slice, publish a new issue to the issue tracker. Use the issue body template below. These issues are considered ready for AFK agents, so publish them with the correct triage label unless instructed otherwise.
+For each approved slice, publish a new ticket to the ticket tracker. Use the ticket body template below. These tickets are considered ready for AFK agents, so publish them with the correct triage label unless instructed otherwise.
 
 Write acceptance criteria as BDD scenarios (Given/When/Then). Each scenario should be concrete enough to map directly to a Cucumber feature file — an agent or developer should be able to implement a step definition from it without ambiguity. Cover the happy path first, then edge cases and error paths.
 
@@ -61,7 +61,7 @@ Publish issues in dependency order (blockers first) so you can reference real is
 <issue-template>
 ## Parent
 
-A reference to the parent issue on the issue tracker (if the source was an existing issue, otherwise omit this section).
+A reference to the parent issue on the ticket tracker (if the source was an existing issue, otherwise omit this section).
 
 ## What to build
 

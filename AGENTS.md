@@ -32,8 +32,8 @@ Available skills:
 |---------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `build-code`                    | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
 | `code-review`                   | Review changes since a fixed point (commit, branch, tag) against coding standards and the originating issue/PRD |
-| `create-prd`                    | Synthesise conversation into a PRD (requires `docs/agents/issue-tracker.md`)                                   |
-| `create-tickets`                | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/issue-tracker.md`)         |
+| `create-prd`                    | Synthesise conversation into a PRD (requires `docs/agents/ticket-tracker.md`)                                  |
+| `create-tickets`                | Break a plan into GitHub issues with BDD acceptance criteria (requires `docs/agents/ticket-tracker.md`)        |
 | `model-domain`                  | Build and maintain `CONTEXT.md` and ADRs                                                                        |
 | `elicit`                        | Interview to sharpen a design or plan                                                                           |
 | `elicit-requirements`           | Requirements elicitation using the domain model                                                                 |
@@ -52,9 +52,9 @@ Full standards by pillar (Foundations, Architecture, Style, Types & Schemas, Too
 
 Workflow disciplines — spec first, definition of done, continuous quality feedback, shift left, leave it better, short-lived branches — are in `docs/agents/process.md`. Read it at the start of any implementation session.
 
-## Issue tracker
+## Ticket tracker
 
-Issues are tracked in GitHub Issues via the `gh` CLI. Infer the repo from `git remote -v`. External PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues via the `gh` CLI. Infer the repo from `git remote -v`. External PRs are not a triage surface. See `docs/agents/ticket-tracker.md`.
 
 Label vocabulary:
 
