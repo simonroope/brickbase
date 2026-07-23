@@ -257,12 +257,12 @@ npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts
 
 Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cursor. Each skill is a self-contained instruction file invoked by name.
 
-Issues are tracked in GitHub Issues (`gh` CLI). Ticket tracker config is in `docs/agents/ticket-tracker.md`. Label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) is in `AGENTS.md` under the Ticket tracker section.
+Tickets are tracked in GitHub Issues (`gh` CLI). Ticket tracker config is in `docs/agents/ticket-tracker.md`. Label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) is in `AGENTS.md` under the Ticket tracker section.
 
 | Skill                           | Claude Code                       | Codex                             | Description |
 |---------------------------------|-----------------------------------|-----------------------------------|-------------|
 | `build-code`                    | `/build-code`                     | `$build-code`                     | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
-| `code-review`                   | `/code-review`                    | `$code-review`                    | Review changes since a fixed point against coding standards and the originating issue/PRD |
+| `code-review`                   | `/code-review`                    | `$code-review`                    | Review changes since a fixed point against coding standards and the originating ticket/PRD |
 | `create-prd`                    | `/create-prd`                     | `$create-prd`                     | Synthesise conversation into a PRD |
 | `create-tickets`                | `/create-tickets`                 | `$create-tickets`                 | Break a plan into GitHub issues with BDD acceptance criteria |
 | `model-domain`                  | `/model-domain`                   | `$model-domain`                   | Build and maintain `CONTEXT.md` and ADRs |

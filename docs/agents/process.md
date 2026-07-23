@@ -31,14 +31,14 @@ See the `tdd` skill (`.claude/skills/tdd/SKILL.md`) for the mechanics of the red
 
 A piece of work is done when all of the following are true:
 
-- [ ] All acceptance criteria from the originating issue pass as tests
+- [ ] All acceptance criteria from the originating ticket pass as tests
 - [ ] All existing tests continue to pass (`nx run web:test`, `nx run contracts:compile`)
 - [ ] TypeScript compiles with no errors (`tsc --noEmit`)
 - [ ] No new linter violations introduced
 - [ ] `code-review` has been run and all findings addressed or explicitly accepted
 - [ ] The branch has a human review approval before merging
 
-Work that meets some but not all of these is in progress, not done. Do not close an issue or mark a ticket complete until every item is checked.
+Work that meets some but not all of these is in progress, not done. Do not close a ticket or mark a ticket complete until every item is checked.
 
 ---
 
@@ -81,7 +81,7 @@ This is the Boy Scout Rule applied to code. Accumulated small improvements compo
 
 ## Short-lived Branches with AI-human Review
 
-Branches are short-lived: one issue, one branch, one PR. A branch that lives longer than two days is a risk — it accumulates merge conflicts and makes review harder.
+Branches are short-lived: one ticket, one branch, one PR. A branch that lives longer than two days is a risk — it accumulates merge conflicts and makes review harder.
 
 Every merge requires two sign-offs:
 
