@@ -3,4 +3,4 @@ name: tdd
 description: tdd skill
 ---
 
-Follow the instructions in ../../.claude/skills/tdd/SKILL.md
+Follow the instructions in ../../skills/tdd/SKILL.md

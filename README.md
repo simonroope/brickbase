@@ -17,6 +17,7 @@ Development is supported by **agent skills** — structured instruction files fo
 | `libs/contracts`     | Solidity smart contracts (Hardhat)                               |
 | `libs/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
 | `libs/shared-config` | Chain config, env                                                |
+| `workflows`    | Temporal worker — automated `build-code` from `ready-for-agent` issues |
 
 
 ## Contracts

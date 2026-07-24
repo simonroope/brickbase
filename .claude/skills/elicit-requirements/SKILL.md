@@ -1,7 +1,6 @@
 ---
 name: elicit-requirements
-description: A relentless interview to sharpen a plan or design, which also creates docs (ADRs and glossary) as we go.
-disable-model-invocation: true
+description: elicit-requirements skill
 ---
 
-Run a `/elicit` session, using the `/model-domain` skill.
+Follow the instructions in ../../skills/elicit-requirements/SKILL.md

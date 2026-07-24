@@ -9,6 +9,7 @@ Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP s
 | `apps/web`    | Next.js investor portal (App Router, Tailwind, wagmi, viem) |
 | `apps/mcp`    | MCP server — AI agent tools + resources for smart contracts |
 | `apps/events` | Live feeds: `ingest/` (upstream → Redis), `gateway/` (Redis → browser), `types/` |
+| `workflows`    | Temporal worker — scans ticket tracker for `ready-for-agent` issues and runs `build-code` via Cursor SDK in isolated git worktrees |
 | `libs/contracts` | Solidity smart contracts (Hardhat): AssetVault, AssetShares, OracleRouter, AssetUserAllowList |
 | `libs/abi`    | Compiled ABIs — import as `@brickbase/abi` |
 | `libs/shared-config` | Chain config, RPC helpers — import as `@brickbase/shared-config` |
@@ -19,7 +20,7 @@ Conventions (imports and paths, env vars, and per-layer rules) live in `docs/age
 
 ## Skills
 
-Skills live in `.claude/skills/` (source of truth). Invocation:
+Skills live in `skills/` (source of truth). Invocation:
 
 | Agent       | Prefix | Example |
 |-------------|--------|-----------|
@@ -38,11 +39,11 @@ Available skills:
 | `elicit`                        | Interview to sharpen a design or plan                                                                           |
 | `elicit-requirements`           | Requirements elicitation using the domain model                                                                 |
 | `tdd`                           | TDD loop — red → green → refactor                                                                               |
-Skill files live at `.claude/skills/<name>/SKILL.md`.
+Skill files live at `skills/<name>/SKILL.md`.
 
-Codex reads skills from `.codex/skills/` (pointer files that reference `.claude/skills/`).
+Codex reads skills from `.codex/skills/` (pointer files that reference `skills/`).
 
-Run `npm run skills:sync` after adding a new skill to `.claude/skills/` to register it in `.codex/skills/`.
+Run `npm run skills:sync` after adding a new skill to `skills/` to register it in `.codex/skills/`.
 
 ## Coding standards
 

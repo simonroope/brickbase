@@ -18,10 +18,18 @@
     "events:ingest": "nx run events:ingest",
     "events:gateway": "nx run events:gateway",
     "events:test": "nx run events:test",
-    "skills:sync": "bash scripts/skills-sync.sh"
+    "skills:sync": "bash scripts/skills-sync.sh",
+    "workflows:server": "npx @temporalio/cli server start-dev",
+    "workflows:start": "nx run workflows:serve",
+    "workflows:trigger": "nx run workflows:trigger"
   },
   "dependencies": {
+    "@cursor/sdk": "^1.0.24",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@temporalio/activity": "^1.21.0",
+    "@temporalio/client": "^1.21.0",
+    "@temporalio/worker": "^1.21.0",
+    "@temporalio/workflow": "^1.21.0",
     "@tanstack/react-query": "^5.90.21",
     "@walletconnect/ethereum-provider": "^2.23.9",
     "@web3modal/wagmi": "^5.1.11",
