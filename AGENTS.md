@@ -48,9 +48,8 @@ Skill files live at `skills/<name>/SKILL.md`.
 |---|---|---|
 | `.claude/skills/` | Relative | Claude CLI (repo-local) |
 | `.codex/skills/` | Relative | Codex (repo-local) |
-| `~/.claude/skills/` | Absolute | Claude CLI (global) |
 
-Run it after adding or amending a skill.
+Run it after adding, amending a skill.
 
 ## Coding standards
 

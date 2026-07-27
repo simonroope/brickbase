@@ -280,7 +280,7 @@ Add new skills to `skills/<name>/SKILL.md`, then run:
 npm run skills:sync
 ```
 
-This syncs pointer files to `.claude/skills/`, `.codex/skills/`, and `~/.claude/skills/` so all agents can invoke the skill.
+This syncs pointer files to `.claude/skills/` and `.codex/skills/` so all agents can invoke the skill.
 
 ## Workflows
 
