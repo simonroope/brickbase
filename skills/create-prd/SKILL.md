@@ -17,8 +17,8 @@ The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracke
 Check with the user that these seams match their expectations.
 
 3. Write the PRD using the template below, then:
-   - Save a local copy to `docs/prd/<kebab-case-title>.md`.
-   - Publish it to the project ticket tracker. Apply the `ready-for-agent` triage label — no need for additional triage.
+   - Save a local copy to `docs/prd/prd-<kebab-case-title>.md`.
+   - Publish it to the project ticket tracker. Apply the `needs-triage` label — the PRD is a planning artefact, not a directly buildable ticket.
 
 <prd-template>
 
