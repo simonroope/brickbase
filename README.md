@@ -302,6 +302,9 @@ The worker builds a dependency graph from these fields and executes tickets in *
 **Running locally:**
 
 ```bash
+# 0. Install the Temporal CLI (one-time, requires Homebrew)
+brew install temporal
+
 # 1. Start the Temporal dev server (keep running)
 npm run workflows:server
 
