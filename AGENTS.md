@@ -17,6 +17,8 @@ Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP s
 
 ## Conventions
 
+Package manager is **npm** (not pnpm or yarn). Use `npm install` / `npm run …` only.
+
 Conventions (imports and paths, env vars, and per-layer rules) live in `docs/agents/coding-standards.md`.
 
 ## Skills

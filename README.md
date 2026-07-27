@@ -62,7 +62,7 @@ Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root
 | `**libs/shared-config`** | No             | Chain config source; Nx project via `project.json` only (like `libs/abi`)                                                           |
 
 
-**npm (default in this repo)** — run from the repo root:
+**npm (canonical — use this)** — run from the repo root:
 
 ```bash
 npm install
@@ -76,19 +76,6 @@ Or install from each package folder:
 npm install
 cd apps/events && npm install
 cd apps/web && npm install
-```
-
-**pnpm** — `pnpm-workspace.yaml` includes `apps/`* and `libs/`*, so a single install at the root links all workspace packages (including `apps/events` via `apps/*`):
-
-```bash
-pnpm install
-```
-
-With pnpm, one root install covers workspace packages with a `package.json` (`apps/*`, and any `libs/*` that define one) — no separate `cd` into each app required.
-
-```bash
-rm -rf node_modules apps/web/node_modules apps/events/node_modules
-pnpm install
 ```
 
 ### Environment

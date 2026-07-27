@@ -1,7 +1,5 @@
-import { execSync } from "child_process";
-import { readFileSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
+import { spawnSync } from "child_process";
+import { readFileSync } from "fs";
 import type { SkillRunner, RunSkillParams } from "../runner";
 import { issueContext } from "../runner";
 
@@ -13,12 +11,15 @@ export class CodexRunner implements SkillRunner {
     const instructions = readFileSync(skillPath, "utf-8");
     const prompt = `${instructions}\n\n---\n\n${issueContext(issue)}`;
 
-    const promptFile = path.join(tmpdir(), `brickbase-prompt-${issue.number}.md`);
-    writeFileSync(promptFile, prompt, "utf-8");
-
-    execSync(`codex --full-auto --quiet "${promptFile}"`, {
+    const result = spawnSync("codex", ["--full-auto", "--quiet"], {
       cwd: worktreePath,
-      stdio: "inherit",
+      input: prompt,
+      encoding: "utf-8",
+      stdio: ["pipe", "inherit", "inherit"],
     });
+
+    if (result.status !== 0) {
+      throw new Error(`Codex CLI exited with status ${result.status}`);
+    }
   }
 }

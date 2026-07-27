@@ -44,25 +44,65 @@ export async function fetchReadyForAgentIssues(): Promise<Issue[]> {
     { cwd: REPO_ROOT }
   ).toString();
   const raw: { number: number; title: string; body: string }[] = JSON.parse(json);
-  return raw.map((i) => ({
-    ...i,
-    blockedBy: parseIssueRefs(i.body, "Blocked by"),
-    blocks: parseIssueRefs(i.body, "Blocks"),
-  }));
+
+  // Skip issues that already have an open PR to avoid reprocessing on re-trigger.
+  const prJson = execSync(
+    `gh pr list --state open --json number,title,body`,
+    { cwd: REPO_ROOT }
+  ).toString();
+  const openPrs: { body: string }[] = JSON.parse(prJson);
+  // Match "Closes #N" anywhere in the PR body (not a section heading).
+  const closesRe = /closes\s+#(\d+)/gi;
+  const issuesWithPr = new Set(
+    openPrs.flatMap((pr) =>
+      [...pr.body.matchAll(closesRe)].map((m) => parseInt(m[1], 10))
+    )
+  );
+
+  return raw
+    .filter((i) => !issuesWithPr.has(i.number))
+    .map((i) => ({
+      ...i,
+      blockedBy: parseIssueRefs(i.body, "Blocked by"),
+      blocks: parseIssueRefs(i.body, "Blocks"),
+    }));
 }
 
 export async function createWorktree(issue: Issue): Promise<string> {
   const slug = issue.title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .slice(0, 40);
+    .slice(0, 40)
+    .replace(/-+$/, ""); // strip trailing dashes from mid-word truncation
   const branchName = `issue-${issue.number}-${slug}`;
-  const worktreePath = path.join(REPO_ROOT, "..", `brickbase-${issue.number}`);
+  const worktreePath = path.resolve(REPO_ROOT, "..", `brickbase-${issue.number}`);
+
+  // Clean up any leftover artefacts from a previous failed run.
+  try {
+    execSync(`git worktree remove --force ${worktreePath}`, { cwd: REPO_ROOT, stdio: "pipe" });
+  } catch { /* worktree not registered */ }
+
+  // Remove the directory if it still exists on disk (e.g. after a forced cleanup).
+  try {
+    execSync(`rm -rf ${worktreePath}`, { cwd: REPO_ROOT, stdio: "pipe" });
+  } catch { /* directory did not exist */ }
+
+  // Prune stale worktree entries before adding a new one.
+  execSync("git worktree prune", { cwd: REPO_ROOT });
+
+  try {
+    execSync(`git branch -D ${branchName}`, { cwd: REPO_ROOT, stdio: "pipe" });
+  } catch { /* branch did not exist */ }
 
   execSync(
     `git worktree add -b ${branchName} ${worktreePath} main`,
     { cwd: REPO_ROOT }
   );
+
+  // Fresh install in the worktree (npm ci — lockfile-driven, no symlink to main checkout).
+  execSync("npm ci", { cwd: worktreePath, stdio: "inherit" });
+  execSync("npm ci", { cwd: path.join(worktreePath, "apps/web"), stdio: "inherit" });
+  execSync("npm ci", { cwd: path.join(worktreePath, "apps/events"), stdio: "inherit" });
 
   return worktreePath;
 }
@@ -79,6 +119,23 @@ export async function raisePullRequest(
   issue: Issue,
   worktreePath: string
 ): Promise<string> {
+  // Commit any uncommitted changes the agent left behind.
+  const status = execSync("git status --porcelain", { cwd: worktreePath }).toString().trim();
+  if (status) {
+    execSync('git add -A && git commit -m "chore: apply agent changes"', { cwd: worktreePath });
+  }
+
+  // gh pr create requires the branch to exist on the remote first.
+  execSync("git push -u origin HEAD", { cwd: worktreePath });
+
+  // Ensure the label exists in the repo (idempotent — no-ops if already present).
+  try {
+    execSync("gh label create ready-for-human --color 0075ca --description 'Requires human implementation'", {
+      cwd: worktreePath,
+      stdio: "pipe",
+    });
+  } catch { /* label already exists */ }
+
   const prUrl = execSync(
     `gh pr create \
       --title "${issue.title}" \

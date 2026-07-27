@@ -14,15 +14,13 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx tsx src/worker.ts",
-        "cwd": "workflows"
+        "command": "npx tsx workflows/src/worker.ts"
       }
     },
     "trigger": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx tsx src/client.ts",
-        "cwd": "workflows"
+        "command": "npx tsx workflows/src/client.ts"
       }
     }
   },
