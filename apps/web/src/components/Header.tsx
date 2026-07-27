@@ -16,6 +16,9 @@ export function Header() {
           <Link href="/asset-admin" className="text-sm font-medium text-header-text hover:text-white">
             Admin
           </Link>
+          <Link href="/account" className="text-sm font-medium text-header-text hover:text-white">
+            Account
+          </Link>
         </nav>
         <div className="flex justify-center">
           <Link href="/" className="text-xl font-bold text-brand">

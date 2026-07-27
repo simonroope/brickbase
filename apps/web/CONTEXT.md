@@ -53,6 +53,12 @@ The feed's connection state: `live`, `delayed` (connected but stale >10s), or `o
 The authoritative on-chain Chainlink values from OracleRouter (ETH/USD, GBP/USD, Gold/USD, FTSE 100), polled on an interval. Distinct from — and not to be confused with — the display-only LiveTicker spot price.
 _Avoid_: conflating oracle prices with the live ticker
 
+## Account
+
+**Account**:
+The connected user's own view of their wallet — the `/account` page and its `AccountPanel`. Currently shows only the connected wallet address in full (monospace); when no wallet is connected it prompts the user to connect. Deliberately scoped to identity, not holdings — no balance, share positions, allowlist status, or chain info.
+_Avoid_: profile, dashboard, portfolio
+
 ## Compliance & admin
 
 **Allowlist**:
