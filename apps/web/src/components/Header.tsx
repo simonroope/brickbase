@@ -13,6 +13,9 @@ export function Header() {
           <Link href="/" className="text-sm font-medium text-header-text hover:text-white">
             Properties
           </Link>
+          <Link href="/account" className="text-sm font-medium text-header-text hover:text-white">
+            Account
+          </Link>
           <Link href="/asset-admin" className="text-sm font-medium text-header-text hover:text-white">
             Admin
           </Link>
