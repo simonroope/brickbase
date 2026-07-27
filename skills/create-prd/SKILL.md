@@ -16,7 +16,9 @@ The ticket tracker config and label vocabulary are in `docs/agents/ticket-tracke
 
 Check with the user that these seams match their expectations.
 
-3. Write the PRD using the template below, then:
+3. Identify any new domain terms introduced by this feature that are not already in the relevant `CONTEXT.md` (e.g. `apps/web/CONTEXT.md`). For each new term, add it to the appropriate glossary section before saving the PRD. Follow the existing entry format: bold term, definition, and an _Avoid_ line if relevant.
+
+4. Write the PRD using the template below, then:
    - Save a local copy to `docs/prd/prd-<kebab-case-title>.md`.
    - Publish it to the project ticket tracker. Apply the `needs-triage` label — the PRD is a planning artefact, not a directly buildable ticket.
 
