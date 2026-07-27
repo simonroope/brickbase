@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { AccountPanel } from "../AccountPanel";
 import { useWallet } from "@/hooks/useWallet";
 
@@ -30,6 +30,12 @@ describe("AccountPanel", () => {
     jest.clearAllMocks();
   });
 
+  // jsdom has no navigator.clipboard; tests that stub it must not leak the stub
+  // onto navigator for later tests.
+  afterEach(() => {
+    delete (navigator as { clipboard?: unknown }).clipboard;
+  });
+
   it("shows the connect prompt with a connect action and no address when disconnected", () => {
     mockUseWallet.mockReturnValue(disconnected());
 
@@ -40,6 +46,7 @@ describe("AccountPanel", () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId("connect-btn")).toBeInTheDocument();
     expect(screen.queryByText(/^0x/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /copy address/i })).not.toBeInTheDocument();
   });
 
   it("displays the full connected wallet address in monospace", () => {
@@ -56,6 +63,25 @@ describe("AccountPanel", () => {
     expect(screen.queryByText(/balance/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/holdings/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/chain/i)).not.toBeInTheDocument();
+  });
+
+  it("shows a copy-to-clipboard button next to the address when connected", () => {
+    mockUseWallet.mockReturnValue(connected());
+
+    render(<AccountPanel />);
+
+    expect(screen.getByRole("button", { name: /copy address/i })).toBeInTheDocument();
+  });
+
+  it("writes the full wallet address to the clipboard when the copy button is activated", () => {
+    const writeText = jest.fn();
+    Object.assign(navigator, { clipboard: { writeText } });
+    mockUseWallet.mockReturnValue(connected());
+
+    render(<AccountPanel />);
+    fireEvent.click(screen.getByRole("button", { name: /copy address/i }));
+
+    expect(writeText).toHaveBeenCalledWith("0x1234567890abcdef1234567890abcdef12345678");
   });
 
   it("updates from prompt to address when the wallet connects without a reload", () => {
