@@ -1,5 +1,7 @@
 import { execSync } from "child_process";
+import { existsSync } from "fs";
 import path from "path";
+import { rimrafSync } from "rimraf";
 import type { SkillRunner } from "./runner";
 import { CursorRunner } from "./runners/cursor-runner";
 import { ClaudeCliRunner } from "./runners/claude-runner";
@@ -7,6 +9,20 @@ import { CodexRunner } from "./runners/codex-runner";
 
 const REPO_ROOT = process.env.REPO_ROOT!;
 const SKILL_PATH = path.join(REPO_ROOT, "skills/build-code/SKILL.md");
+
+/**
+ * Reliably delete a directory tree (including stubborn npm node_modules on macOS).
+ * `rm -rf` often fails with "Directory not empty"; rimraf retries through that.
+ */
+function forceRemoveDir(dir: string): void {
+  if (!existsSync(dir)) return;
+  try {
+    execSync(`chmod -R u+w "${dir}"`, { stdio: "pipe" });
+  } catch {
+    /* best-effort — some paths may already be gone mid-delete */
+  }
+  rimrafSync(dir, { maxRetries: 15, retryDelay: 200 });
+}
 
 export interface Issue {
   number: number;
@@ -82,12 +98,7 @@ export async function createWorktree(issue: Issue): Promise<string> {
     execSync(`git worktree remove --force ${worktreePath}`, { cwd: REPO_ROOT, stdio: "pipe" });
   } catch { /* worktree not registered */ }
 
-  // Remove the directory if it still exists on disk (e.g. after a forced cleanup).
-  try {
-    execSync(`rm -rf ${worktreePath}`, { cwd: REPO_ROOT, stdio: "pipe" });
-  } catch { /* directory did not exist */ }
-
-  // Prune stale worktree entries before adding a new one.
+  forceRemoveDir(worktreePath);
   execSync("git worktree prune", { cwd: REPO_ROOT });
 
   try {
@@ -160,5 +171,16 @@ export async function commentOnIssue(
 }
 
 export async function removeWorktree(worktreePath: string): Promise<void> {
-  execSync(`git worktree remove --force ${worktreePath}`, { cwd: REPO_ROOT });
+  // Unregister the worktree if git still knows about it (may already be gone on retry).
+  try {
+    execSync(`git worktree remove --force ${worktreePath}`, {
+      cwd: REPO_ROOT,
+      stdio: "pipe",
+    });
+  } catch {
+    /* not registered, or remove left files behind (e.g. node_modules from npm ci) */
+  }
+
+  forceRemoveDir(worktreePath);
+  execSync("git worktree prune", { cwd: REPO_ROOT });
 }
