@@ -1,4 +1,4 @@
-import type { Issue } from "./activities.js";
+import type { Issue } from "./activities";
 
 export interface RunSkillParams {
   skillPath: string;

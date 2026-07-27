@@ -9,7 +9,8 @@ Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP s
 | `apps/web`    | Next.js investor portal (App Router, Tailwind, wagmi, viem) |
 | `apps/mcp`    | MCP server — AI agent tools + resources for smart contracts |
 | `apps/events` | Live feeds: `ingest/` (upstream → Redis), `gateway/` (Redis → browser), `types/` |
-| `workflows`    | Temporal worker — scans ticket tracker for `ready-for-agent` issues and runs `build-code` via Cursor SDK in isolated git worktrees |
+| `workflows`   | Temporal worker — scans `ready-for-agent` issues, resolves `Blocked by` / `Blocks` dependency edges, and runs `build-code` in topological order (parallel where possible) in isolated git worktrees |
+| `skills/`     | Agent skills — source of truth. Run `npm run skills:sync` after adding a skill |
 | `libs/contracts` | Solidity smart contracts (Hardhat): AssetVault, AssetShares, OracleRouter, AssetUserAllowList |
 | `libs/abi`    | Compiled ABIs — import as `@brickbase/abi` |
 | `libs/shared-config` | Chain config, RPC helpers — import as `@brickbase/shared-config` |
@@ -41,9 +42,15 @@ Available skills:
 | `tdd`                           | TDD loop — red → green → refactor                                                                               |
 Skill files live at `skills/<name>/SKILL.md`.
 
-Codex reads skills from `.codex/skills/` (pointer files that reference `skills/`).
+`npm run skills:sync` syncs pointers from `skills/` to three targets:
 
-Run `npm run skills:sync` after adding a new skill to `skills/` to register it in `.codex/skills/`.
+| Target | Pointer type | Consumer |
+|---|---|---|
+| `.claude/skills/` | Relative | Claude CLI (repo-local) |
+| `.codex/skills/` | Relative | Codex (repo-local) |
+| `~/.claude/skills/` | Absolute | Claude CLI (global) |
+
+Run it after adding or amending a skill.
 
 ## Coding standards
 

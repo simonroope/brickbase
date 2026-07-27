@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { Agent } from "@cursor/sdk";
-import type { SkillRunner, RunSkillParams } from "../runner.js";
-import { issueContext } from "../runner.js";
+import type { SkillRunner, RunSkillParams } from "../runner";
+import { issueContext } from "../runner";
 
 export class CursorRunner implements SkillRunner {
   async run({ skillPath, issue, worktreePath }: RunSkillParams): Promise<void> {

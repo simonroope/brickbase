@@ -35,7 +35,12 @@ Break the plan into **tracer bullet** tickets.
 
 </vertical-slice-rules>
 
-Give each ticket its **blocking edges** — the other tickets that must complete before it can start. A ticket with no blockers can start immediately.
+Give each ticket its **dependency edges** — two directions:
+
+- **Blocked by**: tickets that must complete before this one can start (prerequisites).
+- **Blocks**: tickets that cannot start until this one completes (dependants).
+
+A ticket with no blockers can start immediately. A ticket with no dependants is a leaf — it unblocks nothing downstream.
 
 **Wide refactors are the exception to vertical slicing.** A **wide refactor** is one mechanical change — rename a column, retype a shared symbol — whose **blast radius** fans across the whole codebase, so a single edit breaks thousands of call sites at once and no vertical slice can land green. Don't force it into a tracer bullet; sequence it as **expand–contract**. First expand: add the new form beside the old so nothing breaks. Then migrate the call sites over in batches sized by blast radius (per package, per directory), each batch its own ticket blocked by the expand, keeping CI green batch to batch because the old form still exists. Finally contract: delete the old form once no caller remains, in a ticket blocked by every migrate batch. When even the batches can't stay green alone, keep the sequence but let them share an integration branch that all block a final integrate-and-verify ticket — green is promised only there.
 
@@ -45,12 +50,13 @@ Present the proposed breakdown as a numbered list. For each slice, show:
 
 - **Title**: short descriptive name
 - **Blocked by**: which other slices (if any) must complete first
+- **Blocks**: which other slices (if any) cannot start until this one is done
 - **User stories covered**: which user stories this addresses (if the source material has them)
 
 Ask the user:
 
 - Does the granularity feel right? (too coarse / too fine)
-- Are the dependency relationships correct?
+- Are the dependency relationships correct? (both blockers and dependants)
 - Should any slices be merged or split further?
 
 Iterate until the user approves the breakdown.
@@ -61,8 +67,8 @@ Write acceptance criteria as BDD scenarios (Given/When/Then). Each scenario shou
 
 Publish the approved tickets. **How** is in `AGENTS.md` (Ticket tracker section) — the tickets are the same either way, only the shape of the blocking edges changes:
 
-- **Local files** → write one file per ticket under `.scratch/<feature-slug>/tickets/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below — one ticket per file, never a single combined file.
-- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Apply the `ready-for-agent` triage label unless instructed otherwise — the tickets are agent-grabbable by construction.
+- **Local files** → write one file per ticket under `.scratch/<feature-slug>/tickets/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" and "Blocks" fields list the numbers/titles of its dependencies and dependants. Use the per-ticket file template below — one ticket per file, never a single combined file.
+- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise populate both "Blocked by" and "Blocks" with the relevant issue numbers. Apply the `ready-for-agent` triage label unless instructed otherwise — the tickets are agent-grabbable by construction.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 
@@ -75,6 +81,8 @@ Do NOT close or modify any parent ticket.
 **What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective — not a layer-by-layer implementation list.
 
 **Blocked by:** the numbers/titles of the tickets that gate this one, or "None — can start immediately".
+
+**Blocks:** the numbers/titles of the tickets that cannot start until this one completes, or "None — leaf ticket".
 
 **Status:** ready-for-agent
 
@@ -110,7 +118,11 @@ Add further scenarios for edge cases, error paths, and negative cases.
 
 ## Blocked by
 
-- A reference to the blocking ticket, or "None - can start immediately".
+- A reference to each blocking ticket (prerequisite), or "None — can start immediately".
+
+## Blocks
+
+- A reference to each dependent ticket (downstream), or "None — leaf ticket".
 
 </ticket-template>
 

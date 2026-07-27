@@ -2,8 +2,8 @@ import { execSync } from "child_process";
 import { readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
-import type { SkillRunner, RunSkillParams } from "../runner.js";
-import { issueContext } from "../runner.js";
+import type { SkillRunner, RunSkillParams } from "../runner";
+import { issueContext } from "../runner";
 
 export class ClaudeCliRunner implements SkillRunner {
   async run({ skillPath, issue, worktreePath }: RunSkillParams): Promise<void> {

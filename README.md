@@ -11,13 +11,14 @@ Development is supported by **agent skills** — structured instruction files fo
 
 | Path                 | Description                                                      |
 | -------------------- | ---------------------------------------------------------------- |
-| `apps/events`  | Events: live feeds (`ingest`, `gateway`, `types`)          |
+| `apps/events`        | Events: live feeds (`ingest`, `gateway`, `types`)                |
 | `apps/mcp`           | MCP server for AI/automation (smart contracts, tools, resources) |
 | `apps/web`           | Next.js web app (display & trade properties)                     |
 | `libs/contracts`     | Solidity smart contracts (Hardhat)                               |
 | `libs/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
 | `libs/shared-config` | Chain config, env                                                |
-| `workflows`    | Temporal worker — automated `build-code` from `ready-for-agent` issues |
+| `skills/`            | Agent skills — source of truth (`skills/<name>/SKILL.md`)        |
+| `workflows`          | Temporal worker — automated `build-code` from `ready-for-agent` issues, respecting ticket dependencies |
 
 
 ## Contracts
@@ -256,27 +257,68 @@ npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts
 
 ## Agent skills
 
-Skills live in `.claude/skills/` and are available to Claude Code, Codex and Cursor. Each skill is a self-contained instruction file invoked by name.
+Skills live in `skills/` (source of truth) and are available to Claude Code and Codex. Each skill is a self-contained instruction file invoked by name.
 
 Tickets are tracked in GitHub Issues (`gh` CLI). Ticket tracker config is in `docs/agents/ticket-tracker.md`. Label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) is in `AGENTS.md` under the Ticket tracker section.
+
+Each ticket's body must include `## Blocked by` and `## Blocks` sections (as `#N` references) so the Temporal workflow can resolve the dependency graph and run tickets in the correct order, parallelising where possible.
 
 | Skill                           | Claude Code                       | Codex                             | Description |
 |---------------------------------|-----------------------------------|-----------------------------------|-------------|
 | `build-code`                    | `/build-code`                     | `$build-code`                     | Implement a spec or set of tickets using TDD, run type-checking and tests, then self-review with `code-review` |
 | `code-review`                   | `/code-review`                    | `$code-review`                    | Review changes since a fixed point against coding standards and the originating ticket/PRD |
 | `create-prd`                    | `/create-prd`                     | `$create-prd`                     | Synthesise conversation into a PRD |
-| `create-tickets`                | `/create-tickets`                 | `$create-tickets`                 | Break a plan into GitHub issues with BDD acceptance criteria |
+| `create-tickets`                | `/create-tickets`                 | `$create-tickets`                 | Break a plan into GitHub issues with BDD acceptance criteria, blocked-by and blocks edges |
 | `model-domain`                  | `/model-domain`                   | `$model-domain`                   | Build and maintain `CONTEXT.md` and ADRs |
 | `elicit`                        | `/elicit`                         | `$elicit`                         | Interview to sharpen a design or plan |
 | `elicit-requirements`           | `/elicit-requirements`            | `$elicit-requirements`            | Requirements elicitation using the domain model |
 | `tdd`                           | `/tdd`                            | `$tdd`                            | TDD loop — red → green → refactor |
-Add new skills to `.claude/skills/<name>/SKILL.md`, then run:
+
+Add new skills to `skills/<name>/SKILL.md`, then run:
 
 ```bash
 npm run skills:sync
 ```
 
-This registers the skill in `.codex/skills/` and `~/.codex/skills/` so both agents can invoke it.
+This syncs pointer files to `.claude/skills/`, `.codex/skills/`, and `~/.claude/skills/` so all agents can invoke the skill.
+
+## Workflows
+
+The `workflows/` directory contains a **Temporal worker** that automates the `build-code` skill for tickets labelled `ready-for-agent`.
+
+**Dependency-aware execution** — tickets declare their relationships in the issue body:
+
+```markdown
+## Blocked by
+- #12
+- #15
+
+## Blocks
+- #20
+```
+
+The worker builds a dependency graph from these fields and executes tickets in **topological order** — independent tickets run in parallel; dependent tickets wait for their blockers to complete (Kahn's algorithm / BFS-style tiers). A circular dependency throws immediately with the stuck issue numbers.
+
+**Running locally:**
+
+```bash
+# 1. Start the Temporal dev server (keep running)
+npm run workflows:server
+
+# 2. Start the worker (keep running)
+npm run workflows:start
+
+# 3. Trigger a scan of ready-for-agent tickets
+npm run workflows:trigger
+```
+
+**Runner selection** — set `SKILL_RUNNER` in `.env` to choose the agent CLI:
+
+| `SKILL_RUNNER` | CLI used | Key required |
+|---|---|---|
+| `claude` (default) | Claude CLI | `ANTHROPIC_API_KEY` |
+| `cursor` | Cursor SDK | `CURSOR_API_KEY` |
+| `codex` | Codex CLI | `OPENAI_API_KEY` |
 
 ## ToDo
 
