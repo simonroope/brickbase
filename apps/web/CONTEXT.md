@@ -37,6 +37,15 @@ _Avoid_: portfolio, position
 **USDC**:
 The 6-decimal ERC-20 settlement currency; approved to AssetShares before a purchase.
 
+## Account
+
+**Account**:
+The connected user's identity in the portal, surfaced on the `/account` page. Scoped to the wallet address only — it deliberately excludes balance, holdings, allowlist status, and chain info. "Your balance" is a per-asset concept, not part of the Account view.
+_Avoid_: profile, portfolio, dashboard
+
+**AccountPanel**:
+The component rendering the Account page body: the full connected wallet address in monospace, or a "Connect your wallet to view your account" prompt with a connect action when no wallet is connected.
+
 ## Live feed (display-only)
 
 **Live feed**:
