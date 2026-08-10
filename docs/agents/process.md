@@ -23,7 +23,7 @@ Each step is a prerequisite for the next.
 
 Write a failing test before writing implementation code. The test is a proof that the spec has been understood — it forces the spec to be concrete before the implementation is written. A failing test that does not yet have a corresponding implementation is the only valid starting point for a cycle.
 
-See the `tdd` skill (`.claude/skills/tdd/SKILL.md`) for the mechanics of the red → green loop and seam selection.
+See the `tdd` skill (`skills/tdd/SKILL.md`) for the mechanics of the red → green loop and seam selection.
 
 ---
 

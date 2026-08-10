@@ -110,8 +110,8 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 - Test files: `*.test.ts` / `*.test.tsx`.
 - Contract tests: `*.t.ts` under `libs/contracts/tests/unit/`.
 - Integration / E2E: Cucumber + Playwright under `apps/web/tests/`.
-- See `.claude/skills/tdd/tests.md` for good/bad test patterns.
-- See `.claude/skills/tdd/mocking.md` for mocking rules.
+- See `skills/tdd/tests.md` for good/bad test patterns.
+- See `skills/tdd/mocking.md` for mocking rules.
 - No test should assert on implementation details (internal call counts, storage slots, private method state).
 - Expected values in assertions must be independent literals — never recompute them the same way the code does.
 
