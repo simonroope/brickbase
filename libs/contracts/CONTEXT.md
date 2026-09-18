@@ -5,11 +5,11 @@ The on-chain core of Brickbase: Solidity contracts (Hardhat) that tokenise real-
 ## Contracts
 
 **AssetVault**:
-The ERC-721 registry of tokenised assets. Each vaulted asset is one NFT whose record carries status, valuations, and a metadata URI. Implements the EIP-7943 non-fungible compliance hooks.
+The ERC-721 registry of tokenised assets. Each vaulted asset is one NFT whose record carries status, valuations, and a metadata URI. Implements the ERC-7943 non-fungible compliance hooks.
 _Avoid_: property contract, NFT contract, token
 
 **AssetShares**:
-The ERC-1155 contract that issues fungible fractional ownership shares per asset, keyed by `assetId`. Purchases and trades are settled in USDC. Implements the EIP-7943 multi-token compliance hooks.
+The ERC-1155 contract that issues fungible fractional ownership shares per asset, keyed by `assetId`. Purchases and trades are settled in USDC. Implements the ERC-7943 multi-token compliance hooks.
 _Avoid_: share token, fractional NFT, ERC-20 shares
 
 **AssetUserAllowList**:
@@ -80,6 +80,6 @@ _Avoid_: authorized user, admin
 
 ## Compliance
 
-**EIP-7943 (uRWA) hooks**:
-The regulated-RWA compliance interface implemented by AssetVault and AssetShares: `isUserAllowed`, `canTransact`, `canTransfer`, freeze inspection, and `forcedTransfer`.
-_Avoid_: ERC-7943 (spec is an EIP), compliance interface (unqualified)
+**ERC-7943 (uRWA) hooks**:
+The regulated-RWA compliance interface implemented by AssetVault and AssetShares: `canSend`, `canReceive`, `canTransfer`, `getFrozenTokens`, `setFrozenTokens`, and `forcedTransfer`.
+_Avoid_: EIP-7943 (official name is ERC-7943), compliance interface (unqualified)

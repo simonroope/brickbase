@@ -307,7 +307,7 @@ Solhint enforces Solidity style: explicit visibility on all state variables and 
 
 ### Duplication detection
 
-Duplicated logic is a bug waiting to diverge. Before adding a new utility function, search `libs/` for an existing one. Before adding a new hook, check `apps/web/src/hooks/`. Before adding a new contract helper, check `libs/contracts/contracts/`.
+Duplicated logic is a bug waiting to diverge. Before adding a new utility function, search `libs/` for an existing one. Before adding a new hook, check `apps/web/src/hooks/`. Before adding a new contract helper, check `libs/contracts/`.
 
 If duplication is detected during review, it must be extracted before the PR merges — not deferred to a follow-up. The rule: two copies is one too many.
 

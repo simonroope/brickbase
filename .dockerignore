@@ -14,5 +14,5 @@ infra/production/terraform.tfvars
 infra/production/.env.production
 test-results
 apps/mcp/test-results
-libs/contracts/cache
+libs/cache
 libs/contracts/typechain-types

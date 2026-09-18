@@ -9,10 +9,10 @@
       "options": {
         "commands": [
           "npx hardhat compile",
-          "cp artifacts/contracts/core/AssetVault.sol/AssetVault.json ../../libs/abi/src/generated/AssetVault.json",
-          "cp artifacts/contracts/core/AssetShares.sol/AssetShares.json ../../libs/abi/src/generated/AssetShares.json",
-          "cp artifacts/contracts/periphery/OracleRouter.sol/OracleRouter.json ../../libs/abi/src/generated/OracleRouter.json",
-          "cp artifacts/contracts/core/AssetUserAllowList.sol/AssetUserAllowList.json ../../libs/abi/src/generated/AssetUserAllowList.json"
+          "cp ../artifacts/core/AssetVault.sol/AssetVault.json ../abi/src/generated/AssetVault.json",
+          "cp ../artifacts/core/AssetShares.sol/AssetShares.json ../abi/src/generated/AssetShares.json",
+          "cp ../artifacts/periphery/OracleRouter.sol/OracleRouter.json ../abi/src/generated/OracleRouter.json",
+          "cp ../artifacts/core/AssetUserAllowList.sol/AssetUserAllowList.json ../abi/src/generated/AssetUserAllowList.json"
         ],
         "cwd": "libs/contracts",
         "parallel": false
@@ -36,21 +36,21 @@
     "deploy:localhost": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat run scripts/deploy.ts --network localhost",
+        "command": "npx hardhat run ../scripts/deploy.ts --network localhost",
         "cwd": "libs/contracts"
       }
     },
     "seed-users": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat run scripts/seed-users.ts --network localhost",
+        "command": "npx hardhat run ../scripts/seed-users.ts --network localhost",
         "cwd": "libs/contracts"
       }
     },
     "seed-assets": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat run scripts/seed-assets.ts --network localhost",
+        "command": "npx hardhat run ../scripts/seed-assets.ts --network localhost",
         "cwd": "libs/contracts"
       }
     }

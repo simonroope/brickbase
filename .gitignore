@@ -8,7 +8,7 @@ dist
 .DS_Store
 
 # Hardhat
-libs/contracts/cache
+libs/cache
 libs/contracts/typechain-types
 
 # Build artifacts
