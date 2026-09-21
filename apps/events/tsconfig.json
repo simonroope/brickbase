@@ -7,9 +7,9 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@brickbase/events-types": ["./types/index.ts"]
+      "@brickbase/events-types": ["./types/index.ts"],
+      "@brickbase/chains": ["../../libs/chains/index.ts"]
     }
   },
   "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]

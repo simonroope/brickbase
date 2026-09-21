@@ -22,7 +22,7 @@ function loadConfig(networkName: string): DeployConfig {
   // Env vars take precedence over the JSON file — set them in CI to avoid
   // committing sensitive addresses. All DEPLOY_* vars are optional; any
   // field not overridden falls back to the JSON file value.
-  const configPath = path.join(__dirname, "..", "deployments", `${networkName}.json`);
+  const configPath = path.join(__dirname, "../..", "deployments", `${networkName}.json`);
 
   const base: DeployConfig = fs.existsSync(configPath)
     ? (JSON.parse(fs.readFileSync(configPath, "utf8")) as DeployConfig)
@@ -208,7 +208,7 @@ async function main() {
   console.log("✓ Pauser set for AssetShares:", pauserAddress);
 
   // Persist deployment addresses for seed scripts
-  const addressesPath = path.join(__dirname, "..", "deployments", `${networkName}-addresses.json`);
+  const addressesPath = path.join(__dirname, "../..", "deployments", `${networkName}-addresses.json`);
   fs.writeFileSync(
     addressesPath,
     JSON.stringify(

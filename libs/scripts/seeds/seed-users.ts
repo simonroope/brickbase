@@ -20,8 +20,8 @@ type DeployConfig = {
 
 async function main() {
   const networkName = hre.network.name;
-  const addressesPath = path.join(__dirname, "..", "deployments", `${networkName}-addresses.json`);
-  const deployConfigPath = path.join(__dirname, "..", "deployments", `${networkName}.json`);
+  const addressesPath = path.join(__dirname, "../..", "deployments", `${networkName}-addresses.json`);
+  const deployConfigPath = path.join(__dirname, "../..", "deployments", `${networkName}.json`);
 
   if (!fs.existsSync(addressesPath)) {
     throw new Error(

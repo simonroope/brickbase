@@ -24,12 +24,10 @@ import {
   oracleRouterAbi,
   assetUserAllowListAbi,
 } from "../../../libs/abi/src/index.js";
+import { appendProjectId } from "@brickbase/chains";
 
 const chainId = parseInt(process.env.CHAIN_ID || "31337", 10);
-const _rpcBase = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545";
-const rpcUrl = process.env.INFURA_PROJECT_ID
-  ? `${_rpcBase}${process.env.INFURA_PROJECT_ID}`
-  : _rpcBase;
+const rpcUrl = appendProjectId(process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545");
 
 const localhost = defineChain({
   id: 31337,

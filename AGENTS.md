@@ -13,7 +13,7 @@ Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP s
 | `skills/`     | Agent skills — source of truth. Run `npm run skills:sync` after adding a skill |
 | `libs/contracts` | Solidity smart contracts (Hardhat): AssetVault, AssetShares, OracleRouter, AssetUserAllowList |
 | `libs/abi`    | Compiled ABIs — import as `@brickbase/abi` |
-| `libs/shared-config` | Chain config, RPC helpers — import as `@brickbase/shared-config` |
+| `libs/chains` | Chain config, RPC helpers — import as `@brickbase/chains` |
 
 ## Conventions
 

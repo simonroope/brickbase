@@ -1,6 +1,6 @@
 /// <reference types="node" />
 /**
- * @brickbase/shared-config - Supported chains and RPC URL construction
+ * @brickbase/chains - Supported chains and RPC URL construction
  */
 
 export const SUPPORTED_CHAIN_IDS = [1, 11155111, 8453, 84532] as const;

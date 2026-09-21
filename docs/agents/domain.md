@@ -2,7 +2,7 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/events`, `apps/mcp`, `apps/web`) and `libs/*` (e.g. `libs/abi`, `libs/contracts`, `libs/shared-config`, `libs/test-seed`).
+This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/events`, `apps/mcp`, `apps/web`) and `libs/*` (e.g. `libs/abi`, `libs/contracts`, `libs/chains`, `libs/tests/seed`).
 
 ## Before exploring, read these
 
@@ -37,8 +37,9 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
     │   └── docs/adr/
     ├── shared-config/
     │   └── CONTEXT.md
-    └── test-seed/
-        └── CONTEXT.md
+    └── tests/
+        └── seed/
+            └── CONTEXT.md
 ```
 
 ## Use the glossary's vocabulary

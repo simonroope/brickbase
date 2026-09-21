@@ -28,7 +28,7 @@
   },
   "implicitDependencies": [
     "abi",
-    "shared-config"
+    "chains"
   ],
   "tags": [
     "scope:mcp"

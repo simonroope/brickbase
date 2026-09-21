@@ -51,7 +51,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 - Use tsconfig path aliases, never relative `../../` traversals across package boundaries.
   - `@brickbase/abi` — contract ABIs in `apps/web` and `apps/mcp`
   - `@brickbase/events-types` — shared event types
-  - `@brickbase/shared-config` — chain config and RPC helpers
+  - `@brickbase/chains` — chain config and RPC helpers
   - `@/*` — within `apps/web/src`
 - No per-lib `package.json` unless the lib is published to a registry.
 

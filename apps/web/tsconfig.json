@@ -33,6 +33,9 @@
       "@brickbase/abi": [
         "../../libs/abi/src/index.ts"
       ],
+      "@brickbase/chains": [
+        "../../libs/chains/index.ts"
+      ],
       "@brickbase/events-types": [
         "../events/types/index.ts"
       ],

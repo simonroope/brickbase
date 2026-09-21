@@ -1,22 +1,17 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { appendProjectId } from "@brickbase/chains";
 
 const monorepoRoot = path.resolve(__dirname, "../..");
-
-/** Append INFURA_PROJECT_ID to the base RPC URL — same logic as shared-config. */
-function buildRpcUrl(base: string): string {
-  const projectId = process.env.INFURA_PROJECT_ID ?? "";
-  return projectId ? `${base}${projectId}` : base;
-}
 
 const nextConfig: NextConfig = {
   output: "standalone",
   // Expose canonical env var names to the browser bundle at build time.
-  // ETHEREUM_RPC_URL is always the base URL; INFURA_PROJECT_ID is always appended here.
+  // ETHEREUM_RPC_URL is the base URL; INFURA_PROJECT_ID appended via shared-config.
   env: {
     APP_URL: process.env.APP_URL ?? "",
     CHAIN_ID: process.env.CHAIN_ID ?? "",
-    ETHEREUM_RPC_URL: buildRpcUrl(process.env.ETHEREUM_RPC_URL ?? ""),
+    ETHEREUM_RPC_URL: appendProjectId(process.env.ETHEREUM_RPC_URL ?? ""),
     ASSET_VAULT_ADDRESS: process.env.ASSET_VAULT_ADDRESS ?? "",
     ASSET_SHARES_ADDRESS: process.env.ASSET_SHARES_ADDRESS ?? "",
     ORACLE_ROUTER_ADDRESS: process.env.ORACLE_ROUTER_ADDRESS ?? "",
@@ -42,6 +37,7 @@ const nextConfig: NextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@brickbase/abi": path.resolve(root, "libs/abi/src/index.ts"),
+      "@brickbase/chains": path.resolve(root, "libs/chains/index.ts"),
       "@brickbase/events-types": path.resolve(
         root,
         "apps/events/types/index.ts"

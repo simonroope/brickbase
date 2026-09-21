@@ -5,9 +5,8 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "baseUrl": ".",
     "paths": {
-      "@brickbase/abi": ["../abi/src/index.ts"]
+      "@brickbase/abi": ["../../abi/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

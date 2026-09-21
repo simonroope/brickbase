@@ -1,6 +1,6 @@
-# Shared Config
+# Chains
 
-Supported chains and RPC URL construction, imported as `@brickbase/shared-config`. Consumed by Web, MCP, and Events to resolve which chain and RPC endpoint to use.
+Supported chains and RPC URL construction, imported as `@brickbase/chains`. Consumed by Web, MCP, and Events to resolve which chain and RPC endpoint to use.
 
 ## Language
 

@@ -1,5 +1,6 @@
 import { config as loadEnv } from "dotenv";
 import { resolve } from "node:path";
+import { appendProjectId } from "@brickbase/chains";
 
 loadEnv({ path: resolve(process.cwd(), "../../.env") });
 loadEnv();
@@ -7,7 +8,7 @@ loadEnv();
 export const ingestConfig = {
   redisUrl: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
   infuraProjectId: process.env.INFURA_PROJECT_ID ?? "",
-  ethereumRpcUrl: process.env.ETHEREUM_RPC_URL ?? "",
+  ethereumRpcUrl: appendProjectId(process.env.ETHEREUM_RPC_URL ?? ""),
   chainId: Number(process.env.CHAIN_ID ?? "11155111"),
   coinbaseWsUrl:
     process.env.COINBASE_WS_URL ?? "wss://advanced-trade-ws.coinbase.com",

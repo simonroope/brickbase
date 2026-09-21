@@ -78,21 +78,21 @@
     "deploy:localhost": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat run ../scripts/deploy.ts --network localhost",
+        "command": "npx hardhat run ../scripts/deploy/deploy.ts --network localhost",
         "cwd": "libs/contracts"
       }
     },
     "seed-users": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat run ../scripts/seed-users.ts --network localhost",
+        "command": "npx hardhat run ../scripts/seeds/seed-users.ts --network localhost",
         "cwd": "libs/contracts"
       }
     },
     "seed-assets": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat run ../scripts/seed-assets.ts --network localhost",
+        "command": "npx hardhat run ../scripts/seeds/seed-assets.ts --network localhost",
         "cwd": "libs/contracts"
       }
     }
