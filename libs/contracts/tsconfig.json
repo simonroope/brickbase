@@ -6,9 +6,9 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "strict": true,
-    "types": ["hardhat", "node"]
+    "types": ["hardhat", "node", "@nomicfoundation/hardhat-chai-matchers"]
   },
-  "include": ["./hardhat.config.ts", "./scripts", "./tests", "./typechain-types"],
-  "exclude": ["node_modules", "./cache", "./artifacts"]
+  "include": ["./hardhat.config.ts", "../scripts", "../tests", "./typechain-types"],
+  "exclude": ["node_modules", "../cache", "../artifacts"]
 }
 

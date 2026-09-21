@@ -26,6 +26,48 @@
         "cwd": "libs/contracts"
       }
     },
+    "test:unit": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test ../tests/unit/*.t.ts",
+        "cwd": "libs/contracts"
+      }
+    },
+    "test:integration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test ../tests/integration/*.t.ts",
+        "cwd": "libs/contracts"
+      }
+    },
+    "test:gas": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test ../tests/gas/*.t.ts",
+        "cwd": "libs/contracts"
+      }
+    },
+    "test:security": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test ../tests/security/*.t.ts",
+        "cwd": "libs/contracts"
+      }
+    },
+    "test:invariant": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test ../tests/invariant/*.t.ts",
+        "cwd": "libs/contracts"
+      }
+    },
+    "test:upgrade": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat test ../tests/upgrade/*.t.ts",
+        "cwd": "libs/contracts"
+      }
+    },
     "node": {
       "executor": "nx:run-commands",
       "options": {
