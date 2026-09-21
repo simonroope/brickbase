@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY libs/abi libs/abi
-COPY libs/shared-config libs/shared-config
+COPY libs/chains libs/chains
 COPY apps/mcp apps/mcp
 WORKDIR /app/apps/mcp
 ENV NODE_ENV=production
