@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "forge-std/StdInvariant.sol";
-import "@contracts/core/AssetVault.sol";
-import "@contracts/core/AssetShares.sol";
-import "@contracts/core/AssetUserAllowList.sol";
-import "@contracts/mocks/MockERC20.sol";
+import "../../lib/forge-std/src/Test.sol";
+import "../../contracts/core/AssetVault.sol";
+import "../../contracts/core/AssetShares.sol";
+import "../../contracts/core/AssetUserAllowList.sol";
+import "../../contracts/mocks/MockERC20.sol";
 
 /**
  * @title ComplianceHandler
@@ -135,7 +134,7 @@ contract ComplianceHandler is Test {
  * @title ComplianceInvariantTest
  * @notice Foundry invariant tests for ERC-7943 compliance across contracts
  */
-contract ComplianceInvariantTest is StdInvariant, Test {
+contract ComplianceInvariantTest is Test {
     AssetVault public assetVault;
     AssetShares public assetShares;
     AssetUserAllowList public allowList;
@@ -328,22 +327,22 @@ contract ComplianceInvariantTest is StdInvariant, Test {
         assertEq(address(assetShares.userAllowList()), address(allowList), "Shares wrong allowlist");
     }
 
-    /// @notice Allowed users with unfrozen assets can transact (when they own the asset)
+    /// @notice Allowed owners of minted, unfrozen assets can transact
     function invariant_allowedUsersCanTransactUnfrozen() public view {
         uint256[] memory assetIds = handler.getVaultedAssetIds();
 
         for (uint256 i = 0; i < assetIds.length; i++) {
-            // Skip frozen assets
             if (handler.assetFrozenStatus(assetIds[i])) continue;
 
-            // Check the owner (handler owns newly created assets)
-            address owner = assetVault.ownerOf(assetIds[i]);
-            if (handler.userAllowedStatus(owner)) {
-                assertTrue(
-                    assetVault.canTransact(owner, assetIds[i]),
-                    "Allowed owner cannot transact unfrozen"
-                );
-            }
+            // createAsset records metadata only; skip IDs that have not been minted
+            try assetVault.ownerOf(assetIds[i]) returns (address owner) {
+                if (handler.userAllowedStatus(owner)) {
+                    assertTrue(
+                        assetVault.canTransact(owner, assetIds[i]),
+                        "Allowed owner cannot transact unfrozen"
+                    );
+                }
+            } catch {}
         }
     }
 }

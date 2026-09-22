@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "forge-std/StdInvariant.sol";
-import "@contracts/core/AssetVault.sol";
-import "@contracts/core/AssetUserAllowList.sol";
+import "../../lib/forge-std/src/Test.sol";
+import "../../contracts/core/AssetVault.sol";
+import "../../contracts/core/AssetUserAllowList.sol";
 
 /**
  * @title AssetVaultHandler
@@ -103,7 +102,7 @@ contract AssetVaultHandler is Test {
  * @title AssetVaultInvariantTest
  * @notice Foundry invariant tests for AssetVault contract
  */
-contract AssetVaultInvariantTest is StdInvariant, Test {
+contract AssetVaultInvariantTest is Test {
     AssetVault public assetVault;
     AssetUserAllowList public allowList;
     AssetVaultHandler public handler;

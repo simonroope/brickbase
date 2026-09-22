@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "forge-std/StdInvariant.sol";
-import "@contracts/core/AssetShares.sol";
-import "@contracts/core/AssetUserAllowList.sol";
-import "@contracts/mocks/MockERC20.sol";
+import "../../lib/forge-std/src/Test.sol";
+import "../../contracts/core/AssetShares.sol";
+import "../../contracts/core/AssetUserAllowList.sol";
+import "../../contracts/mocks/MockERC20.sol";
 
 /**
  * @title AssetSharesHandler
@@ -70,6 +69,23 @@ contract AssetSharesHandler is Test {
         assetShares.updateSharePrice(assetId, newPrice);
     }
 
+    function purchaseShares(uint256 actorSeed, uint256 assetIdSeed, uint256 amount) external {
+        if (createdAssetIds.length == 0 || actors.length == 0) return;
+
+        address actor = actors[actorSeed % actors.length];
+        uint256 assetId = createdAssetIds[assetIdSeed % createdAssetIds.length];
+        (, uint256 available, uint256 sharePrice, , , ) = assetShares.shareInfo(assetId);
+        if (available == 0) return;
+
+        amount = bound(amount, 1, available);
+        uint256 totalCost = (amount * sharePrice) / (10 ** 18);
+
+        vm.startPrank(actor);
+        usdc.approve(address(assetShares), totalCost);
+        assetShares.purchaseAssetShares(assetId, amount);
+        vm.stopPrank();
+    }
+
     function getCreatedAssetIds() external view returns (uint256[] memory) {
         return createdAssetIds;
     }
@@ -83,7 +99,7 @@ contract AssetSharesHandler is Test {
  * @title AssetSharesInvariantTest
  * @notice Foundry invariant tests for AssetShares contract
  */
-contract AssetSharesInvariantTest is StdInvariant, Test {
+contract AssetSharesInvariantTest is Test {
     AssetShares public assetShares;
     AssetUserAllowList public allowList;
     MockERC20 public usdc;
@@ -171,14 +187,26 @@ contract AssetSharesInvariantTest is StdInvariant, Test {
         }
     }
 
-    /// @notice Contract should hold available shares
-    function invariant_contractHoldsAvailableShares() public view {
+    /// @notice Unsold shares are not escrowed; minted + available == total
+    function invariant_availablePlusMintedEqualsTotal() public view {
         uint256[] memory assetIds = handler.getCreatedAssetIds();
+        address[] memory actorList = handler.getActors();
+
         for (uint256 i = 0; i < assetIds.length; i++) {
             uint256 assetId = assetIds[i];
-            (, uint256 availableSupply, , , , ) = assetShares.shareInfo(assetId);
-            uint256 contractBalance = assetShares.balanceOf(address(assetShares), assetId);
-            assertEq(contractBalance, availableSupply, "Contract balance != available supply");
+            (uint256 totalSupply, uint256 availableSupply, , , , ) = assetShares.shareInfo(assetId);
+
+            assertEq(
+                assetShares.balanceOf(address(assetShares), assetId),
+                0,
+                "Contract must not hold escrowed shares"
+            );
+
+            uint256 minted;
+            for (uint256 j = 0; j < actorList.length; j++) {
+                minted += assetShares.balanceOf(actorList[j], assetId);
+            }
+            assertEq(minted + availableSupply, totalSupply, "Minted + available != total");
         }
     }
 }

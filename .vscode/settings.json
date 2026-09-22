@@ -1,3 +1,8 @@
 {
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "solidity.remappings": [
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+    "forge-std/=contracts/lib/forge-std/src/",
+    "@contracts/=contracts/contracts/"
+  ]
 }

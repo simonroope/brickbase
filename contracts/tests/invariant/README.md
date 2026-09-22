@@ -48,7 +48,7 @@ forge test --match-contract AssetSharesInvariantTest -vvv
 | `invariant_totalSupplyImmutable` | Total supply never increases |
 | `invariant_frozenBalanceLteBalance` | Frozen tokens ≤ user balance |
 | `invariant_sharePricePositive` | Share price always > 0 |
-| `invariant_contractHoldsAvailableShares` | Contract balance = available supply |
+| `invariant_availablePlusMintedEqualsTotal` | Minted + available = total; contract holds none |
 
 ### AssetVault (ERC-721)
 
