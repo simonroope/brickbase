@@ -11,9 +11,9 @@ Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP s
 | `apps/events` | Live feeds: `ingest/` (upstream → Redis), `gateway/` (Redis → browser), `types/` |
 | `workflows`   | Temporal worker — scans `ready-for-agent` issues, resolves `Blocked by` / `Blocks` dependency edges, and runs `build-code` in topological order (parallel where possible) in isolated git worktrees |
 | `skills/`     | Agent skills — source of truth. Run `npm run skills:sync` after adding a skill |
-| `libs/contracts` | Solidity smart contracts (Hardhat): AssetVault, AssetShares, OracleRouter, AssetUserAllowList |
-| `libs/abi`    | Compiled ABIs — import as `@brickbase/abi` |
-| `libs/chains` | Chain config, RPC helpers — import as `@brickbase/chains` |
+| `contracts/contracts` | Solidity smart contracts (Hardhat): AssetVault, AssetShares, OracleRouter, AssetUserAllowList |
+| `contracts/abi`    | Compiled ABIs — import as `@brickbase/abi` |
+| `contracts/chains` | Chain config, RPC helpers — import as `@brickbase/chains` |
 
 ## Conventions
 
@@ -78,4 +78,4 @@ Label vocabulary:
 
 ## Domain docs
 
-Multi-context (monorepo) — `CONTEXT-MAP.md` at the repo root points to per-context `CONTEXT.md` files under each `apps/*` and `libs/*`. See `docs/agents/domain.md`.
+Multi-context (monorepo) — `CONTEXT-MAP.md` at the repo root points to per-context `CONTEXT.md` files under each `apps/*` and `contracts/*`. See `docs/agents/domain.md`.

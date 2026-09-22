@@ -9,7 +9,7 @@
     "noEmit": true,
     "paths": {
       "@brickbase/events-types": ["./types/index.ts"],
-      "@brickbase/chains": ["../../libs/chains/index.ts"]
+      "@brickbase/chains": ["../../contracts/chains/index.ts"]
     }
   },
   "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]

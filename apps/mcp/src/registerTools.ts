@@ -19,7 +19,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const abiDir = resolve(__dirname, "../../../libs/abi/src/generated");
+const abiDir = resolve(__dirname, "../../../contracts/abi/src/generated");
 
 function readAbi(name: string): string {
   const p = resolve(abiDir, `${name}.json`);

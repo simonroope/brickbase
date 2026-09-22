@@ -38,12 +38,12 @@ Brickbase is a multi-context monorepo. `CONTEXT-MAP.md` at the repo root lists a
 
 ## Contexts
 
-- [Contracts](./libs/contracts/CONTEXT.md) — on-chain assets, shares, allowlist, oracle
+- [Contracts](./contracts/contracts/CONTEXT.md) — on-chain assets, shares, allowlist, oracle
 - [Web](./apps/web/CONTEXT.md) — investor portal: property display and share purchase UI
 - [MCP](./apps/mcp/CONTEXT.md) — AI agent tools and resources over the smart contracts
 - [Events](./apps/events/CONTEXT.md) — live market and chain data feeds pipeline
-- [ABI](./libs/abi/CONTEXT.md) — compiled ABI types and import conventions
-- [Shared Config](./libs/shared-config/CONTEXT.md) — chain IDs, RPC URL construction
+- [ABI](./contracts/abi/CONTEXT.md) — compiled ABI types and import conventions
+- [Shared Config](./contracts/chains/CONTEXT.md) — chain IDs, RPC URL construction
 
 ## Relationships
 

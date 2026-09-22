@@ -8,8 +8,15 @@ dist
 .DS_Store
 
 # Hardhat
-libs/cache
-libs/contracts/typechain-types
+contracts/cache
+contracts/contracts/typechain-types
+
+# Foundry
+contracts/cache-forge
+contracts/artifacts-forge
+contracts/contracts/out
+contracts/contracts/cache
+contracts/contracts/broadcast
 
 # Build artifacts
 *.tsbuildinfo

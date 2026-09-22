@@ -3,8 +3,8 @@ FROM node:24-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY libs/abi libs/abi
-COPY libs/chains libs/chains
+COPY contracts/abi contracts/abi
+COPY contracts/chains contracts/chains
 COPY apps/mcp apps/mcp
 WORKDIR /app/apps/mcp
 ENV NODE_ENV=production

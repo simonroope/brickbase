@@ -2,7 +2,7 @@
 
 **Status:** Draft — implementation specification  
 **Audience:** Developers generating this feature in the Brickbase monorepo  
-**Related:** `apps/web` (`OraclePrices`, `Header`), `libs/shared-config`, `libs/abi` (unchanged by live feeds)
+**Related:** `apps/web` (`OraclePrices`, `Header`), `contracts/chains`, `contracts/abi` (unchanged by live feeds)
 
 Use this document as the **single source of truth** to scaffold code. Follow the layout and conventions below exactly unless a later PRD revision says otherwise.
 
@@ -220,7 +220,7 @@ On each publish, ingest must `SET brickbase:live:last:<suffix>` where `<suffix>`
 |------|--------|
 | One npm package per app folder | `apps/events/package.json` only — **no** `package.json` under `ingest/`, `gateway/`, or `types/` |
 | One Nx project per app folder | `apps/events/project.json` with `name: "events"` — **no** separate `project.json` under `ingest/` or `gateway/` |
-| Shared types | Plain `.ts` files in `apps/events/types/` — **no** `src/` wrapper, **no** standalone lib under `libs/` |
+| Shared types | Plain `.ts` files in `apps/events/types/` — **no** `src/` wrapper, **no** standalone lib under `contracts/` |
 | Dependencies | All runtime deps (`redis`, `ws`, `zod`, `dotenv`) and dev deps (`tsx`, `typescript`, `@types/node`, `@types/ws`) in `apps/events/package.json` only — **not** in repo root `package.json` |
 | Import alias | `@brickbase/events-types` → `apps/events/types/index.ts` via `apps/events/tsconfig.json` paths; mirror in `apps/web/tsconfig.json` and `apps/web/next.config.ts` webpack alias (same pattern as `@brickbase/abi`) |
 
@@ -257,7 +257,7 @@ apps/events/
       config.ts
 ```
 
-Do **not** create: `libs/live-feed-types`, `apps/events/ingest/package.json`, `apps/events/gateway/project.json`, or `types/package.json`.
+Do **not** create: `contracts/live-feed-types`, `apps/events/ingest/package.json`, `apps/events/gateway/project.json`, or `types/package.json`.
 
 ### 7.3 `apps/events/package.json`
 
@@ -384,7 +384,7 @@ NEXT_PUBLIC_WS_LIVE_URL=ws://localhost:8081/ws/live
 ```yaml
 packages:
   - "apps/*"
-  - "libs/*"
+  - "contracts/*"
 ```
 
 `apps/events` is a direct child of `apps/` with its own `package.json`, so it is covered by `apps/*`. Do **not** add `apps/events/*` unless you introduce nested packages under `ingest/` or `gateway/`.

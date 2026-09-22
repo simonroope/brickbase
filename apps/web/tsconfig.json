@@ -31,10 +31,10 @@
         "./tests/*"
       ],
       "@brickbase/abi": [
-        "../../libs/abi/src/index.ts"
+        "../../contracts/abi/src/index.ts"
       ],
       "@brickbase/chains": [
-        "../../libs/chains/index.ts"
+        "../../contracts/chains/index.ts"
       ],
       "@brickbase/events-types": [
         "../events/types/index.ts"

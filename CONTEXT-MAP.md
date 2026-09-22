@@ -4,13 +4,13 @@ Brickbase is a multi-context monorepo for fractional real-estate RWA investing o
 
 ## Contexts
 
-- [Contracts](./libs/contracts/CONTEXT.md) — on-chain assets, fractional shares, allowlist, oracle
+- [Contracts](./contracts/contracts/CONTEXT.md) — on-chain assets, fractional shares, allowlist, oracle
 - [Web](./apps/web/CONTEXT.md) — investor portal: property display, share purchase, admin
 - [MCP](./apps/mcp/CONTEXT.md) — AI-agent tools and resources over the smart contracts
 - [Events](./apps/events/CONTEXT.md) — display-only live market and chain-head feeds pipeline
-- [ABI](./libs/abi/CONTEXT.md) — compiled ABI exports and import conventions
-- [Chains](./libs/chains/CONTEXT.md) — supported chains, RPC URL construction
-- [Test Seed](./libs/tests/seed/CONTEXT.md) — deterministic Hardhat test signers
+- [ABI](./contracts/abi/CONTEXT.md) — compiled ABI exports and import conventions
+- [Chains](./contracts/chains/CONTEXT.md) — supported chains, RPC URL construction
+- [Test Seed](./contracts/tests/seed/CONTEXT.md) — deterministic Hardhat test signers
 
 ## Relationships
 

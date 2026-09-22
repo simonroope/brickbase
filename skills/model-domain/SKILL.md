@@ -26,13 +26,13 @@ Brickbase is a **multi-context monorepo**. `CONTEXT-MAP.md` at the repo root poi
 │   └── events/
 │       ├── CONTEXT.md                    ← live feeds pipeline domain
 │       └── docs/adr/
-└── libs/
+└── contracts/
     ├── contracts/
     │   ├── CONTEXT.md                    ← smart contract domain (AssetVault, AssetShares, OracleRouter, AssetUserAllowList)
     │   └── docs/adr/
     ├── abi/
     │   └── CONTEXT.md                    ← ABI types and import conventions
-    └── shared-config/
+    └── chains/
         └── CONTEXT.md                    ← chain config, RPC URL conventions
 ```
 
@@ -45,7 +45,7 @@ Create files lazily — only when you have something to write. If no `CONTEXT.md
 Before doing anything else, scan for existing ADRs:
 
 - `docs/adr/` — system-wide decisions
-- `apps/*/docs/adr/` and `libs/*/docs/adr/` — context-scoped decisions
+- `apps/*/docs/adr/` and `contracts/*/docs/adr/` — context-scoped decisions
 
 These are architectural directions set by architects or prior decisions. Treat `accepted` ADRs as hard constraints — do not propose designs that contradict them. If a user request conflicts with an accepted ADR, surface the conflict immediately: "ADR-0003 says MCP never holds private keys, but what you're describing would require the MCP server to sign transactions — that contradicts the ADR. Do you want to revisit the ADR or change the approach?"
 

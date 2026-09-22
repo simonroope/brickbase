@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "apps/**"
-      - "libs/**"
+      - "contracts/**"
       - "infra/docker/**"
       - "package.json"
       - "package-lock.json"

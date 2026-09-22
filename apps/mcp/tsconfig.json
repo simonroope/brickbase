@@ -10,10 +10,10 @@
     "rootDir": "../..",
     "outDir": "./dist",
     "paths": {
-      "@brickbase/abi": ["../../libs/abi/src/index.ts"],
-      "@brickbase/chains": ["../../libs/chains/index.ts"]
+      "@brickbase/abi": ["../../contracts/abi/src/index.ts"],
+      "@brickbase/chains": ["../../contracts/chains/index.ts"]
     }
   },
-  "include": ["src/**/*", "../../libs/chains/**/*", "../../libs/abi/src/**/*"],
+  "include": ["src/**/*", "../../contracts/chains/**/*", "../../contracts/abi/src/**/*"],
   "exclude": ["node_modules"]
 }

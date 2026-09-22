@@ -23,7 +23,7 @@ import {
   assetSharesAbi,
   oracleRouterAbi,
   assetUserAllowListAbi,
-} from "../../../libs/abi/src/index.js";
+} from "../../../contracts/abi/src/index.js";
 import { appendProjectId } from "@brickbase/chains";
 
 const chainId = parseInt(process.env.CHAIN_ID || "31337", 10);

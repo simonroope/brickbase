@@ -14,16 +14,16 @@ Development is supported by **agent skills** — structured instruction files fo
 | `apps/events`        | Events: live feeds (`ingest`, `gateway`, `types`)                |
 | `apps/mcp`           | MCP server for AI/automation (smart contracts, tools, resources) |
 | `apps/web`           | Next.js web app (display & trade properties)                     |
-| `libs/contracts`     | Solidity smart contracts (Hardhat)                               |
-| `libs/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
-| `libs/shared-config` | Chain config, env                                                |
+| `contracts/contracts`     | Solidity smart contracts (Hardhat)                               |
+| `contracts/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
+| `contracts/chains`        | Chain config, env                                                |
 | `skills/`            | Agent skills — source of truth (`skills/<name>/SKILL.md`)        |
 | `workflows`          | Temporal worker — automated `build-code` from `ready-for-agent` issues, respecting ticket dependencies |
 
 
 ## Contracts
 
-Solidity in `libs/contracts/` (Hardhat): **AssetVault**, **AssetShares**, **AssetUserAllowList**, **OracleRouter**, plus mocks. Key Ethereum standards (EIPs):
+Solidity in `contracts/contracts/` (Hardhat): **AssetVault**, **AssetShares**, **AssetUserAllowList**, **OracleRouter**, plus mocks. Key Ethereum standards (EIPs):
 
 
 | EIP / ERC                                           | Name                                        | Usage in Brickbase                                                                                                                                                     |
@@ -48,18 +48,18 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 
 ### Install dependencies
 
-Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root** — apps with their own runtime deps declare a `package.json` (`apps/web`, `apps/events`). `apps/mcp` and `libs/abi`, `libs/shared-config`, and `libs/contracts` have no `package.json`; they use the root toolchain and Nx `project.json`.
+Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root** — apps with their own runtime deps declare a `package.json` (`apps/web`, `apps/events`). `apps/mcp` and `contracts/abi`, `contracts/chains`, and `contracts/contracts` have no `package.json`; they use the root toolchain and Nx `project.json`.
 
 
 | Location                 | `package.json` | What gets installed there                                                                                                           |
 | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Repo root**            | Yes            | Nx, Hardhat, OpenZeppelin/Chainlink for `libs/contracts`, TypeScript, `tsx`, ESLint, Cucumber, Playwright, and other shared tooling |
+| **Repo root**            | Yes            | Nx, Hardhat, OpenZeppelin/Chainlink for `contracts/contracts`, TypeScript, `tsx`, ESLint, Cucumber, Playwright, and other shared tooling |
 | `**apps/events`**  | Yes            | `redis`, `ws`, `zod`, `dotenv`, `tsx` (ingest + gateway only)                                                                       |
 | `**apps/mcp`**           | No             | MCP SDK, `tsx`, Playwright from **root**; Nx `project.json` only                                                                    |
 | `**apps/web`**           | Yes            | Next.js, React, wagmi, viem, Jest, Tailwind, web test stack                                                                         |
-| `**libs/contracts`**     | No             | Hardhat toolchain from **root**                                                                                                     |
-| `**libs/abi`**           | No             | None — ABIs are files; import via `@brickbase/abi` paths                                                                            |
-| `**libs/shared-config`** | No             | Chain config source; Nx project via `project.json` only (like `libs/abi`)                                                           |
+| `**contracts/contracts`**     | No             | Hardhat toolchain from **root**                                                                                                     |
+| `**contracts/abi`**           | No             | None — ABIs are files; import via `@brickbase/abi` paths                                                                            |
+| `**contracts/chains`**        | No             | Chain config source; Nx project via `project.json` only (like `contracts/abi`)                                                           |
 
 
 **npm (canonical — use this)** — run from the repo root:
@@ -80,7 +80,7 @@ cd apps/web && npm install
 
 ### Environment
 
-Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `ETHEREUM_RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `libs/abi` and are imported as `@brickbase/abi`.
+Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `ETHEREUM_RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `contracts/abi` and are imported as `@brickbase/abi`.
 
 ---
 
@@ -89,7 +89,7 @@ Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the 
 ```bash
 # Local chain (Terminal 1 — keep running; RPC http://127.0.0.1:8545, chain ID 31337)
 npx nx run contracts:node
-# Or: cd libs/contracts && npx hardhat node
+# Or: cd contracts && npx hardhat node
 
 # Compile contracts
 npx nx run contracts:compile

@@ -20,7 +20,7 @@ This PRD defines what Terraform must create and [how it is executed](#terraform-
 | Events ingest | `apps/events/ingest` | `nx run events:ingest` | Upstream Coinbase + Infura WebSockets → Redis PUBLISH (internal) |
 | Events gateway | `apps/events/gateway` | `nx run events:gateway` | Redis SUBSCRIBE → browser WebSocket on **`GATEWAY_PORT`** (default **8081**) |
 
-Shared libraries (`libs/abi`, `libs/shared-config`) and shared types (`apps/events/types`) are compiled into the app images at build time.
+Shared libraries (`contracts/abi`, `contracts/chains`) and shared types (`apps/events/types`) are compiled into the app images at build time.
 
 ## Scope
 

@@ -2,14 +2,14 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/events`, `apps/mcp`, `apps/web`) and `libs/*` (e.g. `libs/abi`, `libs/contracts`, `libs/chains`, `libs/tests/seed`).
+This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/events`, `apps/mcp`, `apps/web`) and `contracts/*` (e.g. `contracts/abi`, `contracts/contracts`, `contracts/chains`, `contracts/tests/seed`).
 
 ## Before exploring, read these
 
 - **`CONTEXT-MAP.md`** at the repo root — it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`<context>/CONTEXT.md`** — the per-context glossary under the relevant `apps/*` or `libs/*` directory.
+- **`<context>/CONTEXT.md`** — the per-context glossary under the relevant `apps/*` or `contracts/*` directory.
 - **`docs/adr/`** — system-wide architectural decisions. Read ADRs that touch the area you're about to work in.
-- **`<context>/docs/adr/`** — context-scoped decisions under the relevant `apps/*` or `libs/*` directory.
+- **`<context>/docs/adr/`** — context-scoped decisions under the relevant `apps/*` or `contracts/*` directory.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/model-domain` skill (reached via `/elicit-requirements`) creates them lazily when terms or decisions actually get resolved.
 
@@ -29,13 +29,13 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 │   └── web/
 │       ├── CONTEXT.md
 │       └── docs/adr/
-└── libs/
+└── contracts/
     ├── abi/
     │   └── CONTEXT.md
     ├── contracts/
     │   ├── CONTEXT.md
     │   └── docs/adr/
-    ├── shared-config/
+    ├── chains/
     │   └── CONTEXT.md
     └── tests/
         └── seed/

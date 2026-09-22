@@ -38,7 +38,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 ## General
 
-- TypeScript everywhere — no `.js` source files in `apps/` or `libs/`.
+- TypeScript everywhere — no `.js` source files in `apps/` or `contracts/`.
 - No `any` unless wrapping a third-party contract type that cannot be typed (Hardhat signer/factory); use a comment explaining why.
 - No `console.log` in production paths — use structured logging or remove before merging.
 - No commented-out code — delete it; git history is the record.
@@ -92,7 +92,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 ---
 
-## Smart contracts (`libs/contracts`)
+## Smart contracts (`contracts/contracts`)
 
 - Solidity `^0.8.x` — specify the exact minimum version in each file's pragma.
 - All public state-changing functions that affect user balances or roles must emit an event.
@@ -108,7 +108,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 - Unit tests (`Jest` + `@testing-library/react`) live in `__tests__/` next to the code under test.
 - Test files: `*.test.ts` / `*.test.tsx`.
-- Contract tests: `*.t.ts` under `libs/contracts/tests/unit/`.
+- Contract tests: `*.t.ts` under `contracts/tests/unit/`.
 - Integration / E2E: Cucumber + Playwright under `apps/web/tests/`.
 - See `skills/tdd/tests.md` for good/bad test patterns.
 - See `skills/tdd/mocking.md` for mocking rules.
@@ -201,7 +201,7 @@ The events layer is a unidirectional pipeline: upstream source → `ingest` → 
 
 ### Stable Dependencies Principle
 
-Modules should depend on things that change less frequently than they do. `libs/abi` and `libs/shared-config` are the most stable — nothing in `apps/` should cause them to change. `apps/web` depends on `libs/abi`; `libs/abi` never depends on `apps/web`. Dependency arrows point inward toward stability.
+Modules should depend on things that change less frequently than they do. `contracts/abi` and `contracts/chains` are the most stable — nothing in `apps/` should cause them to change. `apps/web` depends on `contracts/abi`; `contracts/abi` never depends on `apps/web`. Dependency arrows point inward toward stability.
 
 ### Common Closure Principle
 
@@ -213,11 +213,11 @@ API route handlers and WebSocket message handlers are thin: they parse input, ca
 
 ### Bounded Contexts
 
-Each app and lib is a bounded context with its own `CONTEXT.md`. Terms may differ across contexts — do not assume a word means the same thing in `apps/web` and `libs/contracts`. Translations between contexts happen at integration points (API routes, WebSocket messages, ABI call sites). See `CONTEXT-MAP.md` for the full map and integration patterns.
+Each app and lib is a bounded context with its own `CONTEXT.md`. Terms may differ across contexts — do not assume a word means the same thing in `apps/web` and `contracts/contracts`. Translations between contexts happen at integration points (API routes, WebSocket messages, ABI call sites). See `CONTEXT-MAP.md` for the full map and integration patterns.
 
 ### Coupling first
 
-Before choosing a pattern, identify the coupling it creates. A shared type between `apps/web` and `apps/mcp` couples their release cycles. A direct import from `libs/contracts` in `apps/web` couples the UI to the contract build. Name the coupling explicitly before accepting it; prefer loose coupling (events, shared-config) over tight coupling (direct imports across app boundaries).
+Before choosing a pattern, identify the coupling it creates. A shared type between `apps/web` and `apps/mcp` couples their release cycles. A direct import from `contracts/contracts` in `apps/web` couples the UI to the contract build. Name the coupling explicitly before accepting it; prefer loose coupling (events, shared-config) over tight coupling (direct imports across app boundaries).
 
 ### Push to the source of truth
 
@@ -307,7 +307,7 @@ Solhint enforces Solidity style: explicit visibility on all state variables and 
 
 ### Duplication detection
 
-Duplicated logic is a bug waiting to diverge. Before adding a new utility function, search `libs/` for an existing one. Before adding a new hook, check `apps/web/src/hooks/`. Before adding a new contract helper, check `libs/contracts/`.
+Duplicated logic is a bug waiting to diverge. Before adding a new utility function, search `contracts/` for an existing one. Before adding a new hook, check `apps/web/src/hooks/`. Before adding a new contract helper, check `contracts/contracts/`.
 
 If duplication is detected during review, it must be extracted before the PR merges — not deferred to a follow-up. The rule: two copies is one too many.
 

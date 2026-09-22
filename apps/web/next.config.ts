@@ -36,16 +36,16 @@ const nextConfig: NextConfig = {
     const root = monorepoRoot;
     config.resolve.alias = {
       ...config.resolve.alias,
-      "@brickbase/abi": path.resolve(root, "libs/abi/src/index.ts"),
-      "@brickbase/chains": path.resolve(root, "libs/chains/index.ts"),
+      "@brickbase/abi": path.resolve(root, "contracts/abi/src/index.ts"),
+      "@brickbase/chains": path.resolve(root, "contracts/chains/index.ts"),
       "@brickbase/events-types": path.resolve(
         root,
         "apps/events/types/index.ts"
       ),
-      // MCP contracts.ts imports libs/abi via relative path
-      [path.resolve(root, "libs/abi/src/index.js")]: path.resolve(
+      // MCP contracts.ts imports contracts/abi via relative path
+      [path.resolve(root, "contracts/abi/src/index.js")]: path.resolve(
         root,
-        "libs/abi/src/index.ts"
+        "contracts/abi/src/index.ts"
       ),
       "@react-native-async-storage/async-storage": path.resolve(
         __dirname,
