@@ -10,6 +10,13 @@
         "command": "npx eslint contracts --max-warnings 0"
       }
     },
+    "audit": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsx audit/run.ts",
+        "cwd": "contracts"
+      }
+    },
     "compile": {
       "executor": "nx:run-commands",
       "options": {

@@ -15,6 +15,7 @@
     "contracts:test:security": "nx run contracts:test:security",
     "contracts:test:invariant": "nx run contracts:test:invariant",
     "contracts:test:upgrade": "nx run contracts:test:upgrade",
+    "contracts:audit": "nx run contracts:audit",
     "forge:build": "nx run contracts:forge:build",
     "forge:test": "nx run contracts:forge:test",
     "forge:test:gas": "nx run contracts:forge:test:gas",

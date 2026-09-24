@@ -11,6 +11,11 @@ dist
 contracts/cache
 contracts/contracts/typechain-types
 
+# Slither
+contracts/audit/.venv
+contracts/audit/slither-report.json
+contracts/audit/slither.log
+
 # Foundry
 contracts/cache-forge
 contracts/artifacts-forge

@@ -102,6 +102,9 @@ npx nx run contracts:compile
 # Run contracts tests
 npx nx run contracts:test
 
+# Slither static analysis (writes contracts/audit/slither.md)
+npx nx run contracts:audit
+
 # Deploy (localhost | sepolia | mainnet | baseSepolia | base)
 npx nx run contracts:deploy:localhost
 npx nx run contracts:deploy:sepolia

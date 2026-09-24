@@ -22,6 +22,7 @@
   },
   "include": [
     "hardhat.config.ts",
+    "audit/**/*.ts",
     "chains/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts",

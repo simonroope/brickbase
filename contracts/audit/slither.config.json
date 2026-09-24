@@ -1,0 +1,11 @@
+{
+  "compile_force_framework": "foundry",
+  "filter_paths": "node_modules|lib/forge-std|contracts/mocks|tests/",
+  "exclude_dependencies": true,
+  "detectors_to_exclude": "",
+  "exclude_informational": false,
+  "exclude_optimization": false,
+  "exclude_low": false,
+  "exclude_medium": false,
+  "exclude_high": false
+}

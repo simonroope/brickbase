@@ -320,6 +320,7 @@ If duplication is detected during review, it must be extracted before the PR mer
 | Lint workspace    | `nx run-many -t lint`      |
 | Build web         | `nx run web:build`         |
 | Compile contracts | `nx run contracts:compile` |
+| Slither audit     | `nx run contracts:audit`   |
 | Serve MCP         | `nx run mcp:serve`         |
 | Run ingest        | `nx run events:ingest`     |
 | Run gateway       | `nx run events:gateway`    |
