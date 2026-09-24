@@ -78,6 +78,11 @@ cd apps/events && npm install
 cd apps/web && npm install
 ```
 
+```bash
+npm run lint                 # ESLint (warnings fail the build)
+npx nx run-many -t lint      # same, per Nx project
+```
+
 ### Environment
 
 Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `ETHEREUM_RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `contracts/abi` and are imported as `@brickbase/abi`.

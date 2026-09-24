@@ -317,6 +317,7 @@ If duplication is detected during review, it must be extracted before the PR mer
 
 | Target            | Command                    |
 |-------------------|----------------------------|
+| Lint workspace    | `nx run-many -t lint`      |
 | Build web         | `nx run web:build`         |
 | Compile contracts | `nx run contracts:compile` |
 | Serve MCP         | `nx run mcp:serve`         |

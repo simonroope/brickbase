@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "nx run-many -t build",
+    "lint": "eslint . --max-warnings 0",
     "test": "nx run-many -t test",
     "contracts:compile": "nx run contracts:compile",
     "contracts:test": "nx run contracts:test",
@@ -37,11 +38,11 @@
   "dependencies": {
     "@cursor/sdk": "^1.0.24",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@tanstack/react-query": "^5.90.21",
     "@temporalio/activity": "1.21.1",
     "@temporalio/client": "1.21.1",
     "@temporalio/worker": "1.21.1",
     "@temporalio/workflow": "1.21.1",
-    "@tanstack/react-query": "^5.90.21",
     "@walletconnect/ethereum-provider": "^2.23.9",
     "@web3modal/wagmi": "^5.1.11",
     "next": "16.1.6",
@@ -63,6 +64,7 @@
     "dotenv": "^16.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "globals": "^17.12.0",
     "hardhat": "^2.22.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
@@ -72,6 +74,7 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5",
+    "typescript-eslint": "^8.70.1",
     "zod": "^4.3.6"
   },
   "engines": {

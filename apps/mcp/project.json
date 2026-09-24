@@ -11,6 +11,12 @@
         "cwd": "apps/mcp"
       }
     },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx eslint apps/mcp --max-warnings 0"
+      }
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {

@@ -1,7 +1,7 @@
 /**
  * Brickbase events gateway — Redis pub/sub → browser WebSockets.
  */
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer, type IncomingMessage } from "node:http";
 import { createClient, type RedisClientType } from "redis";
 import { WebSocketServer, type WebSocket } from "ws";
 import {

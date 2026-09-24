@@ -18,6 +18,12 @@
         "cwd": "apps/events"
       }
     },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx eslint apps/events --max-warnings 0"
+      }
+    },
     "test": {
       "executor": "nx:run-commands",
       "options": {

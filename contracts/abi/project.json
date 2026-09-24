@@ -4,6 +4,12 @@
   "projectType": "library",
   "sourceRoot": "contracts/abi/src",
   "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx eslint contracts/abi --max-warnings 0"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "options": {

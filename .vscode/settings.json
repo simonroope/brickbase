@@ -1,4 +1,6 @@
 {
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
   "css.lint.unknownAtRules": "ignore",
   "solidity.remappings": [
     "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",

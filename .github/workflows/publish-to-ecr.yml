@@ -25,7 +25,19 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
   publish-web:
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -53,6 +65,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-mcp:
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -68,6 +81,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-ingest:
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -83,6 +97,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-gateway:
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:

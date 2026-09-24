@@ -6,7 +6,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { purchaseShares } from "@/lib/transactions";
 import { isUserAllowlisted } from "@/lib/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { formatInt, formatUsdc } from "@/lib/format";
+import { formatInt } from "@/lib/format";
 
 type BuySharesProps = {
   assetId: number;

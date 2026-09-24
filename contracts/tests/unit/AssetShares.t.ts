@@ -590,7 +590,6 @@ describe("AssetShares", () => {
       const totalSupply = ethers.parseUnits("10000", 18);
       const sharePrice = ethers.parseUnits("1000", 6);
 
-      const vaultAddress = await vault.getAddress();
       // Grant MINTER_ROLE to deployer for testing (in production, vault has this role)
       const MINTER_ROLE = await shares.MINTER_ROLE();
       await shares.grantRole(MINTER_ROLE, deployer.address);

@@ -5,8 +5,6 @@ describe("AssetVault", () => {
   let vault: any;
   let allowList: any;
   let deployer: any;
-  let admin: any;
-  let assetManager: any;
   let complianceOfficer: any;
   let user1: any;
   let user2: any;
@@ -18,7 +16,7 @@ describe("AssetVault", () => {
   const DEFAULT_ADMIN_ROLE = ethers.ZeroHash; // OpenZeppelin uses 0x00 for DEFAULT_ADMIN_ROLE
 
   beforeEach(async () => {
-    [deployer, admin, assetManager, complianceOfficer, user1, user2, user3] = await ethers.getSigners();
+    [deployer, , , complianceOfficer, user1, user2, user3] = await ethers.getSigners();
 
     const AssetUserAllowList = await ethers.getContractFactory("AssetUserAllowList");
     allowList = await AssetUserAllowList.deploy();
@@ -148,14 +146,6 @@ describe("AssetVault", () => {
   });
 
   describe("ERC7943 - Token Freezing", () => {
-    let tokenId: bigint;
-
-    beforeEach(async () => {
-      // Grant MINTER_ROLE to deployer for testing (in production, AssetShares has this role)
-      // Note: ERC721's _mint is internal, so we need to use a workaround
-      // For comprehensive testing, we'll test the freezing logic with a helper
-      tokenId = 1n;
-    });
 
     it("returns false for non-frozen token", async () => {
       // Test that non-existent tokens return false (not frozen)
