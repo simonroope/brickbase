@@ -1,5 +1,8 @@
 import { mnemonicToAccount } from "viem/accounts";
-import { HARDHAT_MNEMONIC } from "./hardhat-mnemonic.js";
+
+/** Well-known Hardhat development mnemonic. Safe for tests only. */
+export const HARDHAT_MNEMONIC =
+  "test test test test test test test test test test test junk";
 
 export function getHardhatSigners() {
   return [0, 1, 2].map((addressIndex) =>

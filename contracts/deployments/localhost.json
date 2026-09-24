@@ -2,10 +2,10 @@
   "network": "localhost",
   "usdc": "",
   "chainlink": {
-    "ethUsd": "",
-    "usdGbp": "",
-    "goldUsd": "",
-    "ftse100": ""
+    "ethUsd": "0x98D29A919F252CdB0550eA0f938bA44edd0d31c4",
+    "usdGbp": "0x60d6239d7750947eD8235161778e2C3490Ad8232",
+    "goldUsd": "0x10c1afee1560c6a765A42643D46548EC5D18823A",
+    "ftse100": "0x2597C0c026384A6a40bDBFa68464980BDB463d81"
   },
   "admins": {
     "defaultAdmin": "",

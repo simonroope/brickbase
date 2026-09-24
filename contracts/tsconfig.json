@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": [
+      "hardhat",
+      "node",
+      "@nomicfoundation/hardhat-chai-matchers",
+      "@nomicfoundation/hardhat-ethers"
+    ]
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "moduleResolution": "node"
+    }
+  },
+  "include": [
+    "hardhat.config.ts",
+    "chains/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts",
+    "typechain-types"
+  ],
+  "exclude": [
+    "node_modules",
+    "cache",
+    "artifacts",
+    "artifacts-forge",
+    "lib",
+    "tests/seed",
+    "tests/invariant"
+  ]
+}

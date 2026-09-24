@@ -97,8 +97,9 @@ npx nx run contracts:compile
 # Run contracts tests
 npx nx run contracts:test
 
-# Deploy
+# Deploy (localhost | sepolia | mainnet | baseSepolia | base)
 npx nx run contracts:deploy:localhost
+npx nx run contracts:deploy:sepolia
 
 # Seeds
 npx nx run contracts:seed-users
@@ -211,6 +212,7 @@ Next.js application to **display and trade** commercial real estate RWAs.
 | `ETHEREUM_RPC_URL`            | Ethereum RPC base URL (e.g. `https://sepolia.infura.io/v3/`) |
 | `BASE_RPC_URL`                | Base RPC base URL (e.g. `https://base-sepolia.infura.io/v3/`) |
 | `INFURA_PROJECT_ID`           | Infura project ID — appended to RPC URLs at runtime      |
+| `PRIVATE_KEY`                 | Deployer key for live networks (`npx nx run contracts:deploy:sepolia`) |
 | `ASSET_VAULT_ADDRESS`         | AssetVault contract                                      |
 | `ASSET_SHARES_ADDRESS`        | AssetShares contract                                     |
 | `ORACLE_ROUTER_ADDRESS`       | OracleRouter contract                                    |

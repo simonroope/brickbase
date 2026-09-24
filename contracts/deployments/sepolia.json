@@ -1,0 +1,15 @@
+{
+  "network": "sepolia",
+  "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  "chainlink": {
+    "ethUsd": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "usdGbp": "0x91FAB41F5f3bE955963a986366edAcff1aaeaa83",
+    "goldUsd": "0xC5981F461d74c46eB4b0CF3f4Ec79f025573B0Ea",
+    "ftse100": "0xBdC7313A8a343458031600dAD164A5127Cc2c7C6"
+  },
+  "admins": {
+    "defaultAdmin": "0xC357cfe6f8acDB4e2D0Daa9751F24DB77Bfbfe3e",
+    "assetManager": "",
+    "complianceOfficer": ""
+  }
+}

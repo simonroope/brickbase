@@ -18,20 +18,41 @@ type DeployConfig = {
   };
 };
 
+function emptyDeployConfig(networkName: string): DeployConfig {
+  return {
+    network: networkName,
+    usdc: "",
+    chainlink: { ethUsd: "", usdGbp: "", goldUsd: "", ftse100: "" },
+    admins: { defaultAdmin: "", assetManager: "", complianceOfficer: "" },
+  };
+}
+
 function loadConfig(networkName: string): DeployConfig {
   // Env vars take precedence over the JSON file — set them in CI to avoid
   // committing sensitive addresses. All DEPLOY_* vars are optional; any
   // field not overridden falls back to the JSON file value.
   const configPath = path.join(__dirname, "../..", "deployments", `${networkName}.json`);
+  const empty = emptyDeployConfig(networkName);
 
-  const base: DeployConfig = fs.existsSync(configPath)
-    ? (JSON.parse(fs.readFileSync(configPath, "utf8")) as DeployConfig)
-    : {
-        network: networkName,
-        usdc: "",
-        chainlink: { ethUsd: "", usdGbp: "", goldUsd: "", ftse100: "" },
-        admins: { defaultAdmin: "", assetManager: "", complianceOfficer: "" },
-      };
+  let parsed: Partial<DeployConfig> & { ASSET_VAULT_ADDRESS?: string } = {};
+  if (fs.existsSync(configPath)) {
+    parsed = JSON.parse(fs.readFileSync(configPath, "utf8")) as typeof parsed;
+  }
+
+  if (parsed.ASSET_VAULT_ADDRESS && !parsed.chainlink) {
+    throw new Error(
+      `${configPath} contains deployed contract addresses, not deploy inputs. ` +
+        `Use keys network, usdc, chainlink, admins (see deployments/localhost.json). ` +
+        `Write deployed addresses to deployments/${networkName}-addresses.json.`
+    );
+  }
+
+  const base: DeployConfig = {
+    network: networkName,
+    usdc: parsed.usdc ?? empty.usdc,
+    chainlink: { ...empty.chainlink, ...parsed.chainlink },
+    admins: { ...empty.admins, ...parsed.admins },
+  };
 
   return {
     network: networkName,
@@ -56,6 +77,11 @@ async function main() {
   const deployConfig = loadConfig(networkName);
 
   const [deployer] = await ethers.getSigners();
+  if (!deployer) {
+    throw new Error(
+      `No deployer account for network "${networkName}". Set PRIVATE_KEY in the repo-root .env to a funded ${networkName} account.`
+    );
+  }
   console.log(`Deploying with ${deployer.address} to network ${networkName}`);
 
   // Validate addresses are valid hex addresses (not ENS names or empty)
@@ -69,56 +95,54 @@ async function main() {
     return address;
   };
 
-  let ethUsdFeed: string;
-  let usdGbpFeed: string;
-  let goldUsdFeed: string;
-  let ftse100Feed: string;
+  const isLocalNetwork = networkName === "localhost" || networkName === "hardhat";
+  const allowMockFeeds =
+    isLocalNetwork || networkName === "sepolia" || networkName === "baseSepolia";
 
-  // For localhost/hardhat networks, deploy mock aggregators if addresses are empty
-  if (networkName === "localhost" || networkName === "hardhat") {
-    if (!deployConfig.chainlink.ethUsd || deployConfig.chainlink.ethUsd === "") {
-      console.log("Deploying mock Chainlink aggregators for localhost...");
-      const MockAggFactory = await ethers.getContractFactory("MockChainlinkAggregator");
-      
-      // Deploy mock aggregators with default values (1 USD = 1, 8 decimals)
-      const mockEthUsd = await MockAggFactory.deploy(ethers.parseUnits("2010", 8), 8); // ETH/USD ~3000
-      await mockEthUsd.waitForDeployment();
-      ethUsdFeed = mockEthUsd.target as string;
-
-      const mockUsdGbp = await MockAggFactory.deploy(ethers.parseUnits("0.8", 8), 8); // USD/GBP ~0.8
-      await mockUsdGbp.waitForDeployment();
-      usdGbpFeed = mockUsdGbp.target as string;
-
-      const mockGoldUsd = await MockAggFactory.deploy(ethers.parseUnits("5100", 8), 8); // USD/Gold ~2000
-      await mockGoldUsd.waitForDeployment();
-      goldUsdFeed = mockGoldUsd.target as string;
-
-      const mockFtse100 = await MockAggFactory.deploy(ethers.parseUnits("1480", 8), 8); // FTSE 100 ~7500
-      await mockFtse100.waitForDeployment();
-      ftse100Feed = mockFtse100.target as string;
-
-      console.log("Mock aggregators deployed:");
-      console.log(`  ETH/USD: ${ethUsdFeed}`);
-      console.log(`  USD/GBP: ${usdGbpFeed}`);
-      console.log(`  Gold/USD: ${goldUsdFeed}`);
-      console.log(`  FTSE 100: ${ftse100Feed}`);
-    } else {
-      ethUsdFeed = validateAddress(deployConfig.chainlink.ethUsd, "ETH/USD feed");
-      usdGbpFeed = validateAddress(deployConfig.chainlink.usdGbp, "USD/GBP feed");
-      goldUsdFeed = validateAddress(deployConfig.chainlink.goldUsd, "Gold/USD feed");
-      ftse100Feed = validateAddress(deployConfig.chainlink.ftse100, "FTSE 100 feed");
+  async function resolveFeed(
+    configured: string,
+    name: string,
+    mockAnswer: bigint
+  ): Promise<string> {
+    if (configured) {
+      return validateAddress(configured, name);
     }
-  } else {
-    // For other networks, addresses must be provided in config
-    ethUsdFeed = validateAddress(deployConfig.chainlink.ethUsd, "ETH/USD feed");
-    usdGbpFeed = validateAddress(deployConfig.chainlink.usdGbp, "USD/GBP feed");
-    goldUsdFeed = validateAddress(deployConfig.chainlink.goldUsd, "Gold/USD feed");
-    ftse100Feed = validateAddress(deployConfig.chainlink.ftse100, "FTSE 100 feed");
+    if (!allowMockFeeds) {
+      throw new Error(`${name} address is required in deploy config`);
+    }
+    console.log(`Deploying mock ${name} (${networkName} has no configured feed)...`);
+    const MockAggFactory = await ethers.getContractFactory("MockChainlinkAggregator");
+    const mock = await MockAggFactory.deploy(mockAnswer, 8);
+    await mock.waitForDeployment();
+    const address = mock.target as string;
+    console.log(`  ${name}: ${address}`);
+    return address;
   }
+
+  const ethUsdFeed = await resolveFeed(
+    deployConfig.chainlink.ethUsd,
+    "ETH/USD feed",
+    ethers.parseUnits("2010", 8)
+  );
+  const usdGbpFeed = await resolveFeed(
+    deployConfig.chainlink.usdGbp,
+    "USD/GBP feed",
+    ethers.parseUnits("0.8", 8)
+  );
+  const goldUsdFeed = await resolveFeed(
+    deployConfig.chainlink.goldUsd,
+    "Gold/USD feed",
+    ethers.parseUnits("5100", 8)
+  );
+  const ftse100Feed = await resolveFeed(
+    deployConfig.chainlink.ftse100,
+    "FTSE 100 feed",
+    ethers.parseUnits("1480", 8)
+  );
 
   // Handle USDC address - deploy mock if needed for localhost
   let usdcAddress: string;
-  if (networkName === "localhost" || networkName === "hardhat") {
+  if (isLocalNetwork) {
     if (!deployConfig.usdc || deployConfig.usdc === "") {
       console.log("Deploying mock USDC for localhost...");
       const MockERC20Factory = await ethers.getContractFactory("MockERC20");

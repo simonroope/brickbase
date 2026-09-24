@@ -110,11 +110,28 @@
         "cwd": "contracts"
       }
     },
-    "deploy:localhost": {
+    "deploy": {
       "executor": "nx:run-commands",
+      "defaultConfiguration": "localhost",
       "options": {
-        "command": "npx hardhat run scripts/deploy/deploy.ts --network localhost",
         "cwd": "contracts"
+      },
+      "configurations": {
+        "localhost": {
+          "command": "npx hardhat run scripts/deploy/deploy.ts --network localhost"
+        },
+        "sepolia": {
+          "command": "npx hardhat run scripts/deploy/deploy.ts --network sepolia"
+        },
+        "mainnet": {
+          "command": "npx hardhat run scripts/deploy/deploy.ts --network mainnet"
+        },
+        "baseSepolia": {
+          "command": "npx hardhat run scripts/deploy/deploy.ts --network baseSepolia"
+        },
+        "base": {
+          "command": "npx hardhat run scripts/deploy/deploy.ts --network base"
+        }
       }
     },
     "seed-users": {

@@ -1,14 +1,3 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "strict": true,
-    "types": ["hardhat", "node", "@nomicfoundation/hardhat-chai-matchers"]
-  },
-  "include": ["../hardhat.config.ts", "../scripts", "../tests", "./typechain-types"],
-  "exclude": ["node_modules", "../cache", "../artifacts"]
+  "extends": "../tsconfig.json"
 }
-
