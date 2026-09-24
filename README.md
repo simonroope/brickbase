@@ -46,7 +46,7 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 
 - Node.js ≥ 18
 - Docker (optional; required for local Redis when running events live feeds)
-- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit`
+- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit` and `contracts:test:invariant`
 
 ### Install dependencies
 
@@ -104,6 +104,9 @@ npx nx run contracts:compile
 # Run contracts tests
 npx nx run contracts:test
 
+# Foundry invariant tests — see [Invariant tests](#invariant-tests)
+npx nx run contracts:test:invariant
+
 # Slither static analysis — see [Audit](#audit)
 npx nx run contracts:audit
 
@@ -120,6 +123,26 @@ npx nx run contracts:seed-assets
 # kill Nx daemon
 npx nx reset
 ```
+
+### Invariant tests
+
+Stateful fuzz tests with [Foundry](https://book.getfoundry.sh/forge/invariant-testing). Hardhat runs the TypeScript suite (`contracts:test`); Foundry runs only `contracts/tests/invariant/*.t.sol` — there is no separate fuzz folder. Config is `[invariant]` in `contracts/foundry.toml` (256 runs, depth 128).
+
+```bash
+npx nx run contracts:test:invariant
+# or
+npm run contracts:test:invariant
+```
+
+| File | Coverage |
+| ---- | -------- |
+| `AssetSharesInvariant.t.sol` | ERC-1155 share supply, freeze, and price |
+| `AssetVaultInvariant.t.sol` | ERC-721 asset ids, status, timestamps, freeze |
+| `ComplianceInvariant.t.sol` | Cross-contract ERC-7943 allowlist / freeze / transfer |
+
+Each suite uses a handler (`targetContract`) so the fuzzer only calls realistic state changes. Properties must hold after every sequence: available supply never exceeds recorded total, frozen balances never exceed holdings, disallowed addresses cannot transact, vault and shares agree on the allowlist.
+
+Full invariant list, handler pattern, and how to add more: [`contracts/tests/invariant/README.md`](contracts/tests/invariant/README.md). Override depth/runs with `forge test --match-path 'tests/invariant/*.t.sol' --fuzz-runs 1000 --invariant-depth 256` from `contracts/`.
 
 ### Audit
 
