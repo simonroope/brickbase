@@ -16,6 +16,7 @@ Development is supported by **agent skills** — structured instruction files fo
 | `apps/web`           | Next.js web app (display & trade properties)                     |
 | `contracts/contracts`     | Solidity smart contracts (Hardhat)                               |
 | `contracts/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
+| `contracts/audit`         | Slither static analysis — config, runner, and reports            |
 | `contracts/chains`        | Chain config, env                                                |
 | `skills/`            | Agent skills — source of truth (`skills/<name>/SKILL.md`)        |
 | `workflows`          | Temporal worker — automated `build-code` from `ready-for-agent` issues, respecting ticket dependencies |
@@ -45,6 +46,7 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 
 - Node.js ≥ 18
 - Docker (optional; required for local Redis when running events live feeds)
+- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit`
 
 ### Install dependencies
 
@@ -102,10 +104,10 @@ npx nx run contracts:compile
 # Run contracts tests
 npx nx run contracts:test
 
-# Slither static analysis (writes contracts/audit/slither.md)
+# Slither static analysis — see [Audit](#audit)
 npx nx run contracts:audit
 
-# Deploy (localhost | sepolia | mainnet | baseSepolia | base)
+# Deploy — see [Deploy](#deploy)
 npx nx run contracts:deploy:localhost
 npx nx run contracts:deploy:sepolia
 
@@ -117,6 +119,58 @@ npx nx run contracts:seed-assets
 ```bash
 # kill Nx daemon
 npx nx reset
+```
+
+### Audit
+
+[Slither](https://github.com/crytic/slither) static analysis of production Solidity (`contracts/core`, `contracts/periphery`, `contracts/interfaces`). Mocks, Foundry tests, and `node_modules` are filtered out. Config and the Node runner live in `contracts/audit/`.
+
+The analyzer is installed into `contracts/audit/.venv` (gitignored) on the first run from `requirements.txt`. Nothing is read from `PATH` or Homebrew. Slither compiles via Foundry (`forge`).
+
+```bash
+npx nx run contracts:audit
+# or
+npm run contracts:audit
+```
+
+Writes:
+
+| File | Contents |
+| ---- | -------- |
+| `contracts/audit/slither.md` | Human-readable checklist (committed) |
+| `contracts/audit/slither-report.json` | Machine-readable findings (gitignored) |
+
+The command fails if Slither reports a **high** finding (`--fail-high`). Latest checklist: no highs; four medium unused-return results in `OracleRouter` getters that ignore unused `latestRoundData()` tuple fields.
+
+### Deploy
+
+Hardhat script `contracts/scripts/deploy/deploy.ts`. Nx target `deploy` with a network configuration (`localhost` | `sepolia` | `mainnet` | `baseSepolia` | `base`):
+
+```bash
+npx nx run contracts:node                    # localhost only — keep running
+npx nx run contracts:deploy:localhost
+npx nx run contracts:deploy:sepolia
+```
+
+**Inputs** (`contracts/deployments/{network}.json`) — USDC, Chainlink feeds, admin addresses. Env vars override the JSON (`USDC_ADDRESS`, `CHAINLINK_*`, `ADMIN_*`). Do not put deployed contract addresses in this file.
+
+**Outputs** (`contracts/deployments/{network}-addresses.json`) — written after a successful deploy (`USER_ALLOWLIST_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `USDC_ADDRESS`). Copy those into the repo-root `.env` for `apps/web` and `apps/mcp`.
+
+Order: **AssetUserAllowList** → **OracleRouter** → **AssetVault** → **AssetShares**, then authorize vault/shares on the allowlist, link shares on the vault, and set the pauser (`admins.defaultAdmin`, or the deployer if empty).
+
+| Network | Signer | Empty USDC / feed |
+| ------- | ------ | ----------------- |
+| `localhost` | Hardhat node accounts (no `PRIVATE_KEY`) | Deploys `MockERC20` and `MockChainlinkAggregator` |
+| `sepolia`, `baseSepolia` | `PRIVATE_KEY` (funded) | USDC required; empty feeds deploy a mock (e.g. no FTSE 100 feed on Sepolia) |
+| `mainnet`, `base` | `PRIVATE_KEY` (funded) | USDC and all four feeds required — no mocks |
+
+Live networks load the repo-root `.env` (then `contracts/.env`). `ETHEREUM_RPC_URL` / `BASE_RPC_URL` must be an Infura base ending in `/`; `INFURA_PROJECT_ID` is appended at runtime. A loopback `ETHEREUM_RPC_URL` is ignored for Sepolia/mainnet and falls back to `https://sepolia.infura.io/v3/` or `https://mainnet.infura.io/v3/`. Never commit a real `PRIVATE_KEY`.
+
+After localhost deploy, seed users and assets:
+
+```bash
+npx nx run contracts:seed-users
+npx nx run contracts:seed-assets
 ```
 
 ## Events layer
@@ -221,11 +275,13 @@ Next.js application to **display and trade** commercial real estate RWAs.
 | `BASE_RPC_URL`                | Base RPC base URL (e.g. `https://base-sepolia.infura.io/v3/`) |
 | `INFURA_PROJECT_ID`           | Infura project ID — appended to RPC URLs at runtime      |
 | `PRIVATE_KEY`                 | Deployer key for live networks (`npx nx run contracts:deploy:sepolia`) |
-| `ASSET_VAULT_ADDRESS`         | AssetVault contract                                      |
-| `ASSET_SHARES_ADDRESS`        | AssetShares contract                                     |
-| `ORACLE_ROUTER_ADDRESS`       | OracleRouter contract                                    |
-| `USER_ALLOWLIST_ADDRESS`      | AllowList contract                                       |
-| `USDC_ADDRESS`                | USDC token address                                       |
+| `ASSET_VAULT_ADDRESS`         | AssetVault — from `{network}-addresses.json` after deploy |
+| `ASSET_SHARES_ADDRESS`        | AssetShares — from `{network}-addresses.json` after deploy |
+| `ORACLE_ROUTER_ADDRESS`       | OracleRouter — from `{network}-addresses.json` after deploy |
+| `USER_ALLOWLIST_ADDRESS`      | AllowList — from `{network}-addresses.json` after deploy |
+| `USDC_ADDRESS`                | USDC token; also overrides deploy input `{network}.json` |
+| `ADMIN_ADDRESS`               | Optional deploy override for pauser / default admin      |
+| `CHAINLINK_ETH_USD_ADDRESS`   | Optional deploy override for the ETH/USD feed            |
 
 
 ### Events (live feeds, server-side unless noted)
