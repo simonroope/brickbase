@@ -7,13 +7,19 @@ export const SUPPORTED_CHAIN_IDS = [1, 11155111, 8453, 84532] as const;
 export type ChainId = (typeof SUPPORTED_CHAIN_IDS)[number];
 
 /**
- * Appends INFURA_PROJECT_ID to the base RPC URL.
- * ETHEREUM_RPC_URL is always stored as a base URL ending with '/'
- * (e.g. https://mainnet.infura.io/v3/).
+ * Appends INFURA_PROJECT_ID to an Infura-style base RPC URL (ending with `/`).
+ * Loopback URLs and public RPCs without a trailing slash are returned unchanged.
  */
 export function appendProjectId(baseUrl: string): string {
   const projectId = process.env.INFURA_PROJECT_ID;
-  return projectId ? `${baseUrl}${projectId}` : baseUrl;
+  if (
+    !projectId ||
+    !baseUrl.endsWith("/") ||
+    /localhost|127\.0\.0\.1/.test(baseUrl)
+  ) {
+    return baseUrl;
+  }
+  return `${baseUrl}${projectId}`;
 }
 
 export function getChainConfig(chainId: number) {

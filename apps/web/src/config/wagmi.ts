@@ -1,7 +1,8 @@
 import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
 import { defineChain } from "viem";
-import { cookieStorage, createStorage } from "wagmi";
+import { cookieStorage, createStorage, http } from "wagmi";
 import { mainnet, sepolia, base, baseSepolia } from "wagmi/chains";
+import { config as appConfig } from "@/lib/config";
 
 const localhost = defineChain({
   id: 31337,
@@ -23,6 +24,20 @@ const metadata = {
 
 export const chains = [localhost, mainnet, sepolia, base, baseSepolia] as const;
 
+function transportFor(chainId: number) {
+  if (chainId === appConfig.chainId && appConfig.rpcUrl) {
+    return http(appConfig.rpcUrl);
+  }
+  if (chainId === localhost.id) {
+    return http("http://127.0.0.1:8545");
+  }
+  return http();
+}
+
+const transports = Object.fromEntries(
+  chains.map((chain) => [chain.id, transportFor(chain.id)])
+);
+
 let _config: ReturnType<typeof defaultWagmiConfig> | null = null;
 
 /** Lazy config creation—avoids indexedDB access during SSR. Call from client only. */
@@ -33,6 +48,7 @@ export function getWagmiConfig() {
       projectId,
       metadata,
       ssr: true,
+      transports,
       auth: {
         socials: ["x", "google", "github", "discord", "apple"],
         showWallets: true,

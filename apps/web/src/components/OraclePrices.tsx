@@ -1,13 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchOraclePrices } from "@/lib/contracts";
+import { loadOraclePrices } from "@/lib/contracts";
 import { formatOracleInt, formatOracleNum } from "@/lib/format";
 
 export function OraclePrices() {
   const { data: prices, isLoading, isError, error } = useQuery({
     queryKey: ["oracle-prices"],
-    queryFn: fetchOraclePrices,
+    queryFn: loadOraclePrices,
     refetchInterval: 30_000,
   });
 

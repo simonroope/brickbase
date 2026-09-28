@@ -30,28 +30,78 @@ export type OraclePrices = {
   ftse100: { value: bigint; updatedAt: bigint };
 };
 
-export async function fetchOraclePrices(): Promise<OraclePrices> {
-  if (!config.oracleRouterAddress || config.oracleRouterAddress === "0x") {
+export type OraclePricesJson = {
+  ethUsd: { price: string; updatedAt: string };
+  gbpUsd: { price: string; updatedAt: string };
+  goldUsd: { price: string; updatedAt: string };
+  ftse100: { value: string; updatedAt: string };
+};
+
+export function serializeOraclePrices(prices: OraclePrices): OraclePricesJson {
+  return {
+    ethUsd: {
+      price: prices.ethUsd.price.toString(),
+      updatedAt: prices.ethUsd.updatedAt.toString(),
+    },
+    gbpUsd: {
+      price: prices.gbpUsd.price.toString(),
+      updatedAt: prices.gbpUsd.updatedAt.toString(),
+    },
+    goldUsd: {
+      price: prices.goldUsd.price.toString(),
+      updatedAt: prices.goldUsd.updatedAt.toString(),
+    },
+    ftse100: {
+      value: prices.ftse100.value.toString(),
+      updatedAt: prices.ftse100.updatedAt.toString(),
+    },
+  };
+}
+
+export function deserializeOraclePrices(json: OraclePricesJson): OraclePrices {
+  return {
+    ethUsd: { price: BigInt(json.ethUsd.price), updatedAt: BigInt(json.ethUsd.updatedAt) },
+    gbpUsd: { price: BigInt(json.gbpUsd.price), updatedAt: BigInt(json.gbpUsd.updatedAt) },
+    goldUsd: { price: BigInt(json.goldUsd.price), updatedAt: BigInt(json.goldUsd.updatedAt) },
+    ftse100: { value: BigInt(json.ftse100.value), updatedAt: BigInt(json.ftse100.updatedAt) },
+  };
+}
+
+/** Browser entry: Next.js API (server publicClient). Does not use a wallet. */
+export async function loadOraclePrices(): Promise<OraclePrices> {
+  const res = await fetch("/api/oracle-prices");
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "Oracle prices unavailable");
+  }
+  return deserializeOraclePrices((await res.json()) as OraclePricesJson);
+}
+
+export async function fetchOraclePrices(
+  oracleRouterAddress: string = config.oracleRouterAddress
+): Promise<OraclePrices> {
+  if (!oracleRouterAddress || oracleRouterAddress === "0x") {
     throw new Error("Oracle router address not configured");
   }
+  const router = oracleRouterAddress as Address;
   const [ethUsd, gbpUsd, goldUsd, ftse100] = await Promise.all([
     publicClient.readContract({
-      address: config.oracleRouterAddress,
+      address: router,
       abi: oracleRouterAbi as never[],
       functionName: "getEthUsdPrice",
     }) as Promise<[bigint, bigint]>,
     publicClient.readContract({
-      address: config.oracleRouterAddress,
+      address: router,
       abi: oracleRouterAbi as never[],
       functionName: "getGbpUsdPrice",
     }) as Promise<[bigint, bigint]>,
     publicClient.readContract({
-      address: config.oracleRouterAddress,
+      address: router,
       abi: oracleRouterAbi as never[],
       functionName: "getGoldUsdPrice",
     }) as Promise<[bigint, bigint]>,
     publicClient.readContract({
-      address: config.oracleRouterAddress,
+      address: router,
       abi: oracleRouterAbi as never[],
       functionName: "getFtse100Value",
     }) as Promise<[bigint, bigint]>,

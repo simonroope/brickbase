@@ -13,7 +13,7 @@ Resolves a `ChainId` to `{ rpcUrl, name }`, applying `appendProjectId` over an e
 _Avoid_: getChain, chain definition
 
 **appendProjectId**:
-Concatenates `INFURA_PROJECT_ID` onto an RPC base URL that must already end in `/`; returns the URL unchanged when the env var is unset.
+Concatenates `INFURA_PROJECT_ID` onto an RPC base URL that already ends in `/` (e.g. `https://sepolia.infura.io/v3/`). Returns the URL unchanged when the env var is unset, the URL is loopback (`localhost` / `127.0.0.1`), or the URL has no trailing slash (public RPC / Hardhat).
 _Avoid_: build RPC URL, add key (it inserts no separator and no `?key=`)
 
 **ETHEREUM_RPC_URL / BASE_RPC_URL**:

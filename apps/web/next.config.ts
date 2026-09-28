@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { config as loadDotenv } from "dotenv";
 import { appendProjectId } from "@brickbase/chains";
+import { resolveDeployedAddress } from "./src/lib/deployedAddresses";
 
 const monorepoRoot = path.resolve(__dirname, "../..");
+loadDotenv({ path: path.resolve(monorepoRoot, ".env") });
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -12,11 +15,11 @@ const nextConfig: NextConfig = {
     APP_URL: process.env.APP_URL ?? "",
     CHAIN_ID: process.env.CHAIN_ID ?? "",
     ETHEREUM_RPC_URL: appendProjectId(process.env.ETHEREUM_RPC_URL ?? ""),
-    ASSET_VAULT_ADDRESS: process.env.ASSET_VAULT_ADDRESS ?? "",
-    ASSET_SHARES_ADDRESS: process.env.ASSET_SHARES_ADDRESS ?? "",
-    ORACLE_ROUTER_ADDRESS: process.env.ORACLE_ROUTER_ADDRESS ?? "",
-    USER_ALLOWLIST_ADDRESS: process.env.USER_ALLOWLIST_ADDRESS ?? "",
-    USDC_ADDRESS: process.env.USDC_ADDRESS ?? "",
+    ASSET_VAULT_ADDRESS: resolveDeployedAddress("ASSET_VAULT_ADDRESS"),
+    ASSET_SHARES_ADDRESS: resolveDeployedAddress("ASSET_SHARES_ADDRESS"),
+    ORACLE_ROUTER_ADDRESS: resolveDeployedAddress("ORACLE_ROUTER_ADDRESS"),
+    USER_ALLOWLIST_ADDRESS: resolveDeployedAddress("USER_ALLOWLIST_ADDRESS"),
+    USDC_ADDRESS: resolveDeployedAddress("USDC_ADDRESS"),
     WALLETCONNECT_PROJECT_ID: process.env.WALLETCONNECT_PROJECT_ID ?? "",
     WS_LIVE_URL: process.env.WS_LIVE_URL ?? "",
   },

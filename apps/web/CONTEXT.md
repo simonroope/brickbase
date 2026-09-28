@@ -50,7 +50,7 @@ The header strip rendering the live feed: Coinbase ETH/USD spot price, latest ch
 The feed's connection state: `live`, `delayed` (connected but stale >10s), or `offline`.
 
 **Oracle prices**:
-The authoritative on-chain Chainlink values from OracleRouter (ETH/USD, GBP/USD, Gold/USD, FTSE 100), polled on an interval. Distinct from — and not to be confused with — the display-only LiveTicker spot price.
+The authoritative on-chain Chainlink values from OracleRouter (ETH/USD, GBP/USD, Gold/USD, FTSE 100), polled on an interval. Loaded via a public RPC on the server — browsing does not require a connected wallet. Distinct from — and not to be confused with — the display-only LiveTicker spot price.
 _Avoid_: conflating oracle prices with the live ticker
 
 ## Compliance & admin
