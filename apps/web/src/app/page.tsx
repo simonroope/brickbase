@@ -1,9 +1,15 @@
 import { Header } from "@/components/Header";
 import { AssetList } from "@/components/AssetList";
 import { fetchAssets } from "@/lib/contracts";
+import { resolveDeployedAddress } from "@/lib/deployedAddresses";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const assets = await fetchAssets();
+  const assets = await fetchAssets(
+    resolveDeployedAddress("ASSET_VAULT_ADDRESS"),
+    resolveDeployedAddress("ASSET_SHARES_ADDRESS")
+  );
   return (
     <div className="min-h-screen bg-page">
       <Header />

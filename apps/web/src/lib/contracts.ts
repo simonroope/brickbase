@@ -2,6 +2,7 @@ import { createPublicClient, defineChain, http, type Address } from "viem";
 import { sepolia } from "viem/chains";
 import { config } from "./config";
 import { mockAssets } from "@tests/mocks/mockAssets";
+import { resolveAssetIds, isRecordedAsset } from "./assetIds";
 
 const localhost = defineChain({
   id: 31337,
@@ -137,6 +138,98 @@ export type AssetSummary = {
   tradingEnabled: boolean;
 };
 
+export type AssetDetail = AssetSummary & { exists: boolean };
+
+export type AssetMetadataJson = Omit<AssetMetadata, "purchasePrice"> & {
+  purchasePrice?: string;
+};
+
+export type AssetSummaryJson = {
+  assetId: number;
+  status: number;
+  capitalValue: string;
+  incomeValue: string;
+  metadataUri: string;
+  metadata: AssetMetadataJson | null;
+  totalSupply: string;
+  availableSupply: string;
+  sharePrice: string;
+  tradingEnabled: boolean;
+};
+
+export type AssetDetailJson = AssetSummaryJson & { exists: boolean };
+
+function serializeMetadata(metadata: AssetMetadata | null): AssetMetadataJson | null {
+  if (!metadata) return null;
+  return {
+    ...metadata,
+    purchasePrice: metadata.purchasePrice?.toString(),
+  };
+}
+
+function deserializeMetadata(metadata: AssetMetadataJson | null): AssetMetadata | null {
+  if (!metadata) return null;
+  return {
+    ...metadata,
+    images: metadata.images ?? [],
+    purchasePrice: metadata.purchasePrice != null ? BigInt(metadata.purchasePrice) : undefined,
+  };
+}
+
+export function serializeAssetSummary(asset: AssetSummary): AssetSummaryJson {
+  return {
+    assetId: asset.assetId,
+    status: asset.status,
+    capitalValue: asset.capitalValue.toString(),
+    incomeValue: asset.incomeValue.toString(),
+    metadataUri: asset.metadataUri,
+    metadata: serializeMetadata(asset.metadata),
+    totalSupply: asset.totalSupply.toString(),
+    availableSupply: asset.availableSupply.toString(),
+    sharePrice: asset.sharePrice.toString(),
+    tradingEnabled: asset.tradingEnabled,
+  };
+}
+
+export function deserializeAssetSummary(json: AssetSummaryJson): AssetSummary {
+  return {
+    assetId: json.assetId,
+    status: json.status,
+    capitalValue: BigInt(json.capitalValue),
+    incomeValue: BigInt(json.incomeValue),
+    metadataUri: json.metadataUri,
+    metadata: deserializeMetadata(json.metadata),
+    totalSupply: BigInt(json.totalSupply),
+    availableSupply: BigInt(json.availableSupply),
+    sharePrice: BigInt(json.sharePrice),
+    tradingEnabled: json.tradingEnabled,
+  };
+}
+
+export function serializeAssetDetail(asset: AssetDetail): AssetDetailJson {
+  return { ...serializeAssetSummary(asset), exists: asset.exists };
+}
+
+export function deserializeAssetDetail(json: AssetDetailJson): AssetDetail {
+  return { ...deserializeAssetSummary(json), exists: json.exists };
+}
+
+/** Browser entry: Next.js API (server publicClient). Does not use a wallet. */
+export async function loadAssetDetail(assetId: number): Promise<AssetDetail | null> {
+  const res = await fetch(`/api/assets/${assetId}`);
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "Asset unavailable");
+  }
+  return deserializeAssetDetail((await res.json()) as AssetDetailJson);
+}
+
+function vaultAndShares(vaultAddress: string, sharesAddress: string): { vault: Address; shares: Address } | null {
+  if (!vaultAddress || !sharesAddress) return null;
+  return { vault: vaultAddress as Address, shares: sharesAddress as Address };
+}
+
 function toDisplayUrl(u: string): string {
   if (!u || typeof u !== "string") return "";
   if (u.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${u.slice(7)}`;
@@ -199,11 +292,10 @@ async function fetchMetadata(metadataUri: string): Promise<AssetMetadata | null>
   }
 }
 
-async function fetchAssetIdsFromEvents(): Promise<number[]> {
-  if (!config.assetVaultAddress) return [];
+async function fetchAssetIdsFromEvents(vault: Address): Promise<number[]> {
   try {
     const logs = await publicClient.getContractEvents({
-      address: config.assetVaultAddress,
+      address: vault,
       abi: assetVaultAbi,
       eventName: "AssetVaulted",
       fromBlock: "earliest",
@@ -217,6 +309,54 @@ async function fetchAssetIdsFromEvents(): Promise<number[]> {
   } catch {
     return [];
   }
+}
+
+type VaultAsset = {
+  status: number;
+  capitalValue: bigint;
+  incomeValue: bigint;
+  metadataURI: string;
+  createdAt: bigint;
+  updatedAt: bigint;
+};
+
+async function readVaultAsset(vault: Address, assetId: number): Promise<VaultAsset> {
+  return publicClient.readContract({
+    address: vault,
+    abi: assetVaultAbi,
+    functionName: "getAsset",
+    args: [BigInt(assetId)],
+  }) as Promise<VaultAsset>;
+}
+
+async function loadSummaries(vault: Address, shares: Address, ids: number[]): Promise<AssetSummary[]> {
+  if (ids.length === 0) return [];
+  const vaultData = (await publicClient.readContract({
+    address: vault,
+    abi: assetVaultAbi,
+    functionName: "getAllAssets",
+    args: [ids.map((assetId) => BigInt(assetId))],
+  })) as VaultAsset[];
+  const shareInfos = await Promise.all(
+    ids.map(
+      (assetId) =>
+        publicClient.readContract({
+          address: shares,
+          abi: assetSharesAbi as never[],
+          functionName: "getAssetShares",
+          args: [BigInt(assetId)],
+        }) as Promise<[bigint, bigint, bigint, boolean]>
+    )
+  );
+  const results: AssetSummary[] = [];
+  for (let i = 0; i < ids.length; i++) {
+    const asset = vaultData[i];
+    const shareInfo = shareInfos[i];
+    if (!asset || !shareInfo || !isRecordedAsset(asset)) continue;
+    const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : null;
+    results.push(mergeAssetWithShareInfo(ids[i], asset, shareInfo, metadata));
+  }
+  return results;
 }
 
 function mergeAssetWithShareInfo(
@@ -239,83 +379,39 @@ function mergeAssetWithShareInfo(
   };
 }
 
-/** Fetch assets from blockchain, or mock when contracts not configured. */
-export async function fetchAssets(): Promise<AssetSummary[]> {
-  if (!config.assetVaultAddress || !config.assetSharesAddress) return mockAssets;
+/** On-chain assets via public RPC. Mocks only when vault/shares addresses are unset. */
+export async function fetchAssets(
+  vaultAddress: string = config.assetVaultAddress,
+  sharesAddress: string = config.assetSharesAddress
+): Promise<AssetSummary[]> {
+  const addresses = vaultAndShares(vaultAddress, sharesAddress);
+  if (!addresses) return mockAssets;
   try {
-    const ids = await fetchAssetIdsFromEvents();
-    if (ids.length === 0) return mockAssets;
-    const vaultData = (await publicClient.readContract({
-      address: config.assetVaultAddress,
-      abi: assetVaultAbi,
-      functionName: "getAllAssets",
-      args: [ids.map((assetId) => BigInt(assetId))],
-    })) as { status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string }[];
-    const shareInfos = await Promise.all(
-      ids.map((assetId) =>
-        publicClient.readContract({
-          address: config.assetSharesAddress,
-          abi: assetSharesAbi as never[],
-          functionName: "getAssetShares",
-          args: [BigInt(assetId)],
-        }) as Promise<[bigint, bigint, bigint, boolean]>
-      )
-    );
-    const results: AssetSummary[] = [];
-    for (let i = 0; i < ids.length; i++) {
-      const asset = vaultData[i];
-      if (!asset) continue;
-      const [totalSupply, availableSupply, sharePrice, tradingEnabled] = shareInfos[i];
-      const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : null;
-      results.push(
-        mergeAssetWithShareInfo(
-          ids[i],
-          asset,
-          [totalSupply, availableSupply, sharePrice, tradingEnabled],
-          metadata
-        )
-      );
-    }
-    return results;
+    const eventIds = await fetchAssetIdsFromEvents(addresses.vault);
+    const ids = await resolveAssetIds(eventIds, (id) => readVaultAsset(addresses.vault, id));
+    return loadSummaries(addresses.vault, addresses.shares, ids);
   } catch {
-    return mockAssets;
+    return [];
   }
 }
 
-export async function fetchAssetDetail(assetId: number) {
-  if (!config.assetVaultAddress || !config.assetSharesAddress) {
+export async function fetchAssetDetail(
+  assetId: number,
+  vaultAddress: string = config.assetVaultAddress,
+  sharesAddress: string = config.assetSharesAddress
+): Promise<AssetDetail | null> {
+  const addresses = vaultAndShares(vaultAddress, sharesAddress);
+  if (!addresses) {
     const asset = mockAssets.find((a) => a.assetId === assetId);
     return asset ? { ...asset, exists: true } : null;
   }
   try {
-    const [assets, shareInfo] = await Promise.all([
-      publicClient.readContract({
-        address: config.assetVaultAddress,
-        abi: assetVaultAbi as never[],
-        functionName: "getAllAssets",
-        args: [[BigInt(assetId)]],
-      }) as Promise<{ status: number; capitalValue: bigint; incomeValue: bigint; metadataURI: string }[]>,
-      publicClient.readContract({
-        address: config.assetSharesAddress,
-        abi: assetSharesAbi as never[],
-        functionName: "getAssetShares",
-        args: [BigInt(assetId)],
-      }) as Promise<[bigint, bigint, bigint, boolean]>,
-    ]);
-    const asset = assets[0];
-    if (!asset) return null;
-    const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : null;
-    const [totalSupply, availableSupply, sharePrice, tradingEnabled] = shareInfo;
-    const summary = mergeAssetWithShareInfo(
-      assetId,
-      asset,
-      [totalSupply, availableSupply, sharePrice, tradingEnabled],
-      metadata
-    );
+    const summaries = await loadSummaries(addresses.vault, addresses.shares, [assetId]);
+    const summary = summaries[0];
+    if (!summary) return null;
     return { ...summary, exists: true };
   } catch {
-    const asset = mockAssets.find((a) => a.assetId === assetId);
-    return asset ? { ...asset, exists: true } : null;
+    return null;
   }
 }
 

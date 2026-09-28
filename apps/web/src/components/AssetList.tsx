@@ -6,8 +6,8 @@ export function AssetList({ assets }: { assets: AssetSummary[] }) {
     return (
       <div className="rounded-lg border border-border bg-surface-muted p-8 text-center">
         <p className="text-text-secondary">
-          No properties listed yet. Configure contract addresses in .env to
-          connect to the blockchain.
+          No properties listed yet. On-chain assets appear here whether or not a
+          wallet is connected.
         </p>
       </div>
     );

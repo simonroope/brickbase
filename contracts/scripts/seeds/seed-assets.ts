@@ -1,12 +1,7 @@
 import hre, { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
-
-type AddressesConfig = {
-  assetVault: string;
-  assetShares: string;
-  usdc?: string;
-};
+import { loadDeployedAddresses } from "../loadDeployedAddresses";
 
 type DeployConfig = {
   seed?: {
@@ -47,17 +42,8 @@ const ASSET_2 = {
 
 async function main() {
   const networkName = hre.network.name;
-  const addressesPath = path.join(__dirname, "../..", "deployments", `${networkName}-addresses.json`);
   const deployConfigPath = path.join(__dirname, "../..", "deployments", `${networkName}.json`);
-
-  if (!fs.existsSync(addressesPath)) {
-    throw new Error(
-      `No deployment addresses found at ${addressesPath}. Run 'npx hardhat run scripts/deploy.ts --network ${networkName}' first.`
-    );
-  }
-
-  const raw = fs.readFileSync(addressesPath, "utf8");
-  const addresses = JSON.parse(raw) as AddressesConfig;
+  const addresses = loadDeployedAddresses(networkName);
 
   const signers = await ethers.getSigners();
   const [signer] = signers;
@@ -84,8 +70,8 @@ async function main() {
     }
   }
 
-  const assetVault = await ethers.getContractAt("AssetVault", addresses.assetVault);
-  const assetShares = await ethers.getContractAt("AssetShares", addresses.assetShares);
+  const assetVault = await ethers.getContractAt("AssetVault", addresses.ASSET_VAULT_ADDRESS);
+  const assetShares = await ethers.getContractAt("AssetShares", addresses.ASSET_SHARES_ADDRESS);
 
   const getAssetIdFromAssetVaultedEvent = (
     receipt: { logs: Array<{ topics: string[] | readonly string[]; data: string }> } | null
@@ -106,8 +92,8 @@ async function main() {
     }
     throw new Error("AssetVaulted event not found in transaction logs");
   };
-  const usdc = addresses.usdc
-    ? await ethers.getContractAt("MockERC20", addresses.usdc)
+  const usdc = addresses.USDC_ADDRESS
+    ? await ethers.getContractAt("MockERC20", addresses.USDC_ADDRESS)
     : null;
 
   // Create asset 1 in AssetVault (status, capitalValue, incomeValue, metadataURI)
@@ -130,7 +116,7 @@ async function main() {
       console.log(`⊘ Asset 1 already exists, skipping`);
       asset1Id = ASSET_1.assetId; // fallback for idempotent re-run
     } else {
-      throw new Error(`createAsset(1) failed: ${reason}. Ensure AssetVault at ${addresses.assetVault} is deployed from the latest code and signer has ASSET_MANAGER_ROLE.`);
+      throw new Error(`createAsset(1) failed: ${reason}. Ensure AssetVault at ${addresses.ASSET_VAULT_ADDRESS} is deployed from the latest code and signer has ASSET_MANAGER_ROLE.`);
     }
   }
 
@@ -144,15 +130,34 @@ async function main() {
     console.log(`✓ Granted MINTER_ROLE to ${signer.address}`);
   }
 
+  const createSharesIfMissing = async (
+    assetId: number,
+    totalSupply: bigint,
+    sharePrice: bigint,
+    summary: string
+  ) => {
+    try {
+      const tx = await assetShares.createAssetShares(assetId, totalSupply, sharePrice);
+      await tx.wait();
+      console.log(`✓ ${summary}`);
+    } catch (e: unknown) {
+      const reason = e instanceof Error ? e.message : String(e);
+      if (reason.includes("Asset shares already exist")) {
+        console.log(`⊘ ShareInfo for asset ${assetId} already exists, skipping`);
+        return;
+      }
+      throw e;
+    }
+  };
+
   // Create ShareInfo for asset 1 (totalSupply, availableSupply, sharePrice, tradingEnabled)
   console.log("\nCreating ShareInfo for asset 1...");
-  const createSharesTx = await assetShares.createAssetShares(
+  await createSharesIfMissing(
     asset1Id,
     ASSET_1.totalSupply,
-    ASSET_1.sharePrice
+    ASSET_1.sharePrice,
+    "ShareInfo: totalSupply=1000, availableSupply=1000, sharePrice=$2, tradingEnabled=false"
   );
-  await createSharesTx.wait();
-  console.log(`✓ ShareInfo: totalSupply=1000, availableSupply=1000, sharePrice=$2, tradingEnabled=false`);
 
   // Create asset 2 in AssetVault
   console.log("\nCreating asset 2 in AssetVault...");
@@ -173,18 +178,18 @@ async function main() {
       console.log(`⊘ Asset 2 already exists, skipping`);
       asset2Id = ASSET_2.assetId; // fallback for idempotent re-run
     } else {
-      throw new Error(`createAsset(2) failed: ${reason}. Ensure AssetVault at ${addresses.assetVault} is deployed from the latest code and signer has ASSET_MANAGER_ROLE.`);
+      throw new Error(`createAsset(2) failed: ${reason}. Ensure AssetVault at ${addresses.ASSET_VAULT_ADDRESS} is deployed from the latest code and signer has ASSET_MANAGER_ROLE.`);
     }
   }
 
   // Create ShareInfo for asset 2
   console.log("\nCreating ShareInfo for asset 2...");
-  const createShares2Tx = await assetShares.createAssetShares(
+  await createSharesIfMissing(
     asset2Id,
     ASSET_2.totalSupply,
-    ASSET_2.sharePrice
+    ASSET_2.sharePrice,
+    "ShareInfo: totalSupply=2000, sharePrice=$2.5, tradingEnabled=true"
   );
-  await createShares2Tx.wait();
 
   // Enable trading for asset 2
   const setTradingTx = await assetShares.setTradingEnabled(asset2Id, ASSET_2.tradingEnabled);

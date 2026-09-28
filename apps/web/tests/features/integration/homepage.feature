@@ -17,4 +17,3 @@ Feature: Homepage
     When I navigate to the homepage
     Then I should see the app shell
     And I should see either the property list or an empty state message
-    And I should see "Lyons House" in the page

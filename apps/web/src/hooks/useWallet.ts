@@ -1,5 +1,6 @@
 "use client";
 
+import "@/config/web3modal";
 import { useConnection, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 

@@ -7,16 +7,16 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchAssetDetail, getUserShareBalance, type AssetMetadata } from "@/lib/contracts";
+import { loadAssetDetail, getUserShareBalance, type AssetMetadata } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
 import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
 import { BuyShares } from "./BuyShares";
 
 export function AssetDetail({ assetId }: { assetId: number }) {
   const { address } = useWallet();
-  const { data: asset, isLoading, error } = useQuery({
+  const { data: asset, isLoading, isError } = useQuery({
     queryKey: ["asset", assetId],
-    queryFn: () => fetchAssetDetail(assetId),
+    queryFn: () => loadAssetDetail(assetId),
   });
 
   const { data: userBalance } = useQuery({
@@ -25,7 +25,7 @@ export function AssetDetail({ assetId }: { assetId: number }) {
     enabled: !!address && !!asset,
   });
 
-  if (isLoading || !asset) {
+  if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
         <div className="h-64 rounded-xl bg-surface-elevated" />
@@ -35,7 +35,7 @@ export function AssetDetail({ assetId }: { assetId: number }) {
     );
   }
 
-  if (error || !asset.exists) {
+  if (isError || !asset?.exists) {
     return (
       <div className="rounded-lg border border-border bg-surface-muted p-8 text-center">
         <p className="text-text-secondary">Property not found or no shares created yet.</p>

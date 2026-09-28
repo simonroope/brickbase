@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { AssetDetail } from "../AssetDetail";
-import { fetchAssetDetail, getUserShareBalance } from "@/lib/contracts";
+import { loadAssetDetail, getUserShareBalance } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
 
 // next/image renders <img> under the hood with extra props that jsdom warns about;
@@ -21,7 +21,7 @@ jest.mock("../BuyShares", () => ({
 }));
 
 jest.mock("@/lib/contracts", () => ({
-  fetchAssetDetail: jest.fn(),
+  loadAssetDetail: jest.fn(),
   getUserShareBalance: jest.fn(),
 }));
 
@@ -29,7 +29,7 @@ jest.mock("@/hooks/useWallet", () => ({
   useWallet: jest.fn(),
 }));
 
-const mockFetchAssetDetail = fetchAssetDetail as jest.MockedFunction<typeof fetchAssetDetail>;
+const mockLoadAssetDetail = loadAssetDetail as jest.MockedFunction<typeof loadAssetDetail>;
 const mockGetUserShareBalance = getUserShareBalance as jest.MockedFunction<typeof getUserShareBalance>;
 const mockUseWallet = useWallet as jest.MockedFunction<typeof useWallet>;
 
@@ -77,34 +77,29 @@ describe("AssetDetail", () => {
 
   it("shows a loading skeleton while the asset query is pending", () => {
     // A never-resolving promise keeps the query in the loading state.
-    mockFetchAssetDetail.mockReturnValue(new Promise(() => {}));
+    mockLoadAssetDetail.mockReturnValue(new Promise(() => {}));
     const { container } = renderWithClient(<AssetDetail assetId={1} />);
     expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
 
   it("renders a not-found message when the asset does not exist", async () => {
-    mockFetchAssetDetail.mockResolvedValue(makeAsset({ exists: false }) as never);
+    mockLoadAssetDetail.mockResolvedValue(makeAsset({ exists: false }) as never);
     renderWithClient(<AssetDetail assetId={1} />);
     expect(
       await screen.findByText(/Property not found or no shares created yet\./i)
     ).toBeInTheDocument();
   });
 
-  it("keeps showing the skeleton when the query resolves to null", async () => {
-    // The `isLoading || !asset` guard catches a null result before the
-    // not-found branch (which requires a truthy asset with exists === false),
-    // so a null asset renders the loading skeleton indefinitely.
-    mockFetchAssetDetail.mockResolvedValue(null as never);
-    const { container } = renderWithClient(<AssetDetail assetId={1} />);
-    await waitFor(() => expect(mockFetchAssetDetail).toHaveBeenCalled());
-    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+  it("renders a not-found message when the query resolves to null", async () => {
+    mockLoadAssetDetail.mockResolvedValue(null as never);
+    renderWithClient(<AssetDetail assetId={1} />);
     expect(
-      screen.queryByText(/Property not found or no shares created yet\./i)
-    ).not.toBeInTheDocument();
+      await screen.findByText(/Property not found or no shares created yet\./i)
+    ).toBeInTheDocument();
   });
 
   it("renders asset metadata, financials and status once loaded", async () => {
-    mockFetchAssetDetail.mockResolvedValue(makeAsset() as never);
+    mockLoadAssetDetail.mockResolvedValue(makeAsset() as never);
     renderWithClient(<AssetDetail assetId={1} />);
 
     expect(await screen.findByRole("heading", { name: "Sunset Villa" })).toBeInTheDocument();
@@ -120,7 +115,7 @@ describe("AssetDetail", () => {
   });
 
   it("falls back to Asset #id heading when no metadata name/address is present", async () => {
-    mockFetchAssetDetail.mockResolvedValue(
+    mockLoadAssetDetail.mockResolvedValue(
       makeAsset({ metadata: { images: [] } }) as never
     );
     renderWithClient(<AssetDetail assetId={42} />);
@@ -134,7 +129,7 @@ describe("AssetDetail", () => {
       connect: jest.fn(),
       disconnect: jest.fn(),
     });
-    mockFetchAssetDetail.mockResolvedValue(makeAsset() as never);
+    mockLoadAssetDetail.mockResolvedValue(makeAsset() as never);
     mockGetUserShareBalance.mockResolvedValue(BigInt(7));
 
     renderWithClient(<AssetDetail assetId={1} />);
@@ -150,7 +145,7 @@ describe("AssetDetail", () => {
       connect: jest.fn(),
       disconnect: jest.fn(),
     });
-    mockFetchAssetDetail.mockResolvedValue(makeAsset() as never);
+    mockLoadAssetDetail.mockResolvedValue(makeAsset() as never);
     mockGetUserShareBalance.mockResolvedValue(BigInt(0));
 
     renderWithClient(<AssetDetail assetId={1} />);
@@ -160,7 +155,7 @@ describe("AssetDetail", () => {
   });
 
   it("renders a gallery when more than one image is provided", async () => {
-    mockFetchAssetDetail.mockResolvedValue(
+    mockLoadAssetDetail.mockResolvedValue(
       makeAsset({
         metadata: {
           name: "Sunset Villa",

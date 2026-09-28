@@ -1,13 +1,7 @@
 import hre, { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
-
-
-type AddressesConfig = {
-  assetVault: string;
-  assetShares: string;
-  usdc?: string;
-};
+import { loadDeployedAddresses } from "../loadDeployedAddresses";
 
 type DeployConfig = {
   seed?: {
@@ -20,17 +14,8 @@ type DeployConfig = {
 
 async function main() {
   const networkName = hre.network.name;
-  const addressesPath = path.join(__dirname, "../..", "deployments", `${networkName}-addresses.json`);
   const deployConfigPath = path.join(__dirname, "../..", "deployments", `${networkName}.json`);
-
-  if (!fs.existsSync(addressesPath)) {
-    throw new Error(
-      `No deployment addresses found at ${addressesPath}. Run 'npx hardhat run scripts/deploy.ts --network ${networkName}' first.`
-    );
-  }
-
-  const raw = fs.readFileSync(addressesPath, "utf8");
-  const addresses = JSON.parse(raw) as AddressesConfig;
+  const addresses = loadDeployedAddresses(networkName);
 
   const signers = await ethers.getSigners();
   const [signer] = signers;
@@ -74,7 +59,7 @@ async function main() {
     }
   }
 
-  const assetShares = await ethers.getContractAt("AssetShares", addresses.assetShares);
+  const assetShares = await ethers.getContractAt("AssetShares", addresses.ASSET_SHARES_ADDRESS);
 
   for (const user of usersToWhitelist) {
     if (!ethers.isAddress(user)) {
@@ -94,8 +79,8 @@ async function main() {
       ]
     : deployConfig.seed?.usdcUsersToFund ?? [];
 
-  const usdc = addresses.usdc
-    ? await ethers.getContractAt("MockERC20", addresses.usdc)
+  const usdc = addresses.USDC_ADDRESS
+    ? await ethers.getContractAt("MockERC20", addresses.USDC_ADDRESS)
     : null;
 
   if (usdc && usdcUsersToFund.length > 0) {
