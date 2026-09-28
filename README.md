@@ -117,6 +117,8 @@ npx nx run contracts:deploy:sepolia
 # Seeds
 npx nx run contracts:seed-users
 npx nx run contracts:seed-assets
+npx nx run contracts:seed-users:sepolia
+npx nx run contracts:seed-assets:sepolia
 ```
 
 ```bash
@@ -189,12 +191,16 @@ Order: **AssetUserAllowList** → **OracleRouter** → **AssetVault** → **Asse
 
 Live networks load the repo-root `.env` (then `contracts/.env`). `ETHEREUM_RPC_URL` / `BASE_RPC_URL` must be an Infura base ending in `/`; `INFURA_PROJECT_ID` is appended at runtime. A loopback `ETHEREUM_RPC_URL` is ignored for Sepolia/mainnet and falls back to `https://sepolia.infura.io/v3/` or `https://mainnet.infura.io/v3/`. Never commit a real `PRIVATE_KEY`.
 
-After localhost deploy, seed users and assets:
+After deploy, seed users and assets on the same chain (`localhost` by default; use `:sepolia`, `:mainnet`, `:base`, or `:baseSepolia`):
 
 ```bash
 npx nx run contracts:seed-users
 npx nx run contracts:seed-assets
+npx nx run contracts:seed-users:sepolia
+npx nx run contracts:seed-assets:sepolia
 ```
+
+Or `npx hardhat run scripts/seeds/seed-assets.ts --network sepolia` from `contracts/`. `SEED_CHAIN` / `--chain` must match `--network`.
 
 ## Events layer
 

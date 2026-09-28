@@ -2,6 +2,7 @@ import hre, { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 import { loadDeployedAddresses } from "../loadDeployedAddresses";
+import { assertProviderChainId, resolveTargetChain } from "../seedChain";
 
 type DeployConfig = {
   seed?: {
@@ -41,14 +42,16 @@ const ASSET_2 = {
 };
 
 async function main() {
-  const networkName = hre.network.name;
+  const networkName = resolveTargetChain(hre.network.name);
   const deployConfigPath = path.join(__dirname, "../..", "deployments", `${networkName}.json`);
   const addresses = loadDeployedAddresses(networkName);
 
   const signers = await ethers.getSigners();
   const [signer] = signers;
-  const isLocalNetwork = networkName === "localhost" || networkName === "hardhat";
-  console.log(`Seeding assets with signer ${signer.address} on network ${networkName}`);
+  const { chainId } = await ethers.provider.getNetwork();
+  assertProviderChainId(networkName, chainId);
+  const isLocalNetwork = networkName === "localhost";
+  console.log(`Seeding assets with signer ${signer.address} on ${networkName} (chainId ${chainId})`);
 
   // On non-localhost (e.g. Sepolia), validate signer matches expected deployer from config
   if (!isLocalNetwork) {

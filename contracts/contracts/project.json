@@ -149,16 +149,50 @@
     },
     "seed-users": {
       "executor": "nx:run-commands",
+      "defaultConfiguration": "localhost",
       "options": {
-        "command": "npx hardhat run scripts/seeds/seed-users.ts --network localhost",
         "cwd": "contracts"
+      },
+      "configurations": {
+        "localhost": {
+          "command": "npx hardhat run scripts/seeds/seed-users.ts --network localhost"
+        },
+        "sepolia": {
+          "command": "npx hardhat run scripts/seeds/seed-users.ts --network sepolia"
+        },
+        "mainnet": {
+          "command": "npx hardhat run scripts/seeds/seed-users.ts --network mainnet"
+        },
+        "baseSepolia": {
+          "command": "npx hardhat run scripts/seeds/seed-users.ts --network baseSepolia"
+        },
+        "base": {
+          "command": "npx hardhat run scripts/seeds/seed-users.ts --network base"
+        }
       }
     },
     "seed-assets": {
       "executor": "nx:run-commands",
+      "defaultConfiguration": "localhost",
       "options": {
-        "command": "npx hardhat run scripts/seeds/seed-assets.ts --network localhost",
         "cwd": "contracts"
+      },
+      "configurations": {
+        "localhost": {
+          "command": "npx hardhat run scripts/seeds/seed-assets.ts --network localhost"
+        },
+        "sepolia": {
+          "command": "npx hardhat run scripts/seeds/seed-assets.ts --network sepolia"
+        },
+        "mainnet": {
+          "command": "npx hardhat run scripts/seeds/seed-assets.ts --network mainnet"
+        },
+        "baseSepolia": {
+          "command": "npx hardhat run scripts/seeds/seed-assets.ts --network baseSepolia"
+        },
+        "base": {
+          "command": "npx hardhat run scripts/seeds/seed-assets.ts --network base"
+        }
       }
     }
   },
