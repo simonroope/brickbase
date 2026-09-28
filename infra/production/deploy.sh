@@ -114,11 +114,25 @@ cmd_deploy() {
 }
 
 cmd_wait_stable() {
-  aws ecs wait services-stable \
+  if aws ecs wait services-stable \
     --region "$AWS_REGION" \
     --cluster "$CLUSTER" \
-    --services brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway
-  echo "All services stable."
+    --services brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway; then
+    echo "All services stable."
+    return
+  fi
+
+  echo "Services did not become stable. Dumping status and recent events:"
+  for svc in brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway; do
+    echo "=== ${svc} ==="
+    aws ecs describe-services \
+      --region "$AWS_REGION" \
+      --cluster "$CLUSTER" \
+      --services "$svc" \
+      --query 'services[0].{desired:desiredCount,running:runningCount,pending:pendingCount,deployments:deployments,events:events[:8]}' \
+      --output json
+  done
+  exit 1
 }
 
 cmd_deploy_dry_run() {
