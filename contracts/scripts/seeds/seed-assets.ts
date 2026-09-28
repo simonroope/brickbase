@@ -5,6 +5,9 @@ import { loadDeployedAddresses } from "../loadDeployedAddresses";
 import { assertProviderChainId, resolveTargetChain } from "../seedChain";
 
 type DeployConfig = {
+  admins?: {
+    defaultAdmin?: string;
+  };
   seed?: {
     expectedDeployer?: string;
   };
@@ -58,17 +61,13 @@ async function main() {
     const deployConfig: DeployConfig = fs.existsSync(deployConfigPath)
       ? JSON.parse(fs.readFileSync(deployConfigPath, "utf8"))
       : {};
-    const expectedDeployer = deployConfig.seed?.expectedDeployer;
+    const expectedDeployer =
+      deployConfig.seed?.expectedDeployer || deployConfig.admins?.defaultAdmin;
 
     if (expectedDeployer && signer.address.toLowerCase() !== expectedDeployer.toLowerCase()) {
       throw new Error(
         `Signer (${signer.address}) does not match expected deployer (${expectedDeployer}). ` +
-          `Set PRIVATE_KEY in .env to the deployer's key. Ensure deploy/${networkName}.json has "seed": { "expectedDeployer": "0x..." }.`
-      );
-    }
-    if (!expectedDeployer) {
-      throw new Error(
-        `deploy/${networkName}.json must have "seed": { "expectedDeployer": "0x..." } to ensure correct account is used.`
+          `Set PRIVATE_KEY in .env to the deployer's key, or set seed.expectedDeployer / admins.defaultAdmin in deployments/${networkName}.json.`
       );
     }
   }

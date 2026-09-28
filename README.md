@@ -114,9 +114,9 @@ npx nx run contracts:audit
 npx nx run contracts:deploy:localhost
 npx nx run contracts:deploy:sepolia
 
-# Seeds
-npx nx run contracts:seed-users
-npx nx run contracts:seed-assets
+# Seeds — see [Seeds](#seeds)
+npx nx run contracts:seed-users:localhost
+npx nx run contracts:seed-assets:localhost
 npx nx run contracts:seed-users:sepolia
 npx nx run contracts:seed-assets:sepolia
 ```
@@ -191,16 +191,32 @@ Order: **AssetUserAllowList** → **OracleRouter** → **AssetVault** → **Asse
 
 Live networks load the repo-root `.env` (then `contracts/.env`). `ETHEREUM_RPC_URL` / `BASE_RPC_URL` must be an Infura base ending in `/`; `INFURA_PROJECT_ID` is appended at runtime. A loopback `ETHEREUM_RPC_URL` is ignored for Sepolia/mainnet and falls back to `https://sepolia.infura.io/v3/` or `https://mainnet.infura.io/v3/`. Never commit a real `PRIVATE_KEY`.
 
-After deploy, seed users and assets on the same chain (`localhost` by default; use `:sepolia`, `:mainnet`, `:base`, or `:baseSepolia`):
+### Seeds
+
+Hardhat scripts `contracts/scripts/seeds/seed-users.ts` and `seed-assets.ts`. Nx targets `seed-users` and `seed-assets` use the same network configurations as deploy (`localhost` | `sepolia` | `mainnet` | `baseSepolia` | `base`). Default is `localhost`. Seed the same chain you just deployed.
 
 ```bash
-npx nx run contracts:seed-users
+npx nx run contracts:seed-users              # localhost
 npx nx run contracts:seed-assets
 npx nx run contracts:seed-users:sepolia
 npx nx run contracts:seed-assets:sepolia
 ```
 
-Or `npx hardhat run scripts/seeds/seed-assets.ts --network sepolia` from `contracts/`. `SEED_CHAIN` / `--chain` must match `--network`.
+From `contracts/`:
+
+```bash
+npx hardhat run scripts/seeds/seed-users.ts --network sepolia
+npx hardhat run scripts/seeds/seed-assets.ts --network sepolia
+```
+
+Loads `contracts/deployments/{network}-addresses.json` (`ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `USDC_ADDRESS`, …). Live networks need `PRIVATE_KEY`. Optional `SEED_CHAIN` or `--chain` must match `--network`; the script checks the connected chain id before sending transactions.
+
+On live networks `seed-users` allowlists the connected signer by default (`admins.defaultAdmin` in `{network}.json` is treated as the expected deployer). Extra addresses: `seed.usersToWhitelist` in `{network}.json`, or comma-separated `SEED_USERS`.
+
+| Script | What it does |
+| ------ | ------------ |
+| `seed-users` | Allowlists seed accounts (live: the signer, plus `seed.usersToWhitelist` / `SEED_USERS`) and (on localhost) mints mock USDC |
+| `seed-assets` | Vaults the sample properties and creates share info |
 
 ## Events layer
 
@@ -303,7 +319,9 @@ Next.js application to **display and trade** commercial real estate RWAs.
 | `ETHEREUM_RPC_URL`            | Ethereum RPC base URL (e.g. `https://sepolia.infura.io/v3/`) |
 | `BASE_RPC_URL`                | Base RPC base URL (e.g. `https://base-sepolia.infura.io/v3/`) |
 | `INFURA_PROJECT_ID`           | Infura project ID — appended to RPC URLs at runtime      |
-| `PRIVATE_KEY`                 | Deployer key for live networks (`npx nx run contracts:deploy:sepolia`) |
+| `PRIVATE_KEY`                 | Deployer / seeder key for live networks (`deploy:sepolia`, `seed-*:sepolia`) |
+| `SEED_CHAIN`                  | Optional seed-script chain (`localhost` \| `sepolia` \| `mainnet` \| `base` \| `baseSepolia`); must match `--network` |
+| `SEED_USERS`                  | Optional comma-separated addresses to allowlist on live `seed-users` when `{network}.json` has no `seed.usersToWhitelist` |
 | `ASSET_VAULT_ADDRESS`         | AssetVault — from `{network}-addresses.json` after deploy |
 | `ASSET_SHARES_ADDRESS`        | AssetShares — from `{network}-addresses.json` after deploy |
 | `ORACLE_ROUTER_ADDRESS`       | OracleRouter — from `{network}-addresses.json` after deploy |

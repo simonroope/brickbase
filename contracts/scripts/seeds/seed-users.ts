@@ -2,9 +2,13 @@ import hre, { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 import { loadDeployedAddresses } from "../loadDeployedAddresses";
+import { resolveLiveSeedAllowlist } from "../seedAllowlist";
 import { assertProviderChainId, resolveTargetChain } from "../seedChain";
 
 type DeployConfig = {
+  admins?: {
+    defaultAdmin?: string;
+  };
   seed?: {
     expectedDeployer?: string;
     usersToWhitelist?: string[];
@@ -38,26 +42,20 @@ async function main() {
     usersToWhitelist = signers.slice(1, 3).map((s) => s.address);
     usersToWhitelist.push("0xC357cfe6f8acDB4e2D0Daa9751F24DB77Bfbfe3e");
   } else {
-    expectedDeployer = deployConfig.seed?.expectedDeployer;
-    usersToWhitelist = deployConfig.seed?.usersToWhitelist ?? [];
-
-    if (usersToWhitelist.length === 0) {
-      throw new Error(
-        `No usersToWhitelist in deploy/${networkName}.json. Add "seed": { "expectedDeployer": "0x...", "usersToWhitelist": ["0x...", "0x..."] }`
-      );
-    }
+    const resolved = resolveLiveSeedAllowlist(signer.address, {
+      expectedDeployer: deployConfig.seed?.expectedDeployer,
+      usersToWhitelist: deployConfig.seed?.usersToWhitelist,
+      defaultAdmin: deployConfig.admins?.defaultAdmin,
+    });
+    expectedDeployer = resolved.expectedDeployer;
+    usersToWhitelist = resolved.usersToWhitelist;
   }
 
   if (!isLocalNetwork) {
-    if (expectedDeployer && signer.address.toLowerCase() !== expectedDeployer.toLowerCase()) {
+    if (signer.address.toLowerCase() !== expectedDeployer.toLowerCase()) {
       throw new Error(
         `Signer (${signer.address}) does not match expected deployer (${expectedDeployer}). ` +
-          `Set PRIVATE_KEY in .env to the deployer's key, and ensure expectedDeployer in deploy/${networkName}.json is correct.`
-      );
-    }
-    if (!expectedDeployer) {
-      throw new Error(
-        `deploy/${networkName}.json must have "seed": { "expectedDeployer": "0x...", "usersToWhitelist": ["0x..."] } for non-localhost networks.`
+          `Set PRIVATE_KEY in .env to the deployer's key, or set seed.expectedDeployer / admins.defaultAdmin in deployments/${networkName}.json.`
       );
     }
   }
