@@ -3,6 +3,7 @@ FROM node:24-alpine
 WORKDIR /app
 COPY apps/events/package.json apps/events/package-lock.json ./apps/events/
 RUN npm ci --prefix apps/events
+COPY contracts/chains contracts/chains
 COPY apps/events ./apps/events
 WORKDIR /app/apps/events
 ENV NODE_ENV=production
