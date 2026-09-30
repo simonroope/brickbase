@@ -7,16 +7,24 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { loadAssetDetail, getUserShareBalance, type AssetMetadata } from "@/lib/contracts";
+import { loadAssetDetail, getUserShareBalance, deserializeAssetDetail, type AssetMetadata, type AssetDetailJson } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
 import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
 import { BuyShares } from "./BuyShares";
 
-export function AssetDetail({ assetId }: { assetId: number }) {
+export function AssetDetail({
+  assetId,
+  initialAsset,
+}: {
+  assetId: number;
+  initialAsset?: AssetDetailJson | null;
+}) {
   const { address } = useWallet();
   const { data: asset, isLoading, isError } = useQuery({
     queryKey: ["asset", assetId],
     queryFn: () => loadAssetDetail(assetId),
+    initialData: initialAsset ? deserializeAssetDetail(initialAsset) : undefined,
+    staleTime: 60_000,
   });
 
   const { data: userBalance } = useQuery({
@@ -65,6 +73,7 @@ export function AssetDetail({ assetId }: { assetId: number }) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 800px"
+              priority
             />
           )}
           <span className="absolute top-4 right-4 rounded-md bg-surface/90 px-3 py-1 text-sm font-medium text-text-tertiary">

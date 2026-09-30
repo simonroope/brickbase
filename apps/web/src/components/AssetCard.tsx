@@ -1,9 +1,7 @@
-"use client";
-
-import Link from "next/link";
 import Image from "next/image";
 import type { AssetSummary } from "@/lib/contracts";
 import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
+import { AssetDetailLink } from "./AssetDetailLink";
 
 export function AssetCard({ asset }: { asset: AssetSummary }) {
   const imageSrc = asset.metadata?.images?.[0];
@@ -13,7 +11,7 @@ export function AssetCard({ asset }: { asset: AssetSummary }) {
 
   return (
     <div className="flex flex-col rounded-xl border border-border bg-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      <Link href={href} className="block flex-1">
+      <AssetDetailLink href={href} assetId={asset.assetId} className="block flex-1">
         <div className="relative h-48 w-full bg-surface-elevated">
           {imageSrc && (
             <Image
@@ -48,14 +46,15 @@ export function AssetCard({ asset }: { asset: AssetSummary }) {
             Available Shares: {formatInt(asset.availableSupply)}
           </p>
         </div>
-      </Link>
+      </AssetDetailLink>
       <div className="border-t border-border-subtle p-4">
-        <Link
+        <AssetDetailLink
           href={href}
+          assetId={asset.assetId}
           className="block w-full rounded-md bg-brand px-4 py-2 text-center text-sm font-medium text-white hover:bg-brand-hover"
         >
           Buy Shares
-        </Link>
+        </AssetDetailLink>
       </div>
     </div>
   );

@@ -23,6 +23,31 @@ jest.mock("../BuyShares", () => ({
 jest.mock("@/lib/contracts", () => ({
   loadAssetDetail: jest.fn(),
   getUserShareBalance: jest.fn(),
+  deserializeAssetDetail: (json: {
+    capitalValue: string;
+    incomeValue: string;
+    totalSupply: string;
+    availableSupply: string;
+    sharePrice: string;
+    metadata: { images?: string[]; purchasePrice?: string } | null;
+  }) => ({
+    ...json,
+    capitalValue: BigInt(json.capitalValue),
+    incomeValue: BigInt(json.incomeValue),
+    totalSupply: BigInt(json.totalSupply),
+    availableSupply: BigInt(json.availableSupply),
+    sharePrice: BigInt(json.sharePrice),
+    metadata: json.metadata
+      ? {
+          ...json.metadata,
+          images: json.metadata.images ?? [],
+          purchasePrice:
+            json.metadata.purchasePrice != null
+              ? BigInt(json.metadata.purchasePrice)
+              : undefined,
+        }
+      : null,
+  }),
 }));
 
 jest.mock("@/hooks/useWallet", () => ({
@@ -118,6 +143,49 @@ describe("AssetDetail", () => {
     expect(screen.getByText("$500,000.00")).toBeInTheDocument();
     expect(screen.getByText("Share Price:")).toBeInTheDocument();
     expect(screen.getByTestId("buy-shares")).toBeInTheDocument();
+  });
+
+  it("renders from server-provided asset data without a client fetch", () => {
+    renderWithClient(
+      <AssetDetail
+        assetId={1}
+        initialAsset={{
+          assetId: 1,
+          exists: true,
+          status: 0,
+          capitalValue: "155000000000000",
+          incomeValue: "500000000000",
+          metadataUri: "ipfs://meta",
+          metadata: {
+            name: "Sunset Villa",
+            address: "123 Ocean Ave",
+            images: ["https://img.example/1.jpg"],
+          },
+          totalSupply: "1000",
+          availableSupply: "400",
+          sharePrice: "1000000",
+          tradingEnabled: true,
+        }}
+      />
+    );
+
+    expect(screen.getByRole("heading", { name: "Sunset Villa" })).toBeInTheDocument();
+    expect(mockLoadAssetDetail).not.toHaveBeenCalled();
+  });
+
+  it("renders from the query cache without a client fetch", () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: 60_000 } },
+    });
+    client.setQueryData(["asset", 1], makeAsset());
+    render(
+      <QueryClientProvider client={client}>
+        <AssetDetail assetId={1} />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole("heading", { name: "Sunset Villa" })).toBeInTheDocument();
+    expect(mockLoadAssetDetail).not.toHaveBeenCalled();
   });
 
   it("falls back to Asset #id heading when no metadata name/address is present", async () => {

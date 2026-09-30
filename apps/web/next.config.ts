@@ -26,6 +26,13 @@ const nextConfig: NextConfig = {
   // Monorepo: trace deps from repo root (avoids multi-lockfile root warning)
   outputFileTracingRoot: monorepoRoot,
   turbopack: {},
+  experimental: {
+    // Keep a short client-router cache so Back / Buy Shares is not a full RSC refetch.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
   images: {
     // IPFS CIDs are immutable; keep optimised photos in the Next image cache.
     minimumCacheTTL: 60 * 60 * 24 * 30,

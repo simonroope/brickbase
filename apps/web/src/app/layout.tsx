@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
+import { Header } from "@/components/Header";
+import { OptimisticAssetProvider } from "@/components/OptimisticAssetProvider";
+import { OptimisticAssetSlot } from "@/components/OptimisticAssetSlot";
 import Web3ModalProvider from "@/context/Web3ModalProvider";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
@@ -34,10 +37,15 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Web3ModalProvider cookie={cookie}>
-          <div className="flex min-h-screen flex-col">
-            {children}
-            <Footer />
-          </div>
+          <OptimisticAssetProvider>
+            <div className="flex min-h-screen flex-col bg-page">
+              <Header />
+              <div className="flex-1">
+                <OptimisticAssetSlot>{children}</OptimisticAssetSlot>
+              </div>
+              <Footer />
+            </div>
+          </OptimisticAssetProvider>
         </Web3ModalProvider>
       </body>
     </html>
