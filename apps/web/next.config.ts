@@ -31,6 +31,9 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      { protocol: "https", hostname: "gateway.pinata.cloud", pathname: "/ipfs/**" },
+      { protocol: "https", hostname: "w3s.link", pathname: "/ipfs/**" },
+      { protocol: "https", hostname: "dweb.link", pathname: "/ipfs/**" },
       { protocol: "https", hostname: "ipfs.io", pathname: "/**" },
       { protocol: "https", hostname: "cloudflare-ipfs.com", pathname: "/**" },
     ],

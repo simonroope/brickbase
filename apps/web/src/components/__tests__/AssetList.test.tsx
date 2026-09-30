@@ -33,6 +33,7 @@ describe("AssetList", () => {
     render(<AssetList assets={[onChainAsset]} />);
 
     expect(screen.getByText("Cannon Street Office")).toBeInTheDocument();
+    expect(screen.getByText("Location: London")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Buy Shares" })).toBeInTheDocument();
   });
 });

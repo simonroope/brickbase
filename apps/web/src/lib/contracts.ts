@@ -1,6 +1,6 @@
 import { createPublicClient, defineChain, http, type Address } from "viem";
 import { sepolia } from "viem/chains";
-import { toIpfsGatewayUrl } from "@brickbase/chains";
+import { createIpfsJsonFetcher, toIpfsGatewayUrl } from "@brickbase/chains";
 import { config } from "./config";
 import { mockAssets } from "@tests/mocks/mockAssets";
 import { resolveAssetIds, isRecordedAsset } from "./assetIds";
@@ -231,6 +231,8 @@ function vaultAndShares(vaultAddress: string, sharesAddress: string): { vault: A
   return { vault: vaultAddress as Address, shares: sharesAddress as Address };
 }
 
+const fetchIpfsJson = createIpfsJsonFetcher();
+
 function stringUrls(values: unknown): string[] {
   if (!Array.isArray(values)) return [];
   return values
@@ -243,23 +245,8 @@ function stringUrls(values: unknown): string[] {
 async function fetchMetadata(metadataUri: string): Promise<AssetMetadata | null> {
   if (!metadataUri || metadataUri.startsWith("data:")) return null;
   try {
-    const url = toIpfsGatewayUrl(metadataUri);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15_000);
-    // CID-addressed IPFS JSON is immutable; Next Data Cache keys by gateway URL.
-    const res = await fetch(url, { cache: "force-cache", signal: controller.signal });
-    clearTimeout(timeout);
-    if (!res.ok) {
-      console.warn(`[fetchMetadata] ${res.status} ${url}`);
-      return null;
-    }
-    const ct = res.headers.get("content-type") ?? "";
-    if (!ct.includes("application/json")) {
-      console.warn(`[fetchMetadata] non-JSON content-type: ${ct} for ${url}`);
-      return null;
-    }
-    const text = await res.text();
-    const json = JSON.parse(text) as Record<string, unknown>;
+    const json = await fetchIpfsJson(metadataUri);
+    if (!json) return null;
     const images = stringUrls(json.images);
     const purchasePrice =
       json.purchasePrice != null

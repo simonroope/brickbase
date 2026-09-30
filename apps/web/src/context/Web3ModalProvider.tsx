@@ -1,5 +1,6 @@
 "use client";
 
+import "@/config/indexedDbStub";
 import React, { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cookieToInitialState, WagmiProvider } from "wagmi";

@@ -125,7 +125,7 @@ export function AssetDetail({ assetId }: { assetId: number }) {
                 {m?.area != null && (
                   <>
                     <dt className="text-text-secondary">Area:</dt>
-                    <dd className="font-medium">{formatInt(BigInt(m.area))}</dd>
+                    <dd className="font-medium">{new Intl.NumberFormat("en-GB").format(m.area)}</dd>
                   </>
                 )}
               </dl>
@@ -135,9 +135,9 @@ export function AssetDetail({ assetId }: { assetId: number }) {
           <div className="mt-6">
             <dl className="grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
               <dt className="text-text-secondary">Capital Value:</dt>
-              <dd className="font-medium">{formatInt(asset.capitalValue)}</dd>
+              <dd className="font-medium">{formatUsdc(asset.capitalValue)}</dd>
               <dt className="text-text-secondary">Income Value:</dt>
-              <dd className="font-medium">{formatInt(asset.incomeValue)}</dd>
+              <dd className="font-medium">{formatUsdc(asset.incomeValue)}</dd>
               <dt className="text-text-secondary">Share Price:</dt>
               <dd className="font-medium">{formatUsdc(asset.sharePrice)}</dd>
               <dt className="text-text-secondary">Available Shares:</dt>

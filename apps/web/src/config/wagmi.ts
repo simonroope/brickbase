@@ -1,3 +1,4 @@
+import "@/config/indexedDbStub";
 import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
 import { defineChain } from "viem";
 import { cookieStorage, createStorage, http } from "wagmi";

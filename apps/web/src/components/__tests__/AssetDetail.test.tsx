@@ -38,14 +38,15 @@ function makeAsset(overrides: Record<string, unknown> = {}) {
     assetId: 1,
     exists: true,
     status: 0,
-    capitalValue: BigInt(500000),
-    incomeValue: BigInt(25000),
+    capitalValue: BigInt("155000000000000"),
+    incomeValue: BigInt("500000000000"),
     metadataUri: "ipfs://meta",
     metadata: {
       name: "Sunset Villa",
       address: "123 Ocean Ave",
       assetType: "Residential",
       jurisdiction: "CA, USA",
+      area: 10_000,
       images: ["https://img.example/1.jpg"],
     },
     totalSupply: BigInt(1000),
@@ -106,10 +107,15 @@ describe("AssetDetail", () => {
     expect(screen.getByText("123 Ocean Ave")).toBeInTheDocument();
     expect(screen.getByText("Residential")).toBeInTheDocument();
     expect(screen.getByText("CA, USA")).toBeInTheDocument();
+    expect(screen.getByText("Area:")).toBeInTheDocument();
+    expect(screen.getByText("10,000")).toBeInTheDocument();
     // status 0 -> "Active"
     expect(screen.getByText("Active")).toBeInTheDocument();
     // financial labels are always rendered
     expect(screen.getByText("Capital Value:")).toBeInTheDocument();
+    expect(screen.getByText("$155,000,000.00")).toBeInTheDocument();
+    expect(screen.getByText("Income Value:")).toBeInTheDocument();
+    expect(screen.getByText("$500,000.00")).toBeInTheDocument();
     expect(screen.getByText("Share Price:")).toBeInTheDocument();
     expect(screen.getByTestId("buy-shares")).toBeInTheDocument();
   });

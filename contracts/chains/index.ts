@@ -6,7 +6,7 @@
 export const SUPPORTED_CHAIN_IDS = [1, 11155111, 8453, 84532] as const;
 export type ChainId = (typeof SUPPORTED_CHAIN_IDS)[number];
 
-export { toIpfsGatewayUrl } from "./ipfsUrl";
+export { toIpfsGatewayUrl, ipfsCidPath, ipfsGatewayUrls, createIpfsJsonFetcher } from "./ipfsUrl";
 
 /**
  * Appends INFURA_PROJECT_ID to an Infura-style base RPC URL (ending with `/`).

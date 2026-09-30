@@ -24,7 +24,7 @@ import {
   oracleRouterAbi,
   assetUserAllowListAbi,
 } from "../../../contracts/abi/src/index.js";
-import { appendProjectId, toIpfsGatewayUrl } from "@brickbase/chains";
+import { appendProjectId, createIpfsJsonFetcher } from "@brickbase/chains";
 
 const chainId = parseInt(process.env.CHAIN_ID || "31337", 10);
 const rpcUrl = appendProjectId(process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545");
@@ -110,19 +110,7 @@ export async function getOraclePrices(): Promise<OraclePrices | null> {
   }
 }
 
-async function fetchMetadata(uri: string): Promise<Record<string, unknown> | null> {
-  if (!uri || uri.startsWith("data:")) return null;
-  try {
-    const url = toIpfsGatewayUrl(uri);
-    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-    if (!res.ok) return null;
-    const ct = res.headers.get("content-type") ?? "";
-    if (!ct.includes("application/json")) return null;
-    return (await res.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
+const fetchIpfsJson = createIpfsJsonFetcher();
 
 export async function getAssetList(): Promise<AssetSummary[]> {
   if (!config.assetVaultAddress || !config.assetSharesAddress) return [];
@@ -196,7 +184,7 @@ export async function getAssetDetail(assetId: number): Promise<AssetSummary & { 
     ]);
     const asset = assets[0];
     if (!asset) return null;
-    const metadata = asset.metadataURI ? await fetchMetadata(asset.metadataURI) : undefined;
+    const metadata = asset.metadataURI ? await fetchIpfsJson(asset.metadataURI) : undefined;
     const [totalSupply, availableSupply, sharePrice, tradingEnabled] = shareInfo;
     return {
       assetId,

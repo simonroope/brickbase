@@ -1,5 +1,6 @@
 "use client";
 
+import "@/config/indexedDbStub";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 import { getWagmiConfig, projectId } from "@/config/wagmi";
 
