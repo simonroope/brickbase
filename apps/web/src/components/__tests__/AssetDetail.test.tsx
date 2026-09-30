@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { AssetDetail } from "../AssetDetail";
@@ -228,18 +228,59 @@ describe("AssetDetail", () => {
     expect(screen.queryByText("Your balance:")).not.toBeInTheDocument();
   });
 
-  it("renders a gallery when more than one image is provided", async () => {
+  it("renders every asset image in the gallery", async () => {
     mockLoadAssetDetail.mockResolvedValue(
       makeAsset({
         metadata: {
           name: "Sunset Villa",
-          images: ["https://img.example/1.jpg", "https://img.example/2.jpg"],
+          images: [
+            "https://img.example/1.jpg",
+            "https://img.example/2.jpg",
+            "https://img.example/3.jpg",
+          ],
         },
       }) as never
     );
     renderWithClient(<AssetDetail assetId={1} />);
 
     expect(await screen.findByText("Gallery")).toBeInTheDocument();
-    expect(screen.getByAltText("View 2")).toBeInTheDocument();
+    expect(screen.getByAltText("View 1")).toHaveAttribute("src", "https://img.example/1.jpg");
+    expect(screen.getByAltText("View 2")).toHaveAttribute("src", "https://img.example/2.jpg");
+    expect(screen.getByAltText("View 3")).toHaveAttribute("src", "https://img.example/3.jpg");
+  });
+
+  it("renders a gallery when the asset has a single image", async () => {
+    mockLoadAssetDetail.mockResolvedValue(makeAsset() as never);
+    renderWithClient(<AssetDetail assetId={1} />);
+
+    expect(await screen.findByText("Gallery")).toBeInTheDocument();
+    expect(screen.getByAltText("View 1")).toHaveAttribute("src", "https://img.example/1.jpg");
+  });
+
+  it("shows a clicked gallery image in the hero", async () => {
+    mockLoadAssetDetail.mockResolvedValue(
+      makeAsset({
+        metadata: {
+          name: "Sunset Villa",
+          address: "123 Ocean Ave",
+          images: [
+            "https://img.example/1.jpg",
+            "https://img.example/2.jpg",
+            "https://img.example/3.jpg",
+          ],
+        },
+      }) as never
+    );
+    renderWithClient(<AssetDetail assetId={1} />);
+
+    expect(await screen.findByAltText("123 Ocean Ave")).toHaveAttribute(
+      "src",
+      "https://img.example/1.jpg"
+    );
+    fireEvent.click(screen.getByAltText("View 2"));
+    expect(screen.getByAltText("123 Ocean Ave")).toHaveAttribute(
+      "src",
+      "https://img.example/2.jpg"
+    );
   });
 });

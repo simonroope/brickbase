@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { flushSync } from "react-dom";
 import type { ReactNode } from "react";
 import { useShowAsset } from "./OptimisticAssetProvider";
 
@@ -18,15 +17,7 @@ export function AssetDetailLink({
 }) {
   const showAsset = useShowAsset();
   return (
-    <Link
-      href={href}
-      className={className}
-      onClick={() => {
-        flushSync(() => {
-          showAsset(assetId);
-        });
-      }}
-    >
+    <Link href={href} className={className} onClick={() => showAsset(assetId)}>
       {children}
     </Link>
   );

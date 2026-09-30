@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { flushSync } from "react-dom";
 import { ConnectWallet } from "./ConnectWallet";
 import { LiveTicker } from "./LiveTicker";
 import { OraclePrices } from "./OraclePrices";
@@ -9,32 +8,27 @@ import { useOptimisticAsset } from "./OptimisticAssetProvider";
 
 export function Header() {
   const { clearAsset } = useOptimisticAsset();
-  const goHome = () => {
-    flushSync(() => {
-      clearAsset();
-    });
-  };
   return (
     <header className="sticky top-0 z-50 border-b border-nav-border bg-nav-bg">
       <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-4 py-4">
         <nav className="flex gap-4">
           <Link
             href="/"
-            onClick={goHome}
+            onClick={clearAsset}
             className="text-sm font-medium text-header-text hover:text-white"
           >
             Properties
           </Link>
           <Link
             href="/asset-admin"
-            onClick={goHome}
+            onClick={clearAsset}
             className="text-sm font-medium text-header-text hover:text-white"
           >
             Admin
           </Link>
         </nav>
         <div className="flex justify-center">
-          <Link href="/" onClick={goHome} className="text-xl font-bold text-brand">
+          <Link href="/" onClick={clearAsset} className="text-xl font-bold text-brand">
             BrickBase
           </Link>
         </div>

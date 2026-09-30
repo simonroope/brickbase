@@ -4,6 +4,7 @@
  * Property details are viewable by all users (signed, unsigned, allowlisted or not).
  * Allowlist is only enforced when attempting to purchase shares (see BuyShares).
  */
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import { loadAssetDetail, getUserShareBalance, deserializeAssetDetail, type Asse
 import { useWallet } from "@/hooks/useWallet";
 import { formatInt, formatUsdc, ASSET_STATUS } from "@/lib/format";
 import { BuyShares } from "./BuyShares";
+import { AssetGallery } from "./AssetGallery";
 
 export function AssetDetail({
   assetId,
@@ -20,6 +22,7 @@ export function AssetDetail({
   initialAsset?: AssetDetailJson | null;
 }) {
   const { address } = useWallet();
+  const [heroIndex, setHeroIndex] = useState(0);
   const { data: asset, isLoading, isError } = useQuery({
     queryKey: ["asset", assetId],
     queryFn: () => loadAssetDetail(assetId),
@@ -32,6 +35,10 @@ export function AssetDetail({
     queryFn: () => (address ? getUserShareBalance(address as `0x${string}`, assetId) : Promise.resolve(BigInt(0))),
     enabled: !!address && !!asset,
   });
+
+  useEffect(() => {
+    setHeroIndex(0);
+  }, [assetId]);
 
   if (isLoading) {
     return (
@@ -55,7 +62,8 @@ export function AssetDetail({
   }
 
   const m = asset.metadata as AssetMetadata | null;
-  const imageSrc = m?.images?.[0];
+  const images = m?.images ?? [];
+  const imageSrc = images[Math.min(heroIndex, Math.max(0, images.length - 1))];
   const statusLabel = ASSET_STATUS[asset.status] ?? "Unknown";
 
   return (
@@ -167,23 +175,12 @@ export function AssetDetail({
             </div>
           </div>
 
-          {m?.images && m.images.length > 1 && (
-            <div className="mt-8">
-              <h2 className="mb-4 text-sm font-medium text-text-muted">Gallery</h2>
-              <div className="flex gap-4 overflow-x-auto">
-                {m.images.slice(1).map((uri, i) => (
-                  <div key={i} className="relative h-32 w-48 shrink-0">
-                    <Image
-                      src={uri}
-                      alt={`View ${i + 2}`}
-                      fill
-                      className="rounded-lg object-cover"
-                      sizes="192px"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+          {images.length > 0 && (
+            <AssetGallery
+              images={images}
+              selectedIndex={heroIndex}
+              onSelect={setHeroIndex}
+            />
           )}
         </div>
       </div>
