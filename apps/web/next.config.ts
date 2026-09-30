@@ -27,11 +27,12 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   turbopack: {},
   images: {
+    // IPFS CIDs are immutable; keep optimised photos in the Next image cache.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
       { protocol: "https", hostname: "ipfs.io", pathname: "/**" },
       { protocol: "https", hostname: "cloudflare-ipfs.com", pathname: "/**" },
-      { protocol: "https", hostname: "ivory-independent-bison-569.mypinata.cloud", pathname: "/**" },
     ],
   },
   webpack: (config) => {

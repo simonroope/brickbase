@@ -1,5 +1,6 @@
 import { createPublicClient, defineChain, http, type Address } from "viem";
 import { sepolia } from "viem/chains";
+import { toIpfsGatewayUrl } from "@brickbase/chains";
 import { config } from "./config";
 import { mockAssets } from "@tests/mocks/mockAssets";
 import { resolveAssetIds, isRecordedAsset } from "./assetIds";
@@ -230,23 +231,23 @@ function vaultAndShares(vaultAddress: string, sharesAddress: string): { vault: A
   return { vault: vaultAddress as Address, shares: sharesAddress as Address };
 }
 
-function toDisplayUrl(u: string): string {
-  if (!u || typeof u !== "string") return "";
-  if (u.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${u.slice(7)}`;
-  if (u.startsWith("http://") || u.startsWith("https://")) return u;
-  if (/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|bafy[a-zA-Z0-9]+)/.test(u.trim())) {
-    return `https://ipfs.io/ipfs/${u.trim()}`;
-  }
-  return u;
+function stringUrls(values: unknown): string[] {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((x) => (typeof x === "string" ? x : (x as { url?: string }).url))
+    .filter((x): x is string => typeof x === "string")
+    .map(toIpfsGatewayUrl)
+    .filter(Boolean);
 }
 
 async function fetchMetadata(metadataUri: string): Promise<AssetMetadata | null> {
   if (!metadataUri || metadataUri.startsWith("data:")) return null;
   try {
-    const url = toDisplayUrl(metadataUri);
+    const url = toIpfsGatewayUrl(metadataUri);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15_000);
-    const res = await fetch(url, { cache: "no-store", signal: controller.signal });
+    // CID-addressed IPFS JSON is immutable; Next Data Cache keys by gateway URL.
+    const res = await fetch(url, { cache: "force-cache", signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) {
       console.warn(`[fetchMetadata] ${res.status} ${url}`);
@@ -259,12 +260,7 @@ async function fetchMetadata(metadataUri: string): Promise<AssetMetadata | null>
     }
     const text = await res.text();
     const json = JSON.parse(text) as Record<string, unknown>;
-    const rawImages: string[] = Array.isArray(json.images)
-      ? json.images
-          .map((x) => (typeof x === "string" ? x : (x as { url?: string }).url))
-          .filter((x): x is string => typeof x === "string")
-      : [];
-    const images = rawImages.map(toDisplayUrl).filter(Boolean);
+    const images = stringUrls(json.images);
     const purchasePrice =
       json.purchasePrice != null
         ? typeof json.purchasePrice === "string"
@@ -282,9 +278,7 @@ async function fetchMetadata(metadataUri: string): Promise<AssetMetadata | null>
       yearBuilt: typeof json.yearBuilt === "number" ? json.yearBuilt : undefined,
       jurisdiction: json.jurisdiction as string | undefined,
       images,
-      documents: Array.isArray(json.documents)
-        ? (json.documents as string[]).filter((x): x is string => typeof x === "string")
-        : undefined,
+      documents: Array.isArray(json.documents) ? stringUrls(json.documents) : undefined,
     };
   } catch (e) {
     console.warn("[fetchMetadata]", metadataUri, e);

@@ -18,7 +18,7 @@ const ASSET_1 = {
   assetId: 1,
   // AssetVault properties
   status: 0, // Active
-  metadataURI: "https://ivory-independent-bison-569.mypinata.cloud/ipfs/bafkreihuvf5pnroufid4cpzfy4fhyyahononohxoycmdnaiobxibk525am",
+  metadataURI: "ipfs://bafkreihuvf5pnroufid4cpzfy4fhyyahononohxoycmdnaiobxibk525am",
   capitalValue: ethers.parseUnits("155000000", 6), // $155M (USDC 6 decimals)
   incomeValue: ethers.parseUnits("500000", 6), // $500k (USDC 6 decimals)
   // AssetShares
@@ -33,7 +33,7 @@ const ASSET_2 = {
   assetId: 2,
   // AssetVault properties
   status: 0, // Active
-  metadataURI: "https://ivory-independent-bison-569.mypinata.cloud/ipfs/bafkreibru36m5prgxabdlgjnz4av4lcizll5cn5vbnyv55s4vi23nyl4fe",
+  metadataURI: "ipfs://bafkreibru36m5prgxabdlgjnz4av4lcizll5cn5vbnyv55s4vi23nyl4fe",
   capitalValue: ethers.parseUnits("102000000", 6), // $102M (USDC 6 decimals)
   incomeValue: ethers.parseUnits("550000", 6), // $550k (USDC 6 decimals)
   // AssetShares

@@ -8,7 +8,7 @@ export function OraclePrices() {
   const { data: prices, isLoading, isError, error } = useQuery({
     queryKey: ["oracle-prices"],
     queryFn: loadOraclePrices,
-    refetchInterval: 30_000,
+    refetchInterval: 60 * 60 * 1000,
   });
 
   if (isError && error) {

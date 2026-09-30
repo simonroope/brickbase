@@ -222,7 +222,7 @@ On live networks `seed-users` allowlists the connected signer by default (`admin
 
 `apps/events` connects Brickbase to **external systems** (market and chain WebSockets today; GraphQL/API/DB later). It returns **data** upward to `apps/web` and `apps/mcp` — the folder name describes the role, not the payload.
 
-**Live feeds (MVP):** display-only ticker in the web header — Coinbase ETH/USD spot + latest block from Infura. This is separate from on-chain oracle polling in `OraclePrices` (Chainlink via `OracleRouter`, still every 30 s). See [docs/pub-sub.md](docs/pub-sub.md) for the full specification.
+**Live feeds (MVP):** display-only ticker in the web header — Coinbase ETH/USD spot + latest block from Infura. This is separate from on-chain oracle polling in `OraclePrices` (Chainlink via `OracleRouter`, every hour). See [docs/pub-sub.md](docs/pub-sub.md) for the full specification.
 
 **Pipeline:**
 

@@ -24,7 +24,7 @@ import {
   oracleRouterAbi,
   assetUserAllowListAbi,
 } from "../../../contracts/abi/src/index.js";
-import { appendProjectId } from "@brickbase/chains";
+import { appendProjectId, toIpfsGatewayUrl } from "@brickbase/chains";
 
 const chainId = parseInt(process.env.CHAIN_ID || "31337", 10);
 const rpcUrl = appendProjectId(process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545");
@@ -110,17 +110,10 @@ export async function getOraclePrices(): Promise<OraclePrices | null> {
   }
 }
 
-function toDisplayUrl(u: string): string {
-  if (!u || typeof u !== "string") return "";
-  if (u.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${u.slice(7)}`;
-  if (u.startsWith("http://") || u.startsWith("https://")) return u;
-  return u;
-}
-
 async function fetchMetadata(uri: string): Promise<Record<string, unknown> | null> {
   if (!uri || uri.startsWith("data:")) return null;
   try {
-    const url = toDisplayUrl(uri);
+    const url = toIpfsGatewayUrl(uri);
     const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
     if (!res.ok) return null;
     const ct = res.headers.get("content-type") ?? "";
