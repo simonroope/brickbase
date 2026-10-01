@@ -40,7 +40,9 @@ aws s3api put-bucket-versioning \
 
 Or apply `infra/production/bootstrap/` if you prefer Terraform for the bucket.
 
-## Configure and apply
+## Configure and apply (first time)
+
+GitHub Actions **does not** apply Terraform. `.github/workflows/deploy-to-environment.yml` only rolls ECS onto an existing image. Any change under `infra/production/*.tf` (VPC, ALB, target groups, ECS service shape, SSM, IAM) is applied from this directory.
 
 ```bash
 cd infra/production
@@ -55,6 +57,43 @@ terraform plan -out=tfplan
 terraform apply tfplan
 terraform output
 ```
+
+## Subsequent Terraform applies
+
+From a checkout that already contains the `.tf` change:
+
+```bash
+cd infra/production
+export AWS_PROFILE=brickbase
+aws sts get-caller-identity
+
+terraform init
+terraform plan -out=tfplan
+```
+
+Read the plan. Apply only if it matches the intended diff.
+
+```bash
+terraform apply tfplan
+```
+
+**ALB web health check** (`aws_lb_target_group.web`): the probe path is `/health`. The Next.js route lives in the web image; the path lives on the target group. Deploy the image that serves `GET /health` **before** applying a path change, then apply Terraform. Applying first probes a missing route and marks tasks unhealthy.
+
+Confirm `/health` on the running app, then confirm the target group:
+
+```bash
+curl -sS "https://$(terraform output -raw production_hostname)/health"
+# {"status":"ok"}
+
+WEB_TG_ARN=$(terraform output -json target_group_arns | jq -r .web)
+aws elbv2 describe-target-groups \
+  --target-group-arns "$WEB_TG_ARN" \
+  --region eu-west-2 \
+  --query 'TargetGroups[0].{Name:TargetGroupName,Path:HealthCheckPath}' \
+  --output table
+```
+
+Target group **names** are `${project_name}-${environment}-<svc>` (defaults: `brickbase-production-web`, `brickbase-production-gateway`, `brickbase-production-mcp`). Do not use the ECR/ECS names (`brickbase-web`, …) with `describe-target-groups --names`. Prefer `terraform output target_group_arns`.
 
 ## Operator DNS (after apply)
 
@@ -119,13 +158,15 @@ cp .env.production.example .env.production
 
 ## Deploy applications (CI or manual)
 
+This step does **not** run Terraform. It registers a new ECS task definition and waits for the services to stabilize.
+
 ```bash
 export IMAGE_ACC=$(terraform output -raw ecr_registry_id)
 export IMAGE_TAG=<git-sha>
 make -C infra/production deploy wait-stable
 ```
 
-Docker builds use `infra/docker/Dockerfile.*` (see `.github/workflows/production-build-deploy.yml`).
+The same ECS roll is what **Deploy to environment** (`deploy-to-environment.yml`) runs. Docker builds use `infra/docker/Dockerfile.*` (see `.github/workflows/production-build-deploy.yml` / `publish-to-ecr.yml`).
 
 ## GitHub Environment `production`
 
