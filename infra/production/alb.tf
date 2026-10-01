@@ -18,7 +18,8 @@ resource "aws_lb_target_group" "web" {
   target_type = "ip"
 
   health_check {
-    path                = "/"
+    # Homepage is force-dynamic and calls Infura; probes must not hit `/`.
+    path                = "/health"
     matcher             = "200-399"
     healthy_threshold   = 2
     unhealthy_threshold = 3
