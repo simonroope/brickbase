@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { loadOraclePrices } from "@/lib/contracts";
 import { formatOracleInt, formatOracleNum } from "@/lib/format";
 
+const rowClass =
+  "flex w-full flex-wrap items-center justify-center gap-4 text-sm";
+
 export function OraclePrices() {
   const { data: prices, isLoading, isError, error } = useQuery({
     queryKey: ["oracle-prices"],
@@ -13,7 +16,7 @@ export function OraclePrices() {
 
   if (isError && error) {
     return (
-      <div className="flex flex-wrap gap-4 text-sm text-error">
+      <div className={`${rowClass} text-error`}>
         Oracle error: {error instanceof Error ? error.message : String(error)}
       </div>
     );
@@ -21,7 +24,7 @@ export function OraclePrices() {
 
   if (isLoading || !prices) {
     return (
-      <div className="flex flex-wrap gap-4 text-sm text-header-text-muted">
+      <div className={`${rowClass} text-header-text-muted`}>
         <span><span className="font-semibold">ETH/USD:</span> --</span>
         <span><span className="font-semibold">GBP/USD:</span> --</span>
         <span><span className="font-semibold">Gold/USD:</span> --</span>
@@ -31,7 +34,7 @@ export function OraclePrices() {
   }
 
   return (
-      <div className="flex flex-wrap gap-4 text-sm text-header-text">
+      <div className={`${rowClass} text-header-text`}>
         <span><span className="font-semibold">ETH/USD:</span> {formatOracleInt(prices.ethUsd.price)}</span>
         <span><span className="font-semibold">GBP/USD:</span> {formatOracleInt(prices.gbpUsd.price)}</span>
         <span><span className="font-semibold">Gold/USD:</span> {formatOracleInt(prices.goldUsd.price)}</span>

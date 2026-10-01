@@ -1,3 +1,1 @@
-export function GET() {
-  return Response.json({ status: "ok" });
-}
+export { GET } from "./health";

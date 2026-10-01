@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { describe, it, expect } from "@jest/globals";
-import { GET } from "../route";
+import { GET } from "../health";
 
 describe("GET /health", () => {
   it("returns 200 with status ok", async () => {

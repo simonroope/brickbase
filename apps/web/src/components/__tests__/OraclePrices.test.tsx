@@ -72,4 +72,11 @@ describe("OraclePrices", () => {
     renderWithClient(<OraclePrices />);
     await expectOraclePricesVisible();
   });
+
+  it("centers the price row so wrapped labels stay centred on a narrow viewport", async () => {
+    mockUseWallet.mockReturnValue(disconnectedWallet);
+    renderWithClient(<OraclePrices />);
+    const ethUsd = await screen.findByText(/ETH\/USD:/);
+    expect(ethUsd.closest("div")).toHaveClass("justify-center");
+  });
 });
