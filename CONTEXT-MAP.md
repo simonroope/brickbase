@@ -7,6 +7,7 @@ Brickbase is a multi-context monorepo for fractional real-estate RWA investing o
 - [Contracts](./contracts/contracts/CONTEXT.md) — on-chain assets, fractional shares, allowlist, oracle
 - [Web](./apps/web/CONTEXT.md) — investor portal: property display, share purchase, admin
 - [MCP](./apps/mcp/CONTEXT.md) — AI-agent tools and resources over the smart contracts
+- [API](./apps/api/CONTEXT.md) — HTTP JSON API for contract reads; never signs
 - [Events](./apps/events/CONTEXT.md) — display-only live market and chain-head feeds pipeline
 - [ABI](./contracts/abi/CONTEXT.md) — compiled ABI exports and import conventions
 - [Chains](./contracts/chains/CONTEXT.md) — supported chains, RPC URL construction
@@ -16,7 +17,8 @@ Brickbase is a multi-context monorepo for fractional real-estate RWA investing o
 
 - **Contracts → Web**: Web reads contract state via a viem `publicClient`; deployment addresses are env-driven per app (`apps/web/src/lib/config.ts`).
 - **Contracts → MCP**: MCP reads contract state via viem and returns **unsigned** transaction payloads; it never signs or holds keys.
+- **Contracts → API**: The Rust HTTP API reads contract state; it never signs or holds keys.
 - **ABI → Web, MCP, Test Seed**: All consumers import typed ABIs from `@brickbase/abi`; the raw `generated/*.json` artifacts (copied from Contracts) are never imported directly.
-- **Chains → Web, MCP, Events**: All services resolve RPC URLs via `getChainConfig` / `appendProjectId`, appending `INFURA_PROJECT_ID` onto a base `RPC_URL`.
+- **Chains → Web, MCP, Events, API**: Web, MCP, and Events resolve RPC URLs via `getChainConfig` / `appendProjectId`. The API reads the same `RPC_URL` / `INFURA_PROJECT_ID` / `CHAIN_ID` env names.
 - **Events → Web**: Ingest publishes normalised `LiveFeedMessage`s to Redis; Gateway relays them over a WebSocket; Web subscribes via `useLiveFeedWebSocket`. Display-only — no contract state flows through this path.
 - **Events ↔ Contracts**: None. The events pipeline consumes exogenous market data (Coinbase) and generic chain liveness (Infura `newHeads`) only; it does not read contracts.

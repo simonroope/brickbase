@@ -2,7 +2,7 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/events`, `apps/mcp`, `apps/web`) and `contracts/*` (e.g. `contracts/abi`, `contracts/contracts`, `contracts/chains`, `contracts/tests/seed`).
+This is a **multi-context** monorepo: contexts live under `apps/*` (e.g. `apps/api`, `apps/events`, `apps/mcp`, `apps/web`) and `contracts/*` (e.g. `contracts/abi`, `contracts/contracts`, `contracts/chains`, `contracts/tests/seed`).
 
 ## Before exploring, read these
 
@@ -20,6 +20,9 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 ├── CONTEXT-MAP.md                      ← points to each context's CONTEXT.md
 ├── docs/adr/                           ← system-wide decisions
 ├── apps/
+│   ├── api/
+│   │   ├── CONTEXT.md
+│   │   └── docs/adr/
 │   ├── events/
 │   │   ├── CONTEXT.md
 │   │   └── docs/adr/                   ← context-specific decisions

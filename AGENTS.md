@@ -1,6 +1,6 @@
 # Brickbase — Agent Guide
 
-Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP server, events layer (live feeds), and a Next.js investor portal.
+Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP server, events layer (live feeds), a Rust HTTP API, and a Next.js investor portal.
 
 ## Structure
 
@@ -8,6 +8,7 @@ Nx monorepo for fractional RWA investing on Ethereum: EVM smart contracts, MCP s
 |---------------|-------------------------------------------------------------|
 | `apps/web`    | Next.js investor portal (App Router, Tailwind, wagmi, viem) |
 | `apps/mcp`    | MCP server — AI agent tools + resources for smart contracts |
+| `apps/api`    | Rust HTTP API (Axum): contract reads and operator queries — never signs |
 | `apps/events` | Live feeds: `ingest/` (upstream → Redis), `gateway/` (Redis → browser), `types/` |
 | `workflows`   | Temporal worker — scans `ready-for-agent` issues, resolves `Blocked by` / `Blocks` dependency edges, and runs `build-code` in topological order (parallel where possible) in isolated git worktrees |
 | `skills/`     | Agent skills — source of truth. Run `npm run skills:sync` after adding a skill |

@@ -38,7 +38,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 ## General
 
-- TypeScript everywhere — no `.js` source files in `apps/` or `contracts/`.
+- TypeScript everywhere in `apps/web`, `apps/mcp`, `apps/events`, and `contracts/` — no `.js` source files. `apps/api` is Rust.
 - No `any` unless wrapping a third-party contract type that cannot be typed (Hardhat signer/factory); use a comment explaining why.
 - No `console.log` in production paths — use structured logging or remove before merging.
 - No commented-out code — delete it; git history is the record.
@@ -84,6 +84,14 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 ---
 
+## Rust API (`apps/api`)
+
+- Axum HTTP JSON API. It never holds or signs with a private key.
+- `GET /health` returns `{ "status": "ok" }` with no RPC, database, or outbound HTTP.
+- Canonical env names (`API_PORT`, `RPC_URL`, `CHAIN_ID`, `*_ADDRESS`) — same as web and MCP.
+- Runtime is `cargo` (`rust-toolchain.toml` pins stable + rustfmt + clippy). Do not commit `target/`.
+- Tests live in `apps/api/tests/` and run with `cargo test`.
+
 ## Events layer (`apps/events`)
 
 - `ingest` reads from upstream (Infura WS, Coinbase WS) and writes to Redis only — it does not read from contracts.
@@ -110,6 +118,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 - Test files: `*.test.ts` / `*.test.tsx`.
 - Contract tests: `*.t.ts` under `contracts/tests/unit/`.
 - Integration / E2E: Cucumber + Playwright under `apps/web/tests/`.
+- Rust API: `apps/api/tests/*.rs` via `cargo test`.
 - See `skills/tdd/tests.md` for good/bad test patterns.
 - See `skills/tdd/mocking.md` for mocking rules.
 - No test should assert on implementation details (internal call counts, storage slots, private method state).
@@ -325,3 +334,5 @@ If duplication is detected during review, it must be extracted before the PR mer
 | Run ingest        | `nx run events:ingest`     |
 | Run gateway       | `nx run events:gateway`    |
 | Test web          | `nx run web:test`          |
+| Serve API         | `nx run api:serve`         |
+| Test API          | `nx run api:test`          |
