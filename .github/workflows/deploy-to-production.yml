@@ -4,15 +4,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      image_tag:
-        description: "ECR image tag (git SHA) to promote — leave blank to use this commit"
-        required: false
-        type: string
-        default: ""
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 env:
@@ -31,19 +26,34 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - id: tags
         env:
-          INPUT_TAG: ${{ inputs.image_tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          SOURCE="${INPUT_TAG:-${{ github.sha }}}"
+          source_manifest() {
+            aws ecr batch-get-image \
+              --repository-name "$1" \
+              --image-ids imageTag="$2" \
+              --output json | jq -r '.images[0].imageManifest // empty'
+          }
+
+          SOURCE=$(gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow publish-to-ecr.yml \
+            --status success \
+            --limit 1 \
+            --json headSha \
+            --jq '.[0].headSha // empty')
+          if [ -z "$SOURCE" ]; then
+            echo "No successful publish-to-ecr run found"
+            exit 1
+          fi
+
           echo "IMAGE_TAG=$SOURCE" >> "$GITHUB_OUTPUT"
-          echo "Promoting ECR tag $SOURCE to production ECS"
+          echo "Promoting images from latest successful publish-to-ecr ($SOURCE)"
           for REPO in brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway; do
-            MANIFEST=$(aws ecr batch-get-image \
-              --repository-name "$REPO" \
-              --image-ids imageTag="$SOURCE" \
-              --output json | jq -r '.images[0].imageManifest // empty')
+            MANIFEST=$(source_manifest "$REPO" "$SOURCE")
             if [ -z "$MANIFEST" ]; then
-              echo "Missing $REPO:$SOURCE — push this SHA with publish-to-ecr first"
+              echo "Missing $REPO:$SOURCE — latest publish-to-ecr SHA is not in ECR"
               exit 1
             fi
             if [ -n "$RELEASE_TAG" ]; then
