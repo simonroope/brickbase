@@ -306,6 +306,28 @@ Next.js application to **display and trade** commercial real estate RWAs.
 - **Integration** (`test:integration`): `tests/features/integration/*.feature`, mock data, no deployed contracts
 - **E2E** (`test:e2e`): `tests/features/e2e/*.feature`, real contracts, no e2e scenarios yet
 
+
+| Process | Nx command | npm script (`apps/web`) |
+| ------- | ---------- | ----------------------- |
+| Dev server | `npx nx run web:serve` | `npm run dev` |
+| Clear Next.js lock | `npx nx run web:dev:locks` | `npm run dev:locks` |
+| Dev server for tests | `npx nx run web:dev:for-test` | `npm run dev:for-test` |
+| Production build | `npx nx run web:build` | `npm run build` |
+| Unit tests | `npx nx run web:test` | `npm run test` |
+| Integration | `npx nx run web:test:integration` | `npm run test:integration` |
+| E2E | `npx nx run web:test:e2e` | `npm run test:e2e` |
+
+
+```bash
+npx nx run web:serve
+npx nx run web:build
+npx nx run web:test
+npx nx run web:test:integration
+npx nx run web:test:e2e
+```
+
+Root shortcuts: `npm run dev` (same as `web:dev`), `npm run web:dev:locks`, `npm run web:dev:for-test`, `npm run web:build`, `npm run web:test`, `npm run web:test:integration`, `npm run web:test:e2e`.
+
 ## Environment
 
 ### Web & contracts
@@ -346,14 +368,6 @@ Next.js application to **display and trade** commercial real estate RWAs.
 
 
 Full list in `.env.example`.
-
-```bash
-npx nx run web:serve            # Dev server
-npx nx run web:build            # Production build
-npx nx run web:test             # Jest unit tests
-npx nx run web:test:integration # Cucumber BDD integration tests (mock data, starts dev server)
-npx nx run web:test:e2e         # Cucumber BDD e2e tests (real contracts, starts dev server)
-```
 
 ## Agent skills
 

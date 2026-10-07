@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { OraclePrices } from "../OraclePrices";
@@ -78,5 +78,24 @@ describe("OraclePrices", () => {
     renderWithClient(<OraclePrices />);
     const ethUsd = await screen.findByText(/ETH\/USD:/);
     expect(ethUsd.closest("div")).toHaveClass("justify-center");
+  });
+
+  it("keeps oracle names visible and hides values when the feed fails", async () => {
+    mockLoadOraclePrices.mockRejectedValue(
+      new Error("HTTP request failed. URL: http://127.0.0.1:8545/")
+    );
+    mockUseWallet.mockReturnValue(disconnectedWallet);
+    renderWithClient(<OraclePrices />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("--")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Oracle error/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/HTTP request failed/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/ETH\/USD:/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/GBP\/USD:/)).toBeInTheDocument();
+    expect(screen.getByText(/Gold\/USD:/)).toBeInTheDocument();
+    expect(screen.getByText(/FTSE 100:/)).toBeInTheDocument();
+    expect(screen.queryByText(/\$2,010/)).not.toBeInTheDocument();
   });
 });

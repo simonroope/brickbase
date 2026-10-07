@@ -46,6 +46,20 @@
         "command": "npm run test:integration",
         "cwd": "apps/web"
       }
+    },
+    "dev:locks": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run dev:locks",
+        "cwd": "apps/web"
+      }
+    },
+    "dev:for-test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run dev:for-test",
+        "cwd": "apps/web"
+      }
     }
   },
   "implicitDependencies": ["abi", "mcp", "chains"],

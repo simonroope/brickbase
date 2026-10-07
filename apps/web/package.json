@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "dev:for-test": "id=$(cat .next/dev/lock 2>/dev/null); rm -f .next/dev/lock 2>/dev/null; [ -n \"$id\" ] && echo \"Locks deleted: $id\"; next dev --webpack",
-    "dev:locks": "id=$(cat .next/dev/lock 2>/dev/null); rm -f .next/dev/lock 2>/dev/null; if [ -n \"$id\" ]; then echo \"Locks deleted: $id\"; else echo \"No locks to delete\"; fi",
+    "dev:for-test": "bash scripts/dev-for-test.sh",
+    "dev:locks": "bash scripts/clear-dev-locks.sh",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
