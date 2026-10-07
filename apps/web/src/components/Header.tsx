@@ -14,6 +14,7 @@ export function Header() {
         <nav className="flex gap-4">
           <Link
             href="/"
+            prefetch={false}
             onClick={clearAsset}
             className="text-sm font-medium text-header-text hover:text-white"
           >
@@ -28,7 +29,7 @@ export function Header() {
           </Link>
         </nav>
         <div className="flex justify-center">
-          <Link href="/" onClick={clearAsset} className="text-xl font-bold text-brand">
+          <Link href="/" prefetch={false} onClick={clearAsset} className="text-xl font-bold text-brand">
             BrickBase
           </Link>
         </div>
