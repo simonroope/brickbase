@@ -10,7 +10,7 @@ const chainConfig = getChainConfig(chainId);
 
 export const config = {
   chainId,
-  rpcUrl: process.env.ETHEREUM_RPC_URL || chainConfig.rpcUrl,
+  rpcUrl: process.env.RPC_URL || chainConfig.rpcUrl,
   assetVaultAddress: (process.env.ASSET_VAULT_ADDRESS || "") as `0x${string}`,
   assetSharesAddress: (process.env.ASSET_SHARES_ADDRESS || "") as `0x${string}`,
   oracleRouterAddress: (process.env.ORACLE_ROUTER_ADDRESS || "") as `0x${string}`,

@@ -1,6 +1,6 @@
 /**
  * Contract read client for MCP server.
- * Reads runtime env vars (CHAIN_ID, ETHEREUM_RPC_URL, *_ADDRESS).
+ * Reads runtime env vars (CHAIN_ID, RPC_URL, *_ADDRESS).
  * The web app uses NEXT_PUBLIC_* equivalents baked into its browser bundle.
  */
 import * as dotenv from "dotenv";
@@ -27,7 +27,7 @@ import {
 import { appendProjectId, createIpfsJsonFetcher } from "@brickbase/chains";
 
 const chainId = parseInt(process.env.CHAIN_ID || "31337", 10);
-const rpcUrl = appendProjectId(process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545");
+const rpcUrl = appendProjectId(process.env.RPC_URL || "http://127.0.0.1:8545");
 
 const localhost = defineChain({
   id: 31337,

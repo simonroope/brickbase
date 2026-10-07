@@ -6,7 +6,7 @@
   "scripts": {
     "ingest": "tsx ingest/src/index.ts",
     "gateway": "tsx gateway/src/index.ts",
-    "test": "tsx --test types/__tests__/schemas.test.ts ingest/src/__tests__/parsers.test.ts"
+    "test": "tsx --test types/__tests__/schemas.test.ts ingest/src/__tests__/parsers.test.ts ingest/src/__tests__/config.test.ts"
   },
   "dependencies": {
     "dotenv": "^16.0.0",

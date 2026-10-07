@@ -45,19 +45,19 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
     },
     sepolia: {
-      url: remoteRpcUrl(process.env.ETHEREUM_RPC_URL, "https://sepolia.infura.io/v3/"),
+      url: remoteRpcUrl(process.env.RPC_URL, "https://sepolia.infura.io/v3/"),
       accounts: deployerAccounts,
     },
     mainnet: {
-      url: remoteRpcUrl(process.env.ETHEREUM_RPC_URL, "https://mainnet.infura.io/v3/"),
+      url: remoteRpcUrl(process.env.RPC_URL, "https://mainnet.infura.io/v3/"),
       accounts: deployerAccounts,
     },
     baseSepolia: {
-      url: remoteRpcUrl(process.env.BASE_RPC_URL, "https://base-sepolia.infura.io/v3/"),
+      url: remoteRpcUrl(process.env.RPC_URL, "https://base-sepolia.infura.io/v3/"),
       accounts: deployerAccounts,
     },
     base: {
-      url: remoteRpcUrl(process.env.BASE_RPC_URL, "https://base-mainnet.infura.io/v3/"),
+      url: remoteRpcUrl(process.env.RPC_URL, "https://base-mainnet.infura.io/v3/"),
       accounts: deployerAccounts,
     }
   },

@@ -87,7 +87,7 @@ npx nx run-many -t lint      # same, per Nx project
 
 ### Environment
 
-Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `ETHEREUM_RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `contracts/abi` and are imported as `@brickbase/abi`.
+Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `contracts/abi` and are imported as `@brickbase/abi`.
 
 ---
 
@@ -189,7 +189,7 @@ Order: **AssetUserAllowList** → **OracleRouter** → **AssetVault** → **Asse
 | `sepolia`, `baseSepolia` | `PRIVATE_KEY` (funded) | USDC required; empty feeds deploy a mock (e.g. no FTSE 100 feed on Sepolia) |
 | `mainnet`, `base` | `PRIVATE_KEY` (funded) | USDC and all four feeds required — no mocks |
 
-Live networks load the repo-root `.env` (then `contracts/.env`). `ETHEREUM_RPC_URL` / `BASE_RPC_URL` must be an Infura base ending in `/`; `INFURA_PROJECT_ID` is appended at runtime. A loopback `ETHEREUM_RPC_URL` is ignored for Sepolia/mainnet and falls back to `https://sepolia.infura.io/v3/` or `https://mainnet.infura.io/v3/`. Never commit a real `PRIVATE_KEY`.
+Live networks load the repo-root `.env` (then `contracts/.env`). `RPC_URL` is this environment's Infura base ending in `/`; `INFURA_PROJECT_ID` is appended at runtime. A loopback `RPC_URL` is ignored for Sepolia/mainnet and falls back to `https://sepolia.infura.io/v3/` or `https://mainnet.infura.io/v3/`. Never commit a real `PRIVATE_KEY`.
 
 ### Seeds
 
@@ -242,29 +242,31 @@ apps/events/
 ```
 
 
-| Process | Nx command                        | npm script (`apps/events`) |
-| ------- | --------------------------------- | -------------------------------- |
-| Ingest  | `npx nx run events:ingest`  | `npm run ingest`                 |
-| Gateway | `npx nx run events:gateway` | `npm run gateway`                |
-| Tests   | `npx nx run events:test`    | `npm run test`                   |
+| Process | Nx command                  | Root npm / local |
+| ------- | --------------------------- | ---------------- |
+| Redis   | —                           | `docker compose -f docker-compose.live.yml up -d` |
+| Ingest  | `npx nx run events:ingest`  | `npm run ingest` |
+| Gateway | `npx nx run events:gateway` | `npm run gateway` |
+| Tests   | `npx nx run events:test`    | `npm run events:test` |
 
-
-**Run locally** (requires `apps/events` install; use with web for the live ticker UI):
+**Run locally** (requires `apps/events` install; use with web for the live ticker UI). **Start Redis first** — ingest and gateway both connect to it (`REDIS_URL`, default `redis://127.0.0.1:6379`). After Redis is up, ingest and gateway can start in either order.
 
 ```bash
-# Redis (from repo root)
+# 1. Redis (repo root) — required before ingest/gateway
 docker compose -f docker-compose.live.yml up -d
 
-# Ingest — Coinbase ticker + Infura newHeads → Redis
+# 2. Ingest — Coinbase ticker + chain newHeads (Hardhat locally, Infura in AWS) → Redis
 npx nx run events:ingest
+# npm run ingest
 
-# Gateway — ws://localhost:8081/ws/live (default)
+# 3. Gateway — ws://localhost:8081/ws/live (default)
 npx nx run events:gateway
+# npm run gateway
 ```
 
-Set `INFURA_PROJECT_ID` in `.env` for chain blocks; `WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
+Local ingest subscribes to Hardhat `newHeads` at `ws://127.0.0.1:8545` (from `RPC_URL`). Staging and production use Infura WebSockets (`INFURA_PROJECT_ID` + Infura `RPC_URL`). `WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
 
-Root shortcuts: `npm run events:ingest`, `npm run events:gateway`, `npm run events:test`.
+Root shortcuts: `npm run ingest` (also `events:ingest`), `npm run gateway` (also `events:gateway`), `npm run events:test`. The same `ingest` / `gateway` scripts exist in `apps/events`.
 
 ## MCP Server
 
@@ -337,9 +339,8 @@ Root shortcuts: `npm run dev` (same as `web:dev`), `npm run web:dev:locks`, `npm
 | ----------------------------- | -------------------------------------------------------- |
 | `WALLETCONNECT_PROJECT_ID`    | WalletConnect Cloud project ID                           |
 | `APP_URL`                     | Application URL (e.g. `https://brickbase.com`)           |
-| `CHAIN_ID`                    | Chain ID (e.g. `11155111` for Sepolia)                   |
-| `ETHEREUM_RPC_URL`            | Ethereum RPC base URL (e.g. `https://sepolia.infura.io/v3/`) |
-| `BASE_RPC_URL`                | Base RPC base URL (e.g. `https://base-sepolia.infura.io/v3/`) |
+| `CHAIN_ID`                    | This environment's chain (`31337` local, `11155111` staging, `1` production) |
+| `RPC_URL`            | This environment's RPC base (Hardhat locally; Infura `…/v3/` in AWS) |
 | `INFURA_PROJECT_ID`           | Infura project ID — appended to RPC URLs at runtime      |
 | `PRIVATE_KEY`                 | Deployer / seeder key for live networks (`deploy:sepolia`, `seed-*:sepolia`) |
 | `SEED_CHAIN`                  | Optional seed-script chain (`localhost` \| `sepolia` \| `mainnet` \| `base` \| `baseSepolia`); must match `--network` |
@@ -359,7 +360,8 @@ Root shortcuts: `npm run dev` (same as `web:dev`), `npm run web:dev:locks`, `npm
 | Env var                   | Description                                                               |
 | ------------------------- | ------------------------------------------------------------------------- |
 | `REDIS_URL`               | Redis for pub/sub (e.g. `redis://127.0.0.1:6379`)                         |
-| `INFURA_PROJECT_ID`       | Infura project ID for `newHeads` (optional; ingest skips Infura if unset) |
+| `INFURA_PROJECT_ID`       | Infura project ID for staging/production `newHeads` (unused on local Hardhat) |
+| `INFURA_WS_NETWORK`       | Optional Infura WS network when `RPC_URL` is a remote non-Infura host |
 | `CHAIN_ID`                | Chain ID in outbound messages                                             |
 | `COINBASE_PRODUCT_ID`     | Default `ETH-USD`                                                         |
 | `GATEWAY_PORT`            | Default `8081`                                                            |

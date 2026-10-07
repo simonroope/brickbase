@@ -34,6 +34,8 @@
     "web:test:e2e": "nx run web:test:e2e",
     "mcp:dev": "nx run mcp:serve",
     "mcp:test": "nx run mcp:test",
+    "ingest": "nx run events:ingest",
+    "gateway": "nx run events:gateway",
     "events:ingest": "nx run events:ingest",
     "events:gateway": "nx run events:gateway",
     "events:test": "nx run events:test",

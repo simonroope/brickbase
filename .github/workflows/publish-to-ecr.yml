@@ -52,7 +52,7 @@ jobs:
           docker build -f infra/docker/Dockerfile.web \
             --build-arg APP_URL="${{ vars.APP_URL }}" \
             --build-arg CHAIN_ID="${{ vars.CHAIN_ID }}" \
-            --build-arg ETHEREUM_RPC_URL="${{ vars.ETHEREUM_RPC_URL }}" \
+            --build-arg RPC_URL="${{ vars.RPC_URL }}" \
             --build-arg INFURA_PROJECT_ID="${{ secrets.INFURA_PROJECT_ID }}" \
             --build-arg ASSET_VAULT_ADDRESS="${{ vars.ASSET_VAULT_ADDRESS }}" \
             --build-arg ASSET_SHARES_ADDRESS="${{ vars.ASSET_SHARES_ADDRESS }}" \

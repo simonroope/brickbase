@@ -180,7 +180,7 @@ Set variables (from `terraform output`):
 | `ECS_TASK_ROLE_ARN` | `ecs_task_role_arn` |
 | `REDIS_URL` | `redis_url` |
 | `SSM_INFURA_ARN` | `arn:aws:ssm:eu-west-2:<account>:parameter/brickbase/production/infura/project_id` |
-| `ETHEREUM_RPC_URL` | Ethereum mainnet RPC endpoint (Infura/Alchemy) |
+| `RPC_URL` | This environment's Infura RPC base (production: `https://mainnet.infura.io/v3/`) |
 | `CHAIN_ID` | `1` (mainnet) |
 | `NEXT_PUBLIC_APP_URL` | `https://briqbase.com` |
 | `NEXT_PUBLIC_WS_LIVE_URL` | `wss://briqbase.com/ws/live` |
@@ -206,7 +206,6 @@ Set these in the GitHub `production` environment before running the deploy workf
 | `ADMIN_ADDRESS` | Variable | Default admin / multisig address |
 | `ADMIN_ASSET_MANAGER_ADDRESS` | Variable | Asset manager wallet address |
 | `ADMIN_COMPLIANCE_ADDRESS` | Variable | Compliance officer wallet address |
-| `BASE_RPC_URL` | **Secret** | Base RPC endpoint — Base mainnet URL in production, Base Sepolia URL in staging |
 | `CONTRACTS_DEPLOYER_PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
 
 The `contracts_network` workflow input selects the Hardhat network (`sepolia`, `mainnet`, `baseSepolia`). Default is `sepolia` — use `mainnet` only when ready for production contract deployment.

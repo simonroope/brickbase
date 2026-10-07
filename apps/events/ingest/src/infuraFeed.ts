@@ -4,6 +4,7 @@ import {
   LIVE_FEED_SCHEMA_VERSION,
   type ChainHeadMessage,
 } from "@brickbase/events-types";
+import { chainHeadLogLabel } from "./config.js";
 import type { RedisPublisher } from "./redisPublisher.js";
 
 export interface InfuraFeedOptions {
@@ -49,6 +50,7 @@ export function parseInfuraNewHead(
 
 export function startInfuraFeed(options: InfuraFeedOptions): () => void {
   const { wsUrl, chainId, publisher } = options;
+  const logTag = `[ingest][${chainHeadLogLabel(chainId)}]`;
   let ws: WebSocket | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
@@ -71,7 +73,7 @@ export function startInfuraFeed(options: InfuraFeedOptions): () => void {
     ws = new WebSocket(wsUrl);
 
     ws.on("open", () => {
-      console.error("[ingest][infura] connected");
+      console.error(`${logTag} connected`);
       backoffMs = 1000;
       subscribeNewHeads();
     });
@@ -91,17 +93,17 @@ export function startInfuraFeed(options: InfuraFeedOptions): () => void {
       try {
         await publisher.publish(LIVE_CHANNELS.CHAIN_HEAD, msg);
       } catch (err) {
-        console.error("[ingest][infura] publish failed:", err);
+        console.error(`${logTag} publish failed:`, err);
       }
     });
 
     ws.on("close", () => {
-      console.error("[ingest][infura] disconnected");
+      console.error(`${logTag} disconnected`);
       scheduleReconnect();
     });
 
     ws.on("error", (err) => {
-      console.error("[ingest][infura] error:", err.message);
+      console.error(`${logTag} error:`, err.message);
       ws?.close();
     });
   };

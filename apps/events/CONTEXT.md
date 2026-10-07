@@ -5,7 +5,7 @@ The display-only live-feeds pipeline: `ingest` normalises upstream market and ch
 ## Pipeline roles
 
 **Ingest**:
-The upstream-facing service. Connects out to Coinbase and Infura, parses their payloads into normalised `LiveFeedMessage`s, and publishes them to Redis. The only writer of Redis.
+The upstream-facing service. Connects out to Coinbase and the environment's chain (Hardhat locally, Infura in AWS), parses their payloads into normalised `LiveFeedMessage`s, and publishes them to Redis. The only writer of Redis.
 _Avoid_: producer, collector
 
 **Gateway**:
@@ -18,9 +18,9 @@ _Avoid_: server (unqualified), proxy
 The subscription to Coinbase's `ticker` channel for a product (default ETH-USD), producing `TickerMessage`s.
 _Avoid_: price feed, market feed
 
-**Infura newHeads feed**:
-The `eth_subscribe`/`newHeads` subscription over Infura, emitting one `ChainHeadMessage` per new block head. Carries block metadata only — no contract state.
-_Avoid_: block feed, chain feed
+**Chain head feed**:
+The `eth_subscribe`/`newHeads` subscription — Hardhat WebSocket on localhost, Infura WebSocket in staging/production — emitting one `ChainHeadMessage` per new block head. Carries block metadata only — no contract state.
+_Avoid_: block feed, treating Infura as the only upstream
 
 ## Messages
 

@@ -10,11 +10,11 @@ loadDotenv({ path: path.resolve(monorepoRoot, ".env") });
 const nextConfig: NextConfig = {
   output: "standalone",
   // Expose canonical env var names to the browser bundle at build time.
-  // ETHEREUM_RPC_URL is the base URL; INFURA_PROJECT_ID appended via shared-config.
+  // RPC_URL is the base URL; INFURA_PROJECT_ID appended via shared-config.
   env: {
     APP_URL: process.env.APP_URL ?? "",
     CHAIN_ID: process.env.CHAIN_ID ?? "",
-    ETHEREUM_RPC_URL: appendProjectId(process.env.ETHEREUM_RPC_URL ?? ""),
+    RPC_URL: appendProjectId(process.env.RPC_URL ?? ""),
     ASSET_VAULT_ADDRESS: resolveDeployedAddress("ASSET_VAULT_ADDRESS"),
     ASSET_SHARES_ADDRESS: resolveDeployedAddress("ASSET_SHARES_ADDRESS"),
     ORACLE_ROUTER_ADDRESS: resolveDeployedAddress("ORACLE_ROUTER_ADDRESS"),

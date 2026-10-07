@@ -24,12 +24,17 @@ export function appendProjectId(baseUrl: string): string {
   return `${baseUrl}${projectId}`;
 }
 
+const RPC_FALLBACKS: Record<number, { rpcUrl: string; name: string }> = {
+  1: { rpcUrl: "https://eth.llamarpc.com", name: "Ethereum" },
+  11155111: { rpcUrl: "https://rpc.sepolia.org", name: "Sepolia" },
+  8453: { rpcUrl: "https://mainnet.base.org", name: "Base" },
+  84532: { rpcUrl: "https://sepolia.base.org", name: "Base Sepolia" },
+};
+
 export function getChainConfig(chainId: number) {
-  const configs: Record<number, { rpcUrl: string; name: string }> = {
-    1: { rpcUrl: appendProjectId(process.env.ETHEREUM_RPC_URL || "https://eth.llamarpc.com"), name: "Ethereum" },
-    11155111: { rpcUrl: appendProjectId(process.env.ETHEREUM_RPC_URL || "https://rpc.sepolia.org"), name: "Sepolia" },
-    8453: { rpcUrl: appendProjectId(process.env.BASE_RPC_URL || "https://mainnet.base.org"), name: "Base" },
-    84532: { rpcUrl: appendProjectId(process.env.BASE_RPC_URL || "https://sepolia.base.org"), name: "Base Sepolia" },
+  const fallback = RPC_FALLBACKS[chainId] ?? { rpcUrl: "", name: `Chain ${chainId}` };
+  return {
+    rpcUrl: appendProjectId(process.env.RPC_URL || fallback.rpcUrl),
+    name: fallback.name,
   };
-  return configs[chainId] ?? { rpcUrl: "", name: `Chain ${chainId}` };
 }

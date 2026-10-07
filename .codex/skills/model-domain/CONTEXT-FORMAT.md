@@ -51,7 +51,7 @@ Brickbase is a multi-context monorepo. `CONTEXT-MAP.md` at the repo root lists a
 - **Contracts → MCP**: MCP reads contract state and returns unsigned transaction payloads for agents to sign
 - **Events → Web**: Ingest publishes to Redis; Gateway exposes a WebSocket; Web subscribes via useLiveFeedWebSocket
 - **Contracts → Events**: Ingest subscribes to Infura newHeads for block events; chain ID flows from shared-config
-- **Shared Config → Web, MCP, Events**: All services consume ETHEREUM_RPC_URL and CHAIN_ID from shared-config
+- **Shared Config → Web, MCP, Events**: All services consume RPC_URL and CHAIN_ID from shared-config
 ```
 
 The skill infers which context the current topic relates to from the files being edited or discussed. If unclear, ask.

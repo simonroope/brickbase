@@ -44,7 +44,7 @@ jobs:
           docker build -f infra/docker/Dockerfile.web \
             --build-arg APP_URL="${{ vars.APP_URL }}" \
             --build-arg CHAIN_ID="${{ vars.CHAIN_ID }}" \
-            --build-arg ETHEREUM_RPC_URL="${{ vars.ETHEREUM_RPC_URL }}" \
+            --build-arg RPC_URL="${{ vars.RPC_URL }}" \
             --build-arg INFURA_PROJECT_ID="${{ secrets.INFURA_PROJECT_ID }}" \
             --build-arg ASSET_VAULT_ADDRESS="${{ vars.ASSET_VAULT_ADDRESS }}" \
             --build-arg ASSET_SHARES_ADDRESS="${{ vars.ASSET_SHARES_ADDRESS }}" \
@@ -128,7 +128,7 @@ jobs:
           APP_URL: ${{ vars.APP_URL }}
           SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
           CHAIN_ID: ${{ vars.CHAIN_ID }}
-          ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
+          RPC_URL: ${{ vars.RPC_URL }}
           ASSET_VAULT_ADDRESS: ${{ vars.NEXT_PUBLIC_ASSET_VAULT_ADDRESS }}
           ASSET_SHARES_ADDRESS: ${{ vars.NEXT_PUBLIC_ASSET_SHARES_ADDRESS }}
           ORACLE_ROUTER_ADDRESS: ${{ vars.NEXT_PUBLIC_ORACLE_ROUTER_ADDRESS }}

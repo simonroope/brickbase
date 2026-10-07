@@ -2,7 +2,7 @@
  * Brickbase events ingest — Coinbase + Infura → Redis pub/sub.
  * Display-only live feeds; no smart contract integration.
  */
-import { ingestConfig, getInfuraWsUrl } from "./config.js";
+import { chainHeadLogLabel, ingestConfig, getChainHeadWsUrl } from "./config.js";
 import { startCoinbaseFeed } from "./coinbaseFeed.js";
 import { startInfuraFeed } from "./infuraFeed.js";
 import { RedisPublisher } from "./redisPublisher.js";
@@ -25,26 +25,27 @@ stops.push(
   })
 );
 
-const infuraWsUrl = getInfuraWsUrl(
+const chainHeadWsUrl = getChainHeadWsUrl(
   ingestConfig.infuraProjectId,
-  ingestConfig.ethereumRpcUrl
+  ingestConfig.rpcUrl,
+  ingestConfig.infuraWsNetwork
 );
 
-if (infuraWsUrl) {
+if (chainHeadWsUrl) {
   stops.push(
     startInfuraFeed({
-      wsUrl: infuraWsUrl,
+      wsUrl: chainHeadWsUrl,
       chainId: ingestConfig.chainId,
       publisher,
     })
   );
 } else {
   console.error(
-    "[ingest][infura] skipped — set INFURA_PROJECT_ID and ETHEREUM_RPC_URL"
+    `[ingest][${chainHeadLogLabel(ingestConfig.chainId)}] skipped — set RPC_URL (Hardhat locally, or Infura + INFURA_PROJECT_ID)`
   );
 }
 
-console.error("[ingest] running (Coinbase ticker + Infura newHeads when configured)");
+console.error("[ingest] running (Coinbase ticker + chain newHeads when configured)");
 
 const shutdown = async () => {
   for (const stop of stops) stop();

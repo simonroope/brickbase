@@ -59,7 +59,7 @@ render_service() {
     -e "s|__REDIS_URL__|${REDIS_URL}|g" \
     -e "s|__SSM_INFURA_ARN__|${SSM_INFURA_ARN:-}|g" \
     -e "s|__CHAIN_ID__|${CHAIN_ID:-1}|g" \
-    -e "s|__ETHEREUM_RPC_URL__|${ETHEREUM_RPC_URL:-}|g" \
+    -e "s|__RPC_URL__|${RPC_URL:-}|g" \
     -e "s|__ASSET_VAULT_ADDRESS__|${ASSET_VAULT_ADDRESS:-}|g" \
     -e "s|__ASSET_SHARES_ADDRESS__|${ASSET_SHARES_ADDRESS:-}|g" \
     -e "s|__ORACLE_ROUTER_ADDRESS__|${ORACLE_ROUTER_ADDRESS:-}|g" \

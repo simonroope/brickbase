@@ -55,8 +55,7 @@ jobs:
         working-directory: contracts
         run: npx hardhat run scripts/deploy/deploy.ts --network ${{ inputs.contracts_network }}
         env:
-          ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
-          BASE_RPC_URL: ${{ vars.BASE_RPC_URL }}
+          RPC_URL: ${{ vars.RPC_URL }}
           PRIVATE_KEY: ${{ secrets.CONTRACTS_DEPLOYER_PRIVATE_KEY }}
           USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
           CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
@@ -125,7 +124,7 @@ jobs:
           APP_URL: ${{ vars.APP_URL }}
           SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
           CHAIN_ID: ${{ vars.CHAIN_ID }}
-          ETHEREUM_RPC_URL: ${{ vars.ETHEREUM_RPC_URL }}
+          RPC_URL: ${{ vars.RPC_URL }}
           ASSET_VAULT_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_vault_address || vars.ASSET_VAULT_ADDRESS }}
           ASSET_SHARES_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_shares_address || vars.ASSET_SHARES_ADDRESS }}
           ORACLE_ROUTER_ADDRESS: ${{ needs.deploy-contracts.outputs.oracle_router_address || vars.ORACLE_ROUTER_ADDRESS }}

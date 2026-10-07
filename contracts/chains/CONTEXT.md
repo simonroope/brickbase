@@ -16,9 +16,9 @@ _Avoid_: getChain, chain definition
 Concatenates `INFURA_PROJECT_ID` onto an RPC base URL that already ends in `/` (e.g. `https://sepolia.infura.io/v3/`). Returns the URL unchanged when the env var is unset, the URL is loopback (`localhost` / `127.0.0.1`), or the URL has no trailing slash (public RPC / Hardhat).
 _Avoid_: build RPC URL, add key (it inserts no separator and no `?key=`)
 
-**ETHEREUM_RPC_URL / BASE_RPC_URL**:
-The base RPC URLs — Ethereum mainnet + Sepolia share `ETHEREUM_RPC_URL`; both Base chains share `BASE_RPC_URL`. Always a base URL ending in `/`; never a complete keyed URL.
-_Avoid_: normalising or trimming the trailing slash
+**RPC_URL**:
+This environment's JSON-RPC base — local Hardhat, staging Sepolia, production mainnet, or Base. The Infura hostname selects the chain; `INFURA_PROJECT_ID` is shared across chains. Always a base URL ending in `/` for Infura; never a complete keyed URL. One value per environment.
+_Avoid_: `ETHEREUM_RPC_URL`, `BASE_RPC_URL`, normalising or trimming the trailing slash
 
 **toIpfsGatewayUrl**:
 Rewrites `ipfs://`, bare CIDs, Pinata dedicated-gateway URLs, and `*/ipfs/{cid}` gateway URLs to `https://gateway.pinata.cloud/ipfs/{cid}` for display (photos). HTTP(S) URLs that are not IPFS pass through unchanged.
@@ -33,5 +33,5 @@ Fetches metadata JSON by CID, trying `ipfsGatewayUrls` in order and caching a su
 _Avoid_: `cache: "force-cache"` of gateway error responses (a 429 would stick)
 
 **INFURA_PROJECT_ID**:
-The Infura key appended at runtime — a server-only secret (sourced from AWS SSM), never baked into the RPC URL. Optional: Events skips Infura `newHeads` when unset.
+The Infura key appended at runtime — a server-only secret (sourced from AWS SSM), never baked into the RPC URL. Events uses it for staging/production `newHeads`; local Hardhat does not need it.
 _Avoid_: Infura API key baked into the URL
