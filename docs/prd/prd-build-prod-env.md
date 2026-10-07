@@ -9,7 +9,7 @@ Provision the AWS infrastructure required to run **all Brickbase monorepo applic
 3. Expose the web app, MCP server, and events gateway over HTTPS through an ALB.
 4. Run events ingest and gateway with **Amazon ElastiCache for Redis** for the live-feed pub/sub pipeline.
 
-This PRD defines what Terraform must create and [how it is executed](#terraform-execution). Application CI (`.github/workflows/production-build-deploy.yml`, Dockerfiles, `infra/production/Makefile`) is committed in the same repo; operators complete [one-time setup](#one-time-setup-before-first-production-deploy) after the first `terraform apply`.
+This PRD defines what Terraform must create and [how it is executed](#terraform-execution). Application CI (`.github/workflows/deploy-to-production.yml`, Dockerfiles, `infra/production/Makefile`) is committed in the same repo; operators complete [one-time setup](#one-time-setup-before-first-production-deploy) after the first `terraform apply`.
 
 ## Monorepo applications
 
@@ -39,7 +39,7 @@ Shared libraries (`contracts/abi`, `contracts/chains`) and shared types (`apps/e
   | Events ingest | `apps/events/ingest` | No — internal only |
   | Redis | ElastiCache | No — private subnets only |
 
-- CI-driven deploy from **`.github/workflows/production-build-deploy.yml`** after image publish (release tag or approved manual dispatch).
+- CI-driven deploy from **`.github/workflows/deploy-to-production.yml`** after image publish (release tag or approved manual dispatch).
 - Supporting networking, IAM, load balancing, and TLS **references** for a single production hostname (DNS zone, hostname records, and ACM cert are **operator-managed**, not created by Terraform).
 - Bootstrap ECS components: ALB, target groups, listener rules, CloudWatch log groups, env-injected `REDIS_URL`.
 
@@ -101,11 +101,11 @@ Gateway subscribes to both channels and serves **`GATEWAY_WS_PATH`** (default `/
 
 ### CI/CD flow
 
-**Workflow:** `.github/workflows/production-build-deploy.yml` — **trigger:** GitHub **release published** (recommended) or **`workflow_dispatch`** with approval via GitHub Environment **`production`**.
+**Workflow:** `.github/workflows/deploy-to-production.yml` — **trigger:** GitHub **release published** (recommended) or **`workflow_dispatch`** with approval via GitHub Environment **`production`**.
 
 ```mermaid
 flowchart LR
-  A[Release tag or approved dispatch] --> B[production-build-deploy]
+  A[Release tag or approved dispatch] --> B[deploy-to-production]
   B --> C[lint + test all apps]
   C --> D[publish: build + push 4 images to ECR]
   D --> E[deploy: make -C infra/production deploy]
@@ -423,7 +423,7 @@ infra/
     Dockerfile.ingest
     Dockerfile.gateway
 .github/workflows/
-  production-build-deploy.yml
+  deploy-to-production.yml
 ```
 
 ### Remote state
@@ -743,7 +743,7 @@ Create Route 53 alias: **`production_hostname`** → `terraform output -raw alb_
 
 ## GitHub Actions integration
 
-**Workflow:** `.github/workflows/production-build-deploy.yml`
+**Workflow:** `.github/workflows/deploy-to-production.yml`
 
 | Job | Action |
 |-----|--------|
@@ -1059,7 +1059,7 @@ ${IMAGE_ACC}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
 
 1. **Phase A** — S3 state bucket bootstrap.
 2. **Phase B** — `infra/production/` Terraform: VPC, four ECR repos, ElastiCache, ECS cluster + services, ALB, IAM, SSM placeholders.
-3. **Application** — MCP HTTP transport; Dockerfiles for mcp, ingest, gateway; `production-build-deploy.yml`.
+3. **Application** — MCP HTTP transport; Dockerfiles for mcp, ingest, gateway; `deploy-to-production.yml`.
 4. **Operator DNS/TLS** — alias **`production_hostname`** → `alb_dns_name`; `acm_certificate_arn` in tfvars.
 5. **One-time setup** — OIDC trust, GitHub Environment **`production`**, SSM values.
 6. **Deploy tooling** — `infra/production/Makefile`, `deploy.sh`, `taskdef.tmpl.json`.

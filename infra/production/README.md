@@ -166,7 +166,7 @@ export IMAGE_TAG=<git-sha>
 make -C infra/production deploy wait-stable
 ```
 
-The same ECS roll is what **Deploy to environment** (`deploy-to-environment.yml`) runs. Docker builds use `infra/docker/Dockerfile.*` (see `.github/workflows/production-build-deploy.yml` / `publish-to-ecr.yml`).
+The same ECS roll is what **Deploy to environment** (`deploy-to-environment.yml`) runs. A GitHub **release** (`deploy-to-production.yml`) promotes existing ECR images for that commit SHA onto production ECS — it does not rebuild. Images are built on `main` by `publish-to-ecr.yml`.
 
 ## GitHub Environment `production`
 

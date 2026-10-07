@@ -1,0 +1,83 @@
+name: Deploy to production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "ECR image tag (git SHA) to promote — leave blank to use this commit"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      image_tag: ${{ steps.tags.outputs.IMAGE_TAG }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: tags
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          SOURCE="${INPUT_TAG:-${{ github.sha }}}"
+          echo "IMAGE_TAG=$SOURCE" >> "$GITHUB_OUTPUT"
+          echo "Promoting ECR tag $SOURCE to production ECS"
+          for REPO in brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway; do
+            MANIFEST=$(aws ecr batch-get-image \
+              --repository-name "$REPO" \
+              --image-ids imageTag="$SOURCE" \
+              --output json | jq -r '.images[0].imageManifest // empty')
+            if [ -z "$MANIFEST" ]; then
+              echo "Missing $REPO:$SOURCE — push this SHA with publish-to-ecr first"
+              exit 1
+            fi
+            if [ -n "$RELEASE_TAG" ]; then
+              aws ecr put-image \
+                --repository-name "$REPO" \
+                --image-tag "$RELEASE_TAG" \
+                --image-manifest "$MANIFEST"
+              echo "Tagged $REPO:$RELEASE_TAG"
+            fi
+          done
+
+  deploy:
+    needs: promote
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - run: make -C infra/production deploy wait-stable
+        env:
+          IMAGE_ACC: ${{ vars.ECR_REGISTRY_ID }}
+          IMAGE_TAG: ${{ needs.promote.outputs.image_tag }}
+          EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
+          TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
+          REDIS_URL: ${{ vars.REDIS_URL }}
+          APP_URL: ${{ vars.APP_URL }}
+          SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
+          CHAIN_ID: ${{ vars.CHAIN_ID }}
+          RPC_URL: ${{ vars.RPC_URL }}
+          ASSET_VAULT_ADDRESS: ${{ vars.ASSET_VAULT_ADDRESS }}
+          ASSET_SHARES_ADDRESS: ${{ vars.ASSET_SHARES_ADDRESS }}
+          ORACLE_ROUTER_ADDRESS: ${{ vars.ORACLE_ROUTER_ADDRESS }}
+          USER_ALLOWLIST_ADDRESS: ${{ vars.USER_ALLOWLIST_ADDRESS }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
