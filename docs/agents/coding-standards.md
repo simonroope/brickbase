@@ -38,7 +38,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 ## General
 
-- TypeScript everywhere — no `.js` source files in `apps/` or `contracts/`.
+- TypeScript everywhere in `apps/web`, `apps/mcp`, `apps/events/gateway`, `apps/events/types`, and `contracts/` — no `.js` source files. `apps/events/ingest` is Rust.
 - No `any` unless wrapping a third-party contract type that cannot be typed (Hardhat signer/factory); use a comment explaining why.
 - No `console.log` in production paths — use structured logging or remove before merging.
 - No commented-out code — delete it; git history is the record.
@@ -88,7 +88,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 - `ingest` reads from upstream (Infura WS, Coinbase WS) and writes to Redis only — it does not read from contracts.
 - `gateway` reads from Redis and writes to the browser WebSocket only — no upstream reads.
-- Runtime is `tsx` for both services.
+- Ingest runtime is `cargo` (`apps/events/ingest`). Gateway runtime is `tsx`.
 
 ---
 
@@ -110,6 +110,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 - Test files: `*.test.ts` / `*.test.tsx`.
 - Contract tests: `*.t.ts` under `contracts/tests/unit/`.
 - Integration / E2E: Cucumber + Playwright under `apps/web/tests/`.
+- Events ingest: `cargo test` in `apps/events/ingest`. Gateway/types: `tsx --test` under `apps/events/types`.
 - See `skills/tdd/tests.md` for good/bad test patterns.
 - See `skills/tdd/mocking.md` for mocking rules.
 - No test should assert on implementation details (internal call counts, storage slots, private method state).

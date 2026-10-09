@@ -11,13 +11,14 @@ Development is supported by **agent skills** — structured instruction files fo
 
 | Path                 | Description                                                      |
 | -------------------- | ---------------------------------------------------------------- |
-| `apps/events`        | Events: live feeds (`ingest`, `gateway`, `types`)                |
+| `apps/events`        | Events: Rust ingest, TS gateway, shared `types/`                 |
 | `apps/mcp`           | MCP server for AI/automation (smart contracts, tools, resources) |
 | `apps/web`           | Next.js web app (display & trade properties)                     |
 | `contracts/contracts`     | Solidity smart contracts (Hardhat)                               |
 | `contracts/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
 | `contracts/audit`         | Slither static analysis — config, runner, and reports            |
 | `contracts/chains`        | Chain config, env                                                |
+| `infra/production`   | Terraform + Makefile: VPC, ECS Fargate, ECR, Redis, ALB (eu-west-2) |
 | `skills/`            | Agent skills — source of truth (`skills/<name>/SKILL.md`)        |
 | `workflows`          | Temporal worker — automated `build-code` from `ready-for-agent` issues, respecting ticket dependencies |
 
@@ -45,6 +46,7 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 ### Prerequisites
 
 - Node.js ≥ 18
+- [Rust](https://rustup.rs/) (`rustup`) — required for events ingest (`apps/events/ingest/rust-toolchain.toml` pins stable plus rustfmt and clippy)
 - Docker (optional; required for local Redis when running events live feeds)
 - Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit` and `contracts:test:invariant`
 
@@ -56,7 +58,7 @@ Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root
 | Location                 | `package.json` | What gets installed there                                                                                                           |
 | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Repo root**            | Yes            | Nx, Hardhat, OpenZeppelin/Chainlink for `contracts/contracts`, TypeScript, `tsx`, ESLint, Cucumber, Playwright, and other shared tooling |
-| `**apps/events`**  | Yes            | `redis`, `ws`, `zod`, `dotenv`, `tsx` (ingest + gateway only)                                                                       |
+| `**apps/events`**  | Yes            | Gateway: `redis`, `ws`, `zod`, `dotenv`, `tsx`. Ingest is a Cargo crate in `ingest/`                                                |
 | `**apps/mcp`**           | No             | MCP SDK, `tsx`, Playwright from **root**; Nx `project.json` only                                                                    |
 | `**apps/web`**           | Yes            | Next.js, React, wagmi, viem, Jest, Tailwind, web test stack                                                                         |
 | `**contracts/contracts`**     | No             | Hardhat toolchain from **root**                                                                                                     |
@@ -230,14 +232,14 @@ On live networks `seed-users` allowlists the connected signer by default (`admin
 Coinbase WS + Infura WS  →  ingest  →  Redis pub/sub  →  gateway  →  browser (LiveTicker)
 ```
 
-**Layout** (one `package.json` + one Nx `project.json` per app, same pattern as `web`):
+**Layout** (one `package.json` + one Nx `project.json`; ingest is a Cargo crate):
 
 ```
 apps/events/
-  package.json          # brickbase-events — redis, ws, zod, dotenv, tsx
+  package.json          # brickbase-events — gateway: redis, ws, zod, dotenv, tsx
   project.json          # Nx project: events
   types/                # channels, message schemas, Zod (no package.json)
-  ingest/src/           # upstream → Redis
+  ingest/               # Rust crate — upstream → Redis
   gateway/src/          # Redis → WebSocket clients
 ```
 
@@ -245,28 +247,31 @@ apps/events/
 | Process | Nx command                  | Root npm / local |
 | ------- | --------------------------- | ---------------- |
 | Redis   | —                           | `docker compose -f docker-compose.live.yml up -d` |
-| Ingest  | `npx nx run events:ingest`  | `npm run ingest` |
+| Ingest (Rust) | `npx nx run events:ingest` | `npm run ingest` (`cargo run` in `apps/events/ingest`) |
 | Gateway | `npx nx run events:gateway` | `npm run gateway` |
-| Tests   | `npx nx run events:test`    | `npm run events:test` |
+| Tests   | `npx nx run events:test`    | `npm run events:test` (Zod schemas + `cargo test` for ingest) |
 
-**Run locally** (requires `apps/events` install; use with web for the live ticker UI). **Start Redis first** — ingest and gateway both connect to it (`REDIS_URL`, default `redis://127.0.0.1:6379`). After Redis is up, ingest and gateway can start in either order.
+**Run locally.** Gateway needs `npm install --prefix apps/events`. Ingest is a **Rust** crate — install [rustup](https://rustup.rs/) first (`apps/events/ingest/rust-toolchain.toml` pins stable, rustfmt, clippy). **Start Redis first** — ingest and gateway both connect to it (`REDIS_URL`, default `redis://127.0.0.1:6379`). After Redis is up, ingest and gateway can start in either order.
 
 ```bash
 # 1. Redis (repo root) — required before ingest/gateway
 docker compose -f docker-compose.live.yml up -d
 
-# 2. Ingest — Coinbase ticker + chain newHeads (Hardhat locally, Infura in AWS) → Redis
+# 2. Rust ingest — Coinbase ticker + chain newHeads (Hardhat locally, Infura in AWS) → Redis
 npx nx run events:ingest
 # npm run ingest
+# cargo run --manifest-path apps/events/ingest/Cargo.toml
 
 # 3. Gateway — ws://localhost:8081/ws/live (default)
 npx nx run events:gateway
 # npm run gateway
 ```
 
+`events:ingest` / `npm run ingest` run `cargo run` in `apps/events/ingest` (first run compiles the binary). Ingest tests: `cargo test --manifest-path apps/events/ingest/Cargo.toml`.
+
 Local ingest subscribes to Hardhat `newHeads` at `ws://127.0.0.1:8545` (from `RPC_URL`). Staging and production use Infura WebSockets (`INFURA_PROJECT_ID` + Infura `RPC_URL`). `WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
 
-Root shortcuts: `npm run ingest` (also `events:ingest`), `npm run gateway` (also `events:gateway`), `npm run events:test`. The same `ingest` / `gateway` scripts exist in `apps/events`.
+Root shortcuts: `npm run ingest` (also `events:ingest`), `npm run gateway` (also `events:gateway`), `npm run events:test`. The gateway script also exists in `apps/events`.
 
 ## MCP Server
 
@@ -370,6 +375,103 @@ Root shortcuts: `npm run dev` (same as `web:dev`), `npm run web:dev:locks`, `npm
 
 
 Full list in `.env.example`.
+
+## Production infrastructure
+
+AWS production lives in `infra/production/` (region **eu-west-2**, cluster `brickbase-uk-production`). Full operator notes: [`infra/production/README.md`](infra/production/README.md).
+
+GitHub Actions **does not** apply Terraform. You apply VPC, ALB, ECS, ECR, and Redis locally. CI only **publishes images** and **rolls ECS** onto those images.
+
+### 1. Prerequisites (once)
+
+- AWS CLI + Terraform `>= 1.5`
+- IAM user/profile `brickbase` (or equivalent)
+- ACM certificate in **eu-west-2** for `production_hostname`
+- S3 bucket for Terraform state (default **`brickbase-531767776154`**)
+
+Bootstrap the state bucket if it does not exist:
+
+```bash
+export AWS_PROFILE=brickbase
+aws s3api create-bucket \
+  --bucket brickbase-531767776154 \
+  --region eu-west-2 \
+  --create-bucket-configuration LocationConstraint=eu-west-2
+aws s3api put-bucket-versioning \
+  --bucket brickbase-531767776154 \
+  --versioning-configuration Status=Enabled
+```
+
+### 2. Apply Terraform (creates the infra)
+
+```bash
+cd infra/production
+cp terraform.tfvars.example terraform.tfvars
+# Set production_hostname, acm_certificate_arn, github_oidc_* (see the example file)
+
+export AWS_PROFILE=brickbase
+aws sts get-caller-identity
+
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+terraform output
+```
+
+After apply: Route 53 alias A to `alb_dns_name`, and put Infura in SSM (`/brickbase/production/infura/project_id`). Commands are in [`infra/production/README.md`](infra/production/README.md). Copy `terraform output` into the GitHub Environment **`production`** (`ECR_REGISTRY_ID`, `AUTOMATED_ROLE_ARN`, `ECS_*_ROLE_ARN`, `REDIS_URL`, `SSM_INFURA_ARN`, `RPC_URL`, `CHAIN_ID`, `APP_URL`, contract `*_ADDRESS` vars).
+
+### 3. Deploy application images
+
+| Step | How |
+| ---- | --- |
+| Build & push ECR | Push to `main` (path filters under `apps/`, `contracts/`, `infra/docker/`) or run workflow **Publish images to ECR** |
+| Roll production ECS | Publish a **GitHub Release** (workflow **Deploy to production**) — promotes the **latest successful** `publish-to-ecr` SHA; it does not rebuild |
+| Manual roll | `make -C infra/production deploy wait-stable` with `IMAGE_ACC` / `IMAGE_TAG` from `terraform output` / the publish SHA |
+
+```bash
+# After terraform apply, from infra/production (or repo root with -C)
+export AWS_PROFILE=brickbase
+export IMAGE_ACC=$(terraform -chdir=infra/production output -raw ecr_registry_id)
+export IMAGE_TAG=<publish-to-ecr git sha>
+make -C infra/production deploy wait-stable
+```
+
+Health: `curl -sS "https://$(terraform -chdir=infra/production output -raw production_hostname)/health"` → `{"status":"ok"}`.
+
+### 4. Refresh production after changes
+
+Pick the path that matches what changed. GitHub still does **not** apply Terraform.
+
+| What changed | Refresh |
+| ------------ | ------- |
+| `infra/production/*.tf` or `terraform.tfvars` (VPC, ALB, target groups, ECS service shape, IAM, SSM, Redis) | Terraform plan/apply (below) |
+| App code (`apps/`, Dockerfiles) | Push `main` → **Publish images to ECR**, then a **GitHub Release** (or `make … deploy wait-stable`) |
+| GitHub Environment **`production`** vars (`RPC_URL`, `*_ADDRESS`, `REDIS_URL`, …) | Update the vars, then an ECS roll so new task defs pick them up (Release or `make deploy`) — Terraform does not inject those |
+| Infura SSM parameter | `aws ssm put-parameter … --overwrite`, then an ECS roll if tasks already started |
+
+**Terraform (existing env):** from a checkout that contains the `.tf` change:
+
+```bash
+cd infra/production
+export AWS_PROFILE=brickbase
+aws sts get-caller-identity
+
+terraform init
+terraform plan -out=tfplan
+# Read the plan. Apply only if it matches the intended diff.
+terraform apply tfplan
+```
+
+If GitHub Environment values moved (new role ARNs, Redis URL, registry id), copy `terraform output` into the **`production`** environment again, then roll ECS.
+
+**ALB `/health`:** the probe path is on the target group; the route is in the web image. Deploy an image that serves `GET /health` **before** applying a health-path Terraform change. Applying first marks tasks unhealthy.
+
+Confirm after a refresh:
+
+```bash
+curl -sS "https://$(terraform -chdir=infra/production output -raw production_hostname)/health"
+# {"status":"ok"}
+```
 
 ## Agent skills
 

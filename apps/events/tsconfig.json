@@ -12,5 +12,5 @@
       "@brickbase/chains": ["../../contracts/chains/index.ts"]
     }
   },
-  "include": ["ingest/src/**/*", "gateway/src/**/*", "types/**/*"]
+  "include": ["gateway/src/**/*", "types/**/*"]
 }

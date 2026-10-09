@@ -23,6 +23,8 @@ export default defineConfig([
     "apps/web/next-env.d.ts",
     "**/playwright-report/**",
     "**/test-results/**",
+    "apps/events/ingest/**",
+    "**/target/**",
   ]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
