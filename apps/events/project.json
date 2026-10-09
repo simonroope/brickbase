@@ -7,8 +7,8 @@
     "ingest": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm run ingest",
-        "cwd": "apps/events"
+        "command": "cargo run",
+        "cwd": "apps/events/ingest"
       }
     },
     "gateway": {
@@ -27,7 +27,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm run test",
+        "command": "npm run test && cargo test --manifest-path ingest/Cargo.toml",
         "cwd": "apps/events"
       }
     }

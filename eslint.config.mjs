@@ -24,6 +24,7 @@ export default defineConfig([
     "**/playwright-report/**",
     "**/test-results/**",
     "apps/api/**",
+    "apps/events/ingest/**",
     "**/target/**",
   ]),
   eslint.configs.recommended,

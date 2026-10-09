@@ -1,10 +1,13 @@
 # syntax=docker/dockerfile:1
-FROM node:24-alpine
-WORKDIR /app
-COPY apps/events/package.json apps/events/package-lock.json ./apps/events/
-RUN npm ci --prefix apps/events
-COPY contracts/chains contracts/chains
-COPY apps/events ./apps/events
-WORKDIR /app/apps/events
-ENV NODE_ENV=production
-CMD ["npx", "tsx", "ingest/src/index.ts"]
+FROM rust:1-bookworm AS build
+WORKDIR /src
+COPY apps/events/ingest ./
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /src/target/release/brickbase-ingest /usr/local/bin/brickbase-ingest
+ENV RUST_LOG=info
+CMD ["brickbase-ingest"]
