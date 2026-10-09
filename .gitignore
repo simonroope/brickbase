@@ -26,6 +26,10 @@ contracts/contracts/broadcast
 # Build artifacts
 *.tsbuildinfo
 
+# Rust
+target
+**/*.rs.bk
+
 # Test results
 test-results
 apps/mcp/test-results

@@ -5,7 +5,7 @@ The display-only live-feeds pipeline: `ingest` normalises upstream market and ch
 ## Pipeline roles
 
 **Ingest**:
-The upstream-facing service. Connects out to Coinbase and the environment's chain (Hardhat locally, Infura in AWS), parses their payloads into normalised `LiveFeedMessage`s, and publishes them to Redis. The only writer of Redis.
+The upstream-facing service (Rust, `apps/events/ingest`). Connects out to Coinbase and the environment's chain (Hardhat locally, Infura in AWS), parses their payloads into normalised `LiveFeedMessage`s, and publishes them to Redis. The only writer of Redis.
 _Avoid_: producer, collector
 
 **Gateway**:

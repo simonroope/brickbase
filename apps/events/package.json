@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "ingest": "tsx ingest/src/index.ts",
+    "ingest": "cargo run --manifest-path ingest/Cargo.toml",
     "gateway": "tsx gateway/src/index.ts",
-    "test": "tsx --test types/__tests__/schemas.test.ts ingest/src/__tests__/parsers.test.ts ingest/src/__tests__/config.test.ts"
+    "test": "tsx --test types/__tests__/schemas.test.ts"
   },
   "dependencies": {
     "dotenv": "^16.0.0",
