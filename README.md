@@ -18,6 +18,7 @@ Development is supported by **agent skills** — structured instruction files fo
 | `contracts/abi`           | Shared ABIs (`@brickbase/abi`)                                   |
 | `contracts/audit`         | Slither static analysis — config, runner, and reports            |
 | `contracts/chains`        | Chain config, env                                                |
+| `infra/production`   | Terraform + Makefile: VPC, ECS Fargate, ECR, Redis, ALB (eu-west-2) |
 | `skills/`            | Agent skills — source of truth (`skills/<name>/SKILL.md`)        |
 | `workflows`          | Temporal worker — automated `build-code` from `ready-for-agent` issues, respecting ticket dependencies |
 
@@ -374,6 +375,103 @@ Root shortcuts: `npm run dev` (same as `web:dev`), `npm run web:dev:locks`, `npm
 
 
 Full list in `.env.example`.
+
+## Production infrastructure
+
+AWS production lives in `infra/production/` (region **eu-west-2**, cluster `brickbase-uk-production`). Full operator notes: [`infra/production/README.md`](infra/production/README.md).
+
+GitHub Actions **does not** apply Terraform. You apply VPC, ALB, ECS, ECR, and Redis locally. CI only **publishes images** and **rolls ECS** onto those images.
+
+### 1. Prerequisites (once)
+
+- AWS CLI + Terraform `>= 1.5`
+- IAM user/profile `brickbase` (or equivalent)
+- ACM certificate in **eu-west-2** for `production_hostname`
+- S3 bucket for Terraform state (default **`brickbase-531767776154`**)
+
+Bootstrap the state bucket if it does not exist:
+
+```bash
+export AWS_PROFILE=brickbase
+aws s3api create-bucket \
+  --bucket brickbase-531767776154 \
+  --region eu-west-2 \
+  --create-bucket-configuration LocationConstraint=eu-west-2
+aws s3api put-bucket-versioning \
+  --bucket brickbase-531767776154 \
+  --versioning-configuration Status=Enabled
+```
+
+### 2. Apply Terraform (creates the infra)
+
+```bash
+cd infra/production
+cp terraform.tfvars.example terraform.tfvars
+# Set production_hostname, acm_certificate_arn, github_oidc_* (see the example file)
+
+export AWS_PROFILE=brickbase
+aws sts get-caller-identity
+
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+terraform output
+```
+
+After apply: Route 53 alias A to `alb_dns_name`, and put Infura in SSM (`/brickbase/production/infura/project_id`). Commands are in [`infra/production/README.md`](infra/production/README.md). Copy `terraform output` into the GitHub Environment **`production`** (`ECR_REGISTRY_ID`, `AUTOMATED_ROLE_ARN`, `ECS_*_ROLE_ARN`, `REDIS_URL`, `SSM_INFURA_ARN`, `RPC_URL`, `CHAIN_ID`, `APP_URL`, contract `*_ADDRESS` vars).
+
+### 3. Deploy application images
+
+| Step | How |
+| ---- | --- |
+| Build & push ECR | Push to `main` (path filters under `apps/`, `contracts/`, `infra/docker/`) or run workflow **Publish images to ECR** |
+| Roll production ECS | Publish a **GitHub Release** (workflow **Deploy to production**) — promotes the **latest successful** `publish-to-ecr` SHA; it does not rebuild |
+| Manual roll | `make -C infra/production deploy wait-stable` with `IMAGE_ACC` / `IMAGE_TAG` from `terraform output` / the publish SHA |
+
+```bash
+# After terraform apply, from infra/production (or repo root with -C)
+export AWS_PROFILE=brickbase
+export IMAGE_ACC=$(terraform -chdir=infra/production output -raw ecr_registry_id)
+export IMAGE_TAG=<publish-to-ecr git sha>
+make -C infra/production deploy wait-stable
+```
+
+Health: `curl -sS "https://$(terraform -chdir=infra/production output -raw production_hostname)/health"` → `{"status":"ok"}`.
+
+### 4. Refresh production after changes
+
+Pick the path that matches what changed. GitHub still does **not** apply Terraform.
+
+| What changed | Refresh |
+| ------------ | ------- |
+| `infra/production/*.tf` or `terraform.tfvars` (VPC, ALB, target groups, ECS service shape, IAM, SSM, Redis) | Terraform plan/apply (below) |
+| App code (`apps/`, Dockerfiles) | Push `main` → **Publish images to ECR**, then a **GitHub Release** (or `make … deploy wait-stable`) |
+| GitHub Environment **`production`** vars (`RPC_URL`, `*_ADDRESS`, `REDIS_URL`, …) | Update the vars, then an ECS roll so new task defs pick them up (Release or `make deploy`) — Terraform does not inject those |
+| Infura SSM parameter | `aws ssm put-parameter … --overwrite`, then an ECS roll if tasks already started |
+
+**Terraform (existing env):** from a checkout that contains the `.tf` change:
+
+```bash
+cd infra/production
+export AWS_PROFILE=brickbase
+aws sts get-caller-identity
+
+terraform init
+terraform plan -out=tfplan
+# Read the plan. Apply only if it matches the intended diff.
+terraform apply tfplan
+```
+
+If GitHub Environment values moved (new role ARNs, Redis URL, registry id), copy `terraform output` into the **`production`** environment again, then roll ECS.
+
+**ALB `/health`:** the probe path is on the target group; the route is in the web image. Deploy an image that serves `GET /health` **before** applying a health-path Terraform change. Applying first marks tasks unhealthy.
+
+Confirm after a refresh:
+
+```bash
+curl -sS "https://$(terraform -chdir=infra/production output -raw production_hostname)/health"
+# {"status":"ok"}
+```
 
 ## Agent skills
 
