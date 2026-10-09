@@ -1,12 +1,17 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use brickbase_api::http::router;
+use brickbase_api::state::AppState;
 use http_body_util::BodyExt;
+use sqlx::postgres::PgPoolOptions;
 use tower::ServiceExt;
 
 #[tokio::test]
 async fn get_health_returns_200_with_status_ok() {
-    let response = router()
+    let pool = PgPoolOptions::new()
+        .connect_lazy("postgres://unused:unused@127.0.0.1:1/unused")
+        .expect("lazy pool");
+    let response = router(AppState { pool })
         .oneshot(
             Request::builder()
                 .uri("/health")

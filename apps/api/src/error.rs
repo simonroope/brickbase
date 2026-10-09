@@ -11,3 +11,13 @@ impl IntoResponse for AppError {
         (self.status, self.message).into_response()
     }
 }
+
+impl From<sqlx::Error> for AppError {
+    fn from(error: sqlx::Error) -> Self {
+        tracing::error!(?error, "database");
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: "database error".to_string(),
+        }
+    }
+}

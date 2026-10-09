@@ -2,7 +2,7 @@
 
 > _Standalone overview of Brickbase — self-contained by design. It restates key facts (structure, commands, skills) so it can be read on its own; that is intentional, not accidental duplication._
 
-Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, an **events** layer for external data streams, a **Next.js** investor portal for tokenised commercial real estate, and **agentic AI** development workflows powered by Claude Code and Codex.
+Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, a **Rust HTTP API**, an **events** layer for external data streams, a **Next.js** investor portal for tokenised commercial real estate, and **agentic AI** development workflows powered by Claude Code and Codex.
 
 Development is supported by **agent skills** — structured instruction files for Claude Code and Codex that guide common workflows (requirements elicitation, PRD creation, ticket generation, TDD build, architecture review). See [Agent skills](#agent-skills).
 
@@ -11,6 +11,7 @@ Development is supported by **agent skills** — structured instruction files fo
 
 | Path                 | Description                                                      |
 | -------------------- | ---------------------------------------------------------------- |
+| `apps/api`           | Rust HTTP API (Axum): contract-shaped reads; never signs         |
 | `apps/events`        | Events: live feeds (`ingest`, `gateway`, `types`)                |
 | `apps/mcp`           | MCP server for AI/automation (smart contracts, tools, resources) |
 | `apps/web`           | Next.js web app (display & trade properties)                     |
@@ -45,17 +46,19 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 ### Prerequisites
 
 - Node.js ≥ 18
-- Docker (optional; required for local Redis when running events live feeds)
+- [Rust](https://rustup.rs/) (`rustup`) — required for `apps/api`; `apps/api/rust-toolchain.toml` pins stable plus rustfmt and clippy
+- Docker (optional; required for local Redis when running events live feeds, and for local Postgres when running the HTTP API)
 - Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit` and `contracts:test:invariant`
 
 ### Install dependencies
 
-Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root** — apps with their own runtime deps declare a `package.json` (`apps/web`, `apps/events`). `apps/mcp` and `contracts/abi`, `contracts/chains`, and `contracts/contracts` have no `package.json`; they use the root toolchain and Nx `project.json`.
+Brickbase is an Nx monorepo. **Dependencies are not all hoisted to the repo root** — apps with their own runtime deps declare a `package.json` (`apps/web`, `apps/events`). `apps/mcp` and `contracts/abi`, `contracts/chains`, and `contracts/contracts` have no `package.json`; they use the root toolchain and Nx `project.json`. `apps/api` has no `package.json`; it is a Cargo crate.
 
 
 | Location                 | `package.json` | What gets installed there                                                                                                           |
 | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Repo root**            | Yes            | Nx, Hardhat, OpenZeppelin/Chainlink for `contracts/contracts`, TypeScript, `tsx`, ESLint, Cucumber, Playwright, and other shared tooling |
+| `**apps/api`**           | No             | Cargo crate (`Cargo.toml`); Axum, Tokio, SQLx, Serde, Tracing, Reqwest. Nx `project.json` only                                      |
 | `**apps/events`**  | Yes            | `redis`, `ws`, `zod`, `dotenv`, `tsx` (ingest + gateway only)                                                                       |
 | `**apps/mcp`**           | No             | MCP SDK, `tsx`, Playwright from **root**; Nx `project.json` only                                                                    |
 | `**apps/web`**           | Yes            | Next.js, React, wagmi, viem, Jest, Tailwind, web test stack                                                                         |
@@ -87,7 +90,7 @@ npx nx run-many -t lint      # same, per Nx project
 
 ### Environment
 
-Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `RPC_URL`, `WALLETCONNECT_PROJECT_ID`, and events variables (see [Environment](#environment) below). ABIs live in `contracts/abi` and are imported as `@brickbase/abi`.
+Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the web app as needed (`apps/web/.env.local` can mirror root values). Set contract addresses, `RPC_URL`, `WALLETCONNECT_PROJECT_ID`, events variables, and `DATABASE_URL` for the HTTP API (see [Environment](#environment) below). ABIs live in `contracts/abi` and are imported as `@brickbase/abi`.
 
 ---
 
@@ -179,7 +182,7 @@ npx nx run contracts:deploy:sepolia
 
 **Inputs** (`contracts/deployments/{network}.json`) — USDC, Chainlink feeds, admin addresses. Env vars override the JSON (`USDC_ADDRESS`, `CHAINLINK_*`, `ADMIN_*`). Do not put deployed contract addresses in this file.
 
-**Outputs** (`contracts/deployments/{network}-addresses.json`) — written after a successful deploy (`USER_ALLOWLIST_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `USDC_ADDRESS`). Copy those into the repo-root `.env` for `apps/web` and `apps/mcp`.
+**Outputs** (`contracts/deployments/{network}-addresses.json`) — written after a successful deploy (`USER_ALLOWLIST_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `USDC_ADDRESS`). Copy those into the repo-root `.env` for `apps/web`, `apps/mcp`, and `apps/api`.
 
 Order: **AssetUserAllowList** → **OracleRouter** → **AssetVault** → **AssetShares**, then authorize vault/shares on the allowlist, link shares on the vault, and set the pauser (`admins.defaultAdmin`, or the deployer if empty).
 
@@ -244,7 +247,7 @@ apps/events/
 
 | Process | Nx command                  | Root npm / local |
 | ------- | --------------------------- | ---------------- |
-| Redis   | —                           | `docker compose -f docker-compose.live.yml up -d` |
+| Redis   | —                           | `docker compose -f docker-compose.live.yml up -d redis` |
 | Ingest  | `npx nx run events:ingest`  | `npm run ingest` |
 | Gateway | `npx nx run events:gateway` | `npm run gateway` |
 | Tests   | `npx nx run events:test`    | `npm run events:test` |
@@ -253,7 +256,7 @@ apps/events/
 
 ```bash
 # 1. Redis (repo root) — required before ingest/gateway
-docker compose -f docker-compose.live.yml up -d
+docker compose -f docker-compose.live.yml up -d redis
 
 # 2. Ingest — Coinbase ticker + chain newHeads (Hardhat locally, Infura in AWS) → Redis
 npx nx run events:ingest
@@ -294,6 +297,46 @@ Uses the same `.env` contract addresses as the web app. No private keys; each ag
 ```bash
 npx nx run mcp:serve
 ```
+
+## HTTP API
+
+`apps/api` is a Rust (Axum) HTTP JSON API. It never holds a private key and never signs or broadcasts transactions. `GET /assets` currently returns **mock** rows from Postgres — not AssetVault state.
+
+**Layout** (one Cargo crate + one Nx `project.json`):
+
+```
+apps/api/
+  Cargo.toml
+  rust-toolchain.toml   # stable + rustfmt + clippy
+  project.json
+  migrations/           # SQLx
+  src/routes/           # health, assets, shares, oracles, allowlist
+  tests/
+```
+
+| Process | Nx command | Root npm |
+| ------- | ---------- | -------- |
+| Postgres | — | `docker compose -f docker-compose.live.yml up -d postgres` |
+| Serve | `npx nx run api:serve` | `npm run api:dev` |
+| Tests | `npx nx run api:test` | `npm run api:test` |
+
+**Run locally** (requires Rust; Postgres on `DATABASE_URL`, default `postgres://brickbase:brickbase@127.0.0.1:5432/brickbase`). On start the process migrates and seeds two mock assets.
+
+```bash
+# 1. Postgres (repo root)
+docker compose -f docker-compose.live.yml up -d postgres
+
+# 2. API — http://localhost:3200 (API_PORT)
+npx nx run api:serve
+# npm run api:dev
+```
+
+| Route | Behaviour |
+| ----- | --------- |
+| `GET /health` | `{ "status": "ok" }` — no RPC or database |
+| `GET /assets` | Mock `Asset` rows from Postgres (JSON keys match MCP `AssetSummary`) |
+
+Default port **3200**, not 3000 (that is the Next.js app).
 
 ## Web app
 
@@ -353,6 +396,17 @@ Root shortcuts: `npm run dev` (same as `web:dev`), `npm run web:dev:locks`, `npm
 | `ADMIN_ADDRESS`               | Optional deploy override for pauser / default admin      |
 | `CHAINLINK_ETH_USD_ADDRESS`   | Optional deploy override for the ETH/USD feed            |
 
+
+### HTTP API (`apps/api`)
+
+
+| Env var        | Description                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
+| `API_PORT`     | Listen port (default `3200`)                                                |
+| `DATABASE_URL` | Postgres URL (local: `postgres://brickbase:brickbase@127.0.0.1:5432/brickbase`) |
+
+
+`GET /health` must not query Postgres. The API also reads the same `CHAIN_ID`, `RPC_URL`, `INFURA_PROJECT_ID`, and `*_ADDRESS` names as web and MCP.
 
 ### Events (live feeds, server-side unless noted)
 

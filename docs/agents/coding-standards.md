@@ -61,6 +61,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 - Contract addresses use canonical names (`ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, etc.) — no `NEXT_PUBLIC_` prefix anywhere.
 - `RPC_URL` is this environment's JSON-RPC base (Infura hostname selects the chain; ending with `/`); `INFURA_PROJECT_ID` is appended at runtime — never hardcode the joined URL. Local `.env`, AWS staging, and production each set their own value. Do not add a second RPC URL per chain family.
+- `DATABASE_URL` is the Postgres URL for `apps/api` (`postgres://…`). Required to serve `/assets`; `GET /health` must not query it.
 - All env vars baked into the browser bundle go through the `env` block in `next.config.ts`, not `NEXT_PUBLIC_` prefixes.
 - Never commit secrets or real addresses to source; use `.env.example` for documentation.
 
@@ -88,7 +89,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 - Axum HTTP JSON API. It never holds or signs with a private key.
 - `GET /health` returns `{ "status": "ok" }` with no RPC, database, or outbound HTTP.
-- Canonical env names (`API_PORT`, `RPC_URL`, `CHAIN_ID`, `*_ADDRESS`) — same as web and MCP.
+- Canonical env names (`API_PORT`, `DATABASE_URL`, `RPC_URL`, `CHAIN_ID`, `*_ADDRESS`) — same as web and MCP.
 - Runtime is `cargo` (`rust-toolchain.toml` pins stable + rustfmt + clippy). Do not commit `target/`.
 - Tests live in `apps/api/tests/` and run with `cargo test`.
 

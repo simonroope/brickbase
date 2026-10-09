@@ -11,6 +11,7 @@ pub struct Config {
     pub oracle_router_address: String,
     pub user_allowlist_address: String,
     pub usdc_address: String,
+    pub database_url: String,
 }
 
 impl Config {
@@ -25,6 +26,7 @@ impl Config {
             oracle_router_address: env_or_empty("ORACLE_ROUTER_ADDRESS"),
             user_allowlist_address: env_or_empty("USER_ALLOWLIST_ADDRESS"),
             usdc_address: env_or_empty("USDC_ADDRESS"),
+            database_url: env_or_empty("DATABASE_URL"),
         }
     }
 }
