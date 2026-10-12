@@ -6,6 +6,7 @@ locals {
     "brickbase-mcp",
     "brickbase-ingest",
     "brickbase-gateway",
+    "brickbase-api",
   ])
 
   azs = slice(data.aws_availability_zones.available.names, 0, 2)

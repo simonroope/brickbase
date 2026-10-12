@@ -471,7 +471,7 @@ terraform apply tfplan
 terraform output
 ```
 
-After apply: Route 53 alias A to `alb_dns_name`, and put Infura in SSM (`/brickbase/production/infura/project_id`). Commands are in [`infra/production/README.md`](infra/production/README.md). Copy `terraform output` into the GitHub Environment **`production`** (`ECR_REGISTRY_ID`, `AUTOMATED_ROLE_ARN`, `ECS_*_ROLE_ARN`, `REDIS_URL`, `SSM_INFURA_ARN`, `RPC_URL`, `CHAIN_ID`, `APP_URL`, contract `*_ADDRESS` vars).
+After apply: Route 53 alias A to `alb_dns_name`, put Infura in SSM (`/brickbase/production/infura/project_id`), and put the Infura RPC base in `/brickbase/production/rpc/url`. Commands are in [`infra/production/README.md`](infra/production/README.md). Copy `terraform output` into the GitHub Environment **`production`** (`ECR_REGISTRY_ID`, `AUTOMATED_ROLE_ARN`, `ECS_*_ROLE_ARN`, `REDIS_URL`, `SSM_INFURA_ARN`, `RPC_URL`, `CHAIN_ID`, `APP_URL`, contract `*_ADDRESS` vars).
 
 ### 3. Deploy application images
 

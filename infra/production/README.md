@@ -5,7 +5,7 @@ Terraform and deploy tooling for the production environment defined in `docs/prd
 ## What this creates
 
 - VPC (2 AZs), NAT gateway, public/private subnets
-- Four ECR repositories: `brickbase-web`, `brickbase-mcp`, `brickbase-ingest`, `brickbase-gateway`
+- Five ECR repositories: `brickbase-web`, `brickbase-mcp`, `brickbase-ingest`, `brickbase-gateway`, `brickbase-api` (API image is published; no ECS service or RDS yet)
 - ElastiCache Redis 7 (single node)
 - ECS cluster `brickbase-uk-production` on Fargate (four services)
 - Internet-facing ALB with HTTPS (operator ACM cert) and path rules for web, `/ws/live`, `/mcp`
@@ -147,6 +147,9 @@ Replace <value> with infura id value.
 ```bash
 aws ssm put-parameter --name /brickbase/production/infura/project_id \
   --type SecureString --value '<value>' --overwrite --region eu-west-2
+
+aws ssm put-parameter --name /brickbase/production/rpc/url \
+  --type String --value 'https://mainnet.infura.io/v3/' --overwrite --region eu-west-2
 ```
 
 ## Local deploy config

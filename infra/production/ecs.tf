@@ -67,6 +67,7 @@ locals {
       container_port = null
       environment = [
         { name = "NODE_ENV", value = "production" },
+        { name = "RUST_LOG", value = "info" },
         { name = "REDIS_URL", value = local.redis_url },
         { name = "CHAIN_ID", value = "1" },
         { name = "COINBASE_PRODUCT_ID", value = "ETH-USD" },
@@ -75,6 +76,10 @@ locals {
         {
           name      = "INFURA_PROJECT_ID"
           valueFrom = aws_ssm_parameter.app["/brickbase/production/infura/project_id"].arn
+        },
+        {
+          name      = "RPC_URL"
+          valueFrom = aws_ssm_parameter.app["/brickbase/production/rpc/url"].arn
         },
       ]
     }

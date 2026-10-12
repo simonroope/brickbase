@@ -111,3 +111,19 @@ jobs:
           IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-gateway:${{ env.IMAGE_TAG }}"
           docker build -f infra/docker/Dockerfile.gateway -t "$IMAGE" .
           docker push "$IMAGE"
+
+  publish-api:
+    needs: lint
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-api:${{ env.IMAGE_TAG }}"
+          docker build -f infra/docker/Dockerfile.api -t "$IMAGE" .
+          docker push "$IMAGE"
