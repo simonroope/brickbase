@@ -109,7 +109,8 @@ Copy `.env.example` to `.env` at the **repo root**. Copy or symlink env for the 
 
 ```bash
 # Local chain (Terminal 1 — keep running; RPC http://127.0.0.1:8545, chain ID 31337)
-npx nx run contracts:node
+npm run contracts:node
+# Same: npx nx run contracts:node
 # Or: cd contracts && npx hardhat node
 
 # Compile contracts
@@ -186,7 +187,7 @@ The command fails if Slither reports a **high** finding (`--fail-high`). Latest 
 Hardhat script `contracts/scripts/deploy/deploy.ts`. Nx target `deploy` with a network configuration (`localhost` | `sepolia` | `mainnet` | `baseSepolia` | `base`):
 
 ```bash
-npx nx run contracts:node                    # localhost only — keep running
+npm run contracts:node                       # localhost only — keep running (`npx hardhat node`)
 npx nx run contracts:deploy:localhost
 npx nx run contracts:deploy:sepolia
 ```

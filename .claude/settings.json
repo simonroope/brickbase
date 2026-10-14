@@ -4,8 +4,30 @@
     "allow": [
       "Bash(git status)",
       "Bash(git diff:*)",
+      "Bash(git branch)",
+      "Bash(git branch --show-current)",
+      "Bash(git branch --list:*)",
+      "Bash(git branch -a:*)",
+      "Bash(git branch -r:*)",
+      "Bash(git branch -v:*)",
+      "Bash(git branch -vv:*)",
+      "Bash(git branch --all:*)",
+      "Bash(git branch --remotes:*)",
+      "Bash(git branch --contains:*)",
+      "Bash(git branch --no-contains:*)",
+      "Bash(git branch --merged:*)",
+      "Bash(git branch --no-merged:*)",
+      "Bash(git branch --points-at:*)",
       "Bash(npm run lint)",
-      "Bash(npm run api:lint)"
+      "Bash(npm run api:lint)",
+      "Bash(npm run test)",
+      "Bash(npm run build)",
+      "Bash(npm run web:test)",
+      "Bash(npm run web:test:*)",
+      "Bash(npm run web:build)",
+      "Bash(npm run mcp:test)",
+      "Bash(npm run api:test)",
+      "Bash(npm run events:test)"
     ],
     "ask": [
       "Bash(terraform apply:*)"

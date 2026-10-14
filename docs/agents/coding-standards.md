@@ -331,6 +331,7 @@ If duplication is detected during review, it must be extracted before the PR mer
 | Lint workspace    | `npm run lint`             |
 | Lint API          | `npm run api:lint`         |
 | Build web         | `nx run web:build`         |
+| Local Hardhat node | `npm run contracts:node`   |
 | Compile contracts | `nx run contracts:compile` |
 | Slither audit     | `nx run contracts:audit`   |
 | Serve MCP         | `nx run mcp:serve`         |
