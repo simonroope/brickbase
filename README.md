@@ -116,7 +116,8 @@ npm run contracts:node
 # Compile contracts
 npx nx run contracts:compile
 
-# Run contracts tests
+# Run contracts tests (in-process Hardhat; no `hardhat node` required)
+# npx hardhat test --network hardhat
 npx nx run contracts:test
 
 # Foundry invariant tests — see [Invariant tests](#invariant-tests)
@@ -572,7 +573,7 @@ Claude Code runs command hooks from `.claude/settings.json`. Scripts live in `.c
 
 | Event | Matcher | Script | Behaviour |
 | ----- | ------- | ------ | --------- |
-| `PreToolUse` | `Bash` | `block-destructive-bash.sh` | **Ask** before `rm -rf`. **Deny** `git push --force` / `git push -f` and `DROP TABLE` (even in bypass mode). Deny wins if a command mixes `rm -rf` with a denied action. |
+| `PreToolUse` | `Bash` | `block-destructive-bash.sh` | **Ask** before `rm -rf` and before `git branch` create/delete/rename. **Deny** `git push --force` / `git push -f` and `DROP TABLE` (even in bypass mode). Deny wins if a command mixes `rm -rf` with a denied action. |
 | `PostToolUse` | `Edit\|Write` | `format-after-edit.sh` | After a successful edit: `rustfmt` on `.rs`; `npx eslint --fix` on TS/JS. Skips `node_modules`, `.next`, `target`, generated ABI/artifacts. Always exits 0. |
 | `Stop` | — | `lint-on-stop.sh` | If git shows dirty lintable files (`.ts` / `.tsx` / `.js` / `.rs` and related), run `npm run lint` (ESLint, then clippy on `api` and ingest). Failed lint **blocks** the stop so Claude must fix it. Allows the stop when lint is clean, nothing lintable changed, or `stop_hook_active` is already true. Timeout 300s. |
 

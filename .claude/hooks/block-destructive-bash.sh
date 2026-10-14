@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""PreToolUse (Bash): ask for rm -rf; deny git push --force and DROP TABLE."""
+"""PreToolUse (Bash): ask for rm -rf and mutating git branch; deny force-push and DROP TABLE."""
 
 from __future__ import annotations
 
 import json
 import re
+import shlex
 import sys
 
 DENY = (
@@ -16,6 +17,38 @@ DENY = (
 )
 
 ASK = ((re.compile(r"\brm\s+-[^\s]*[rf][^\s]*[fr]\b"), "rm -rf"),)
+
+GIT_BRANCH = re.compile(r"\bgit\s+branch\b((?:(?!&&|\|\||;).)*)", re.S)
+
+MUTATE_LONG = {
+    "--copy",
+    "--create-reflog",
+    "--delete",
+    "--edit-description",
+    "--force",
+    "--move",
+    "--no-track",
+    "--set-upstream-to",
+    "--track",
+    "--unset-upstream",
+}
+
+VALUE_LONG = {
+    "--abbrev",
+    "--color",
+    "--column",
+    "--contains",
+    "--format",
+    "--list",
+    "--merged",
+    "--no-contains",
+    "--no-merged",
+    "--points-at",
+    "--set-upstream-to",
+    "--sort",
+}
+
+MUTATE_SHORT = set("dDmMcCuf")
 
 
 def command_from_stdin() -> str:
@@ -43,6 +76,36 @@ def decide(decision: str, reason: str) -> None:
     )
 
 
+def git_branch_mutates(args: str) -> bool:
+    try:
+        tokens = shlex.split(args)
+    except ValueError:
+        return True
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token.startswith("--"):
+            name = token.split("=", 1)[0]
+            if name in MUTATE_LONG:
+                return True
+            if name in VALUE_LONG and "=" not in token:
+                i += 2
+                continue
+            i += 1
+            continue
+        if token.startswith("-") and token != "-":
+            if any(letter in MUTATE_SHORT for letter in token[1:]):
+                return True
+            i += 1
+            continue
+        return True
+    return False
+
+
+def mutating_git_branch(command: str) -> bool:
+    return any(git_branch_mutates(match.group(1)) for match in GIT_BRANCH.finditer(command))
+
+
 def main() -> int:
     command = command_from_stdin()
     for pattern, label in DENY:
@@ -53,6 +116,9 @@ def main() -> int:
         if pattern.search(command):
             decide("ask", f"{label} requires confirmation")
             return 0
+    if mutating_git_branch(command):
+        decide("ask", "git branch create/delete/rename requires confirmation")
+        return 0
     return 0
 
 

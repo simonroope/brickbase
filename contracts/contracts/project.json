@@ -35,35 +35,35 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat test",
+        "command": "npx hardhat test --network hardhat",
         "cwd": "contracts"
       }
     },
     "test:unit": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat test tests/unit/*.t.ts",
+        "command": "npx hardhat test tests/unit/*.t.ts --network hardhat",
         "cwd": "contracts"
       }
     },
     "test:integration": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat test tests/integration/*.t.ts",
+        "command": "npx hardhat test tests/integration/*.t.ts --network hardhat",
         "cwd": "contracts"
       }
     },
     "test:gas": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat test tests/gas/*.t.ts",
+        "command": "npx hardhat test tests/gas/*.t.ts --network hardhat",
         "cwd": "contracts"
       }
     },
     "test:security": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat test tests/security/*.t.ts",
+        "command": "npx hardhat test tests/security/*.t.ts --network hardhat",
         "cwd": "contracts"
       }
     },
@@ -77,7 +77,7 @@
     "test:upgrade": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx hardhat test tests/upgrade/*.t.ts",
+        "command": "npx hardhat test tests/upgrade/*.t.ts --network hardhat",
         "cwd": "contracts"
       }
     },
