@@ -1,5 +1,5 @@
 {
-  "enabledMcpjsonServers": ["figma"],
+  "enabledMcpjsonServers": ["figma", "postgres"],
   "permissions": {
     "allow": [
       "Bash(git status)",
