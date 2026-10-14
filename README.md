@@ -2,7 +2,7 @@
 
 Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, a **Rust HTTP API**, an **events** layer for external data streams, a **Next.js** investor portal for tokenised commercial real estate, and **agentic AI** development workflows powered by Claude Code and Codex.
 
-Development is supported by **agent skills** — structured instruction files for Claude Code and Codex that guide common workflows (requirements elicitation, PRD creation, ticket generation, TDD build, architecture review). See [Agent skills](#agent-skills).
+Development is supported by **agent skills** — structured instruction files for Claude Code and Codex that guide common workflows (requirements elicitation, PRD creation, ticket generation, TDD build, architecture review). Claude Code also runs project **hooks** on Bash, file edits, and end of turn. See [Agent skills](#agent-skills) and [Claude Code hooks](#claude-code-hooks).
 
 ## Structure
 
@@ -19,6 +19,7 @@ Development is supported by **agent skills** — structured instruction files fo
 | `contracts/chains`        | Chain config, env                                                |
 | `infra/production`   | Terraform + Makefile: VPC, ECS Fargate, ECR, Redis, ALB (eu-west-2) |
 | `skills/`            | Agent skills — source of truth (`skills/<name>/SKILL.md`)        |
+| `.claude/hooks/`     | Claude Code lifecycle hooks (PreToolUse, PostToolUse, Stop)      |
 | `workflows`          | Temporal worker — automated `build-code` from `ready-for-agent` issues, respecting ticket dependencies |
 
 
@@ -47,7 +48,7 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 - Node.js ≥ 18
 - [Rust](https://rustup.rs/) (`rustup`) — required for `apps/api` and `apps/events/ingest`. Each crate’s `rust-toolchain.toml` pins stable plus rustfmt and clippy (`rustup component add clippy` if a host toolchain is missing the component)
 - Docker (optional; required for local Redis when running events live feeds, and for local Postgres when running the HTTP API)
-- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit` and `contracts:test:invariant`
+- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit`, `contracts:test:invariant`, and Claude Code hooks (`.claude/hooks/*.sh` are Python 3)
 
 ### Install dependencies
 
@@ -564,6 +565,18 @@ npm run skills:sync
 
 This syncs pointer files to `.claude/skills/` and `.codex/skills/` so all agents can invoke the skill.
 
+## Claude Code hooks
+
+Claude Code runs command hooks from `.claude/settings.json`. Scripts live in `.claude/hooks/` (Python 3 shebangs, executable). Claude Code sets `CLAUDE_PROJECT_DIR` to the project root when it spawns a hook; the hook scripts fall back to locating the repo from `__file__` if that variable is missing.
+
+| Event | Matcher | Script | Behaviour |
+| ----- | ------- | ------ | --------- |
+| `PreToolUse` | `Bash` | `block-destructive-bash.sh` | **Ask** before `rm -rf`. **Deny** `git push --force` / `git push -f` and `DROP TABLE` (even in bypass mode). Deny wins if a command mixes `rm -rf` with a denied action. |
+| `PostToolUse` | `Edit\|Write` | `format-after-edit.sh` | After a successful edit: `rustfmt` on `.rs`; `npx eslint --fix` on TS/JS. Skips `node_modules`, `.next`, `target`, generated ABI/artifacts. Always exits 0. |
+| `Stop` | — | `lint-on-stop.sh` | If git shows dirty lintable files (`.ts` / `.tsx` / `.js` / `.rs` and related), run `npm run lint` (ESLint, then clippy on `api` and ingest). Failed lint **blocks** the stop so Claude must fix it. Allows the stop when lint is clean, nothing lintable changed, or `stop_hook_active` is already true. Timeout 300s. |
+
+Hooks are not TypeScript: PreToolUse must stay fast and must not depend on `node_modules`.
+
 ## Workflows
 
 The `workflows/` directory contains a **Temporal worker** that automates the `build-code` skill for tickets labelled `ready-for-agent`.
@@ -610,4 +623,4 @@ npm run workflows:trigger
 - Account Abstraction
 - Upgradeable proxy contracts
 
-> _This readme is a standalone overview of Brickbase — self-contained by design. It restates key facts (structure, commands, skills) so it can be read on its own._
+> _This readme is a standalone overview of Brickbase — self-contained by design. It restates key facts (structure, commands, skills, hooks) so it can be read on its own._
