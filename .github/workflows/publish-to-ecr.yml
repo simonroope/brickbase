@@ -34,26 +34,17 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - run: npm run lint
-
-  clippy:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        crate: [apps/api, apps/events/ingest]
-    steps:
-      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
+      - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ${{ matrix.crate }}
-      - run: cargo clippy --all-targets -- -D warnings
-        working-directory: ${{ matrix.crate }}
+          workspaces: |
+            apps/api
+            apps/events/ingest
+      - run: npm run lint
 
   publish-web:
-    needs: [lint, clippy]
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -81,7 +72,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-mcp:
-    needs: [lint, clippy]
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -97,7 +88,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-ingest:
-    needs: [lint, clippy]
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -113,7 +104,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-gateway:
-    needs: [lint, clippy]
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -129,7 +120,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-api:
-    needs: [lint, clippy]
+    needs: lint
     runs-on: ubuntu-latest
     environment: production
     steps:

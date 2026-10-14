@@ -24,6 +24,13 @@
         "command": "npx eslint apps/events --max-warnings 0"
       }
     },
+    "ingest-lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cargo clippy --all-targets -- -D warnings",
+        "cwd": "apps/events/ingest"
+      }
+    },
     "test": {
       "executor": "nx:run-commands",
       "options": {

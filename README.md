@@ -1,7 +1,5 @@
 # Brickbase
 
-> _Standalone overview of Brickbase — self-contained by design. It restates key facts (structure, commands, skills) so it can be read on its own; that is intentional, not accidental duplication._
-
 Monorepo for fractional RWA investing on Ethereum — **EVM smart contracts**, **MCP** server for AI-powered trading agents, a **Rust HTTP API**, an **events** layer for external data streams, a **Next.js** investor portal for tokenised commercial real estate, and **agentic AI** development workflows powered by Claude Code and Codex.
 
 Development is supported by **agent skills** — structured instruction files for Claude Code and Codex that guide common workflows (requirements elicitation, PRD creation, ticket generation, TDD build, architecture review). See [Agent skills](#agent-skills).
@@ -47,7 +45,7 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 ### Prerequisites
 
 - Node.js ≥ 18
-- [Rust](https://rustup.rs/) (`rustup`) — required for `apps/api`, `apps/events/ingest/`; `apps/api/rust-toolchain.toml` pins stable plus rustfmt and clippy
+- [Rust](https://rustup.rs/) (`rustup`) — required for `apps/api` and `apps/events/ingest`. Each crate’s `rust-toolchain.toml` pins stable plus rustfmt and clippy (`rustup component add clippy` if a host toolchain is missing the component)
 - Docker (optional; required for local Redis when running events live feeds, and for local Postgres when running the HTTP API)
 - Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit` and `contracts:test:invariant`
 
@@ -85,8 +83,19 @@ cd apps/web && npm install
 ```
 
 ```bash
-npm run lint                 # ESLint (warnings fail the build)
-npx nx run-many -t lint      # same, per Nx project
+npm run lint                      # ESLint, then clippy on api + ingest (`-D warnings`)
+npm run api:lint                  # cargo clippy --all-targets -- -D warnings  (apps/api)
+npm run events:ingest:lint        # same clippy flags  (apps/events/ingest)
+npx nx run api:lint               # same as npm run api:lint
+npx nx run events:ingest-lint     # same as npm run events:ingest:lint
+npx nx run-many -t lint           # per Nx project (includes api:lint; ingest clippy is events:ingest-lint)
+```
+
+Clippy is not invoked as raw `cargo clippy` from CI or agent allow-lists — use the npm/Nx scripts above. Direct equivalents if you are already in the crate directory:
+
+```bash
+cd apps/api && cargo clippy --all-targets -- -D warnings
+cd apps/events/ingest && cargo clippy --all-targets -- -D warnings
 ```
 
 ### Environment
@@ -250,6 +259,7 @@ apps/events/
 | ------- | --------------------------- | ---------------- |
 | Redis   | —                           | `docker compose -f docker-compose.live.yml up -d` |
 | Ingest (Rust) | `npx nx run events:ingest` | `npm run ingest` (`cargo run` in `apps/events/ingest`) |
+| Ingest clippy | `npx nx run events:ingest-lint` | `npm run events:ingest:lint` (`cargo clippy --all-targets -- -D warnings`) |
 | Gateway | `npx nx run events:gateway` | `npm run gateway` |
 | Tests   | `npx nx run events:test`    | `npm run events:test` (Zod schemas + `cargo test` for ingest) |
 
@@ -273,7 +283,7 @@ npx nx run events:gateway
 
 Local ingest subscribes to Hardhat `newHeads` at `ws://127.0.0.1:8545` (from `RPC_URL`). Staging and production use Infura WebSockets (`INFURA_PROJECT_ID` + Infura `RPC_URL`). `WS_LIVE_URL` defaults to `ws://localhost:8081/ws/live`. Coinbase public ticker data does not require API keys.
 
-Root shortcuts: `npm run ingest` (also `events:ingest`), `npm run gateway` (also `events:gateway`), `npm run events:test`. The gateway script also exists in `apps/events`.
+Root shortcuts: `npm run ingest` (also `events:ingest`), `npm run events:ingest:lint` (clippy), `npm run gateway` (also `events:gateway`), `npm run events:test`. The gateway script also exists in `apps/events`.
 
 ## MCP Server
 
@@ -322,6 +332,7 @@ apps/api/
 | ------- | ---------- | -------- |
 | Postgres | — | `docker compose -f docker-compose.live.yml up -d postgres` |
 | Serve | `npx nx run api:serve` | `npm run api:dev` |
+| Clippy | `npx nx run api:lint` | `npm run api:lint` (`cargo clippy --all-targets -- -D warnings`) |
 | Tests | `npx nx run api:test` | `npm run api:test` |
 
 **Run locally** (requires Rust; Postgres on `DATABASE_URL`, default `postgres://brickbase:brickbase@127.0.0.1:5432/brickbase`). On start the process migrates and seeds two mock assets.
@@ -599,3 +610,4 @@ npm run workflows:trigger
 - Account Abstraction
 - Upgradeable proxy contracts
 
+> _This readme is a standalone overview of Brickbase — self-contained by design. It restates key facts (structure, commands, skills) so it can be read on its own._

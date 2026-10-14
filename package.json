@@ -5,7 +5,9 @@
   "license": "MIT",
   "scripts": {
     "build": "nx run-many -t build",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && nx run api:lint && nx run events:ingest-lint",
+    "api:lint": "nx run api:lint",
+    "events:ingest:lint": "nx run events:ingest-lint",
     "test": "nx run-many -t test",
     "contracts:compile": "nx run contracts:compile",
     "contracts:test": "nx run contracts:test",

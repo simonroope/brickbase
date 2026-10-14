@@ -328,7 +328,8 @@ If duplication is detected during review, it must be extracted before the PR mer
 
 | Target            | Command                    |
 |-------------------|----------------------------|
-| Lint workspace    | `nx run-many -t lint`      |
+| Lint workspace    | `npm run lint`             |
+| Lint API          | `npm run api:lint`         |
 | Build web         | `nx run web:build`         |
 | Compile contracts | `nx run contracts:compile` |
 | Slither audit     | `nx run contracts:audit`   |
