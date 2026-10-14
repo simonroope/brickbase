@@ -44,6 +44,7 @@
     "events:gateway": "nx run events:gateway",
     "events:test": "nx run events:test",
     "skills:sync": "bash scripts/skills-sync.sh",
+    "skills:global": "bash scripts/skills-global.sh",
     "workflows:server": "temporal server start-dev",
     "workflows:start": "nx run workflows:serve",
     "workflows:trigger": "nx run workflows:trigger"
