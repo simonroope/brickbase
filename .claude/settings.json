@@ -1,0 +1,11 @@
+{
+  "enabledMcpjsonServers": ["figma"],
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(npm run lint)",
+      "Bash(cargo clippy)"
+    ]
+  }
+}
