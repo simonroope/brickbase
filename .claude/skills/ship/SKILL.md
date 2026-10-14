@@ -2,7 +2,7 @@
 name: ship
 description: Runs lint, build and tests on the current project, and if every step passes, stages the changes and creates a git commit. Use when the user says "ship", "ship it", "/ship", "lint, build, test and commit", or asks to verify and commit their work in one go. Never pushes.
 disable-model-invocation: true
-allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git add:*), Bash(git commit:*)
+allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git add:*), Bash(git commit:*), Bash(npm run lint), Bash(npm run build), Bash(npm run test)
 ---
 
 # Ship
@@ -33,7 +33,15 @@ If a step has no command, mark it **skipped** and carry on. Never invent a comma
 
 ## 3. Run the checks
 
-Run in order: **lint → build → test**.
+Run in order: **lint → build → test**. Each step is its own Bash call, exactly:
+
+```bash
+npm run lint
+npm run build
+npm run test
+```
+
+Do not redirect to `/tmp`, chain `;`, `|`, `echo $?`, `tail`, or `grep`. Those wrappers are not on the project allow list and will prompt. Use the tool result to decide pass or fail.
 
 - Stop at the first failure.
 - On failure, show the key error output (not the full log), say which step failed, and do **not** commit.

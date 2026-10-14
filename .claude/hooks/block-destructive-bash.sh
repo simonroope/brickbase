@@ -18,7 +18,11 @@ DENY = (
 
 ASK = ((re.compile(r"\brm\s+-[^\s]*[rf][^\s]*[fr]\b"), "rm -rf"),)
 
-GIT_BRANCH = re.compile(r"\bgit\s+branch\b((?:(?!&&|\|\||;).)*)", re.S)
+GIT_BRANCH = re.compile(
+    r"\bgit(?:\s+(?:-C|-c|--git-dir|--work-tree|--namespace)\s+\S+|\s+-\S+)*"
+    r"\s+branch\b((?:(?!&&|\|\||;).)*)",
+    re.S,
+)
 
 MUTATE_LONG = {
     "--copy",
@@ -34,9 +38,6 @@ MUTATE_LONG = {
 }
 
 VALUE_LONG = {
-    "--abbrev",
-    "--color",
-    "--column",
     "--contains",
     "--format",
     "--list",
