@@ -231,7 +231,10 @@ npx nx run contracts:deploy:sepolia
 
 **Outputs** (`contracts/deployments/{network}-addresses.json`) — written after a successful deploy (`USER_ALLOWLIST_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `USDC_ADDRESS`). Copy those into the repo-root `.env` for `apps/web`, `apps/mcp`, and `apps/api`.
 
-**Deployment verification** (`tests/deployment/`) attaches to those addresses on the Hardhat `--network` (Sepolia or mainnet) and checks bytecode, vault/shares/allowlist wiring, pauser, USDC decimals, and Chainlink feed addresses. View calls only — it does not send transactions. CI runs this immediately after deploy; vars are not updated if it fails.
+**CI test phases** (`deploy-contracts.yml`) run only when contract sources will be deployed (Solidity / `scripts/deploy` / Hardhat / Foundry config on `main`, or `workflow_dispatch`). A tests-only change skips both phases.
+
+1. **Pre-deploy** — Hardhat (`--network hardhat`) and Foundry on an **in-process EVM inside the GitHub Actions runner**. Not Sepolia and not `hardhat node` on port 8545.
+2. **Post-deploy** — after a successful deploy, `tests/deployment/` against the **chain just deployed to** (from `CHAIN_ID`: Sepolia when `11155111`). Read-only wiring checks. Vars are not updated if this fails.
 
 ```bash
 npm run contracts:test:deployment                 # Sepolia (default)
@@ -533,7 +536,7 @@ After apply: Route 53 alias A to `alb_dns_name`, put Infura in SSM (`/brickbase/
 
 | Step | How |
 | ---- | --- |
-| Deploy contracts + bake addresses | Push Solidity / deploy-script changes to `main` → **Deploy contracts** (`deploy-contracts.yml`): run local Hardhat/Foundry suites, deploy to the prod chain (currently Sepolia), run `tests/deployment/` against those addresses, write changed `*_ADDRESS` vars only if that passes, then call **Publish images to ECR**. PRs into `main` that touch `contracts/**` run the local contract tests and do not deploy |
+| Deploy contracts + bake addresses | Push Solidity / deploy-script changes to `main` → **Deploy contracts**: pre-deploy tests on the runner’s in-process chain, deploy to `CHAIN_ID` on GitHub Environment **`production`** (currently the only GitHub/Terraform environment; `staging` later), post-deploy tests on that chain, write `*_ADDRESS` vars only if that passes, then publish images. No deploy → no contract tests |
 | Build & push ECR | Push to `main` (path filters under `apps/`, `contracts/abi/`, `infra/docker/`) or run workflow **Publish images to ECR**. If contract sources changed on the same push, this workflow skips and waits for **Deploy contracts** so images do not bake stale addresses |
 | Roll production ECS | Publish a **GitHub Release** (workflow **Deploy to production**) — promotes the **latest successful** `publish-to-ecr` SHA; it does not rebuild |
 | Manual roll | `make -C infra/production deploy wait-stable` with `IMAGE_ACC` / `IMAGE_TAG` from `terraform output` / the publish SHA |
@@ -556,7 +559,7 @@ Pick the path that matches what changed. GitHub still does **not** apply Terrafo
 | ------------ | ------- |
 | `infra/production/*.tf` or `terraform.tfvars` (VPC, ALB, target groups, ECS service shape, IAM, SSM, Redis) | Terraform plan/apply (below) |
 | App code (`apps/`, Dockerfiles) | Push `main` → **Publish images to ECR** (uses current `production` `*_ADDRESS` vars), then a **GitHub Release** (or `make … deploy wait-stable`) |
-| Solidity / `contracts/**` | PR or merge to `main` → **Deploy contracts** runs every local Hardhat and Foundry suite. Merge of source/deploy changes also deploys to the prod chain (currently Sepolia), runs `tests/deployment/` against those addresses, updates `production` `*_ADDRESS` vars only if that passes, and publishes images; then a **GitHub Release** |
+| Solidity / `contracts/**` | Merge of source/deploy changes → **Deploy contracts** (pre-deploy tests, deploy, post-deploy tests, update `*_ADDRESS` vars, publish images), then a **GitHub Release**. Test-only contract changes do not run contract tests or deploy |
 | GitHub Environment **`production`** vars (`RPC_URL`, `REDIS_URL`, … — not contract addresses after an automated deploy) | Update the vars, then an ECS roll so new task defs pick them up (Release or `make deploy`) — Terraform does not inject those |
 | Infura SSM parameter | `aws ssm put-parameter … --overwrite`, then an ECS roll if tasks already started |
 

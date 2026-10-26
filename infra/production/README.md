@@ -173,6 +173,8 @@ The same ECS roll is what **Deploy to environment** (`deploy-to-environment.yml`
 
 ## GitHub Environment `production`
 
+GitHub Environment and Terraform stack share this name. It is currently the only environment; a `staging` GitHub Environment and Terraform stack will be added later. `CHAIN_ID` on this environment is the chain contracts deploy to (not implied by the name `production`).
+
 Set variables (from `terraform output`):
 
 | Variable | Source |
@@ -211,9 +213,7 @@ Set these in the GitHub `production` environment before running the deploy workf
 | `ADMIN_COMPLIANCE_ADDRESS` | Variable | Compliance officer wallet address |
 | `CONTRACTS_DEPLOYER_PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
 
-The `contracts_network` workflow input selects the Hardhat network (`sepolia`, `mainnet`, `baseSepolia`). Default is `sepolia` — use `mainnet` only when ready for production contract deployment.
-
-On push to `main` when contract sources change, **Deploy contracts** (`deploy-contracts.yml`) runs tests, deploys to Sepolia, writes changed `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `USER_ALLOWLIST_ADDRESS`, and `USDC_ADDRESS` on the `production` environment, then calls **Publish images to ECR** with those addresses as build args. A GitHub Release still rolls ECS onto the new images.
+On push to `main` when contract sources change, **Deploy contracts** (`deploy-contracts.yml`) runs tests, deploys to this environment's `CHAIN_ID`, writes changed `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `USER_ALLOWLIST_ADDRESS`, and `USDC_ADDRESS` on the GitHub Environment, then calls **Publish images to ECR** with those addresses as build args. A GitHub Release still rolls ECS onto the new images.
 
 ## Destroy
 

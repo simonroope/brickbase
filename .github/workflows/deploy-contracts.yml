@@ -1,12 +1,10 @@
 name: Deploy contracts
 
-# Prod chain is Sepolia until mainnet cutover (`CONTRACTS_NETWORK`).
+# Pre-deploy tests always use Hardhat's in-process local network (`--network hardhat`).
+# GitHub Environment and Terraform stack share a name. Currently only `production`;
+# a `staging` environment will be added later. `CHAIN_ID` on that environment is the chain to deploy to.
 on:
   push:
-    branches: [main]
-    paths:
-      - "contracts/**"
-  pull_request:
     branches: [main]
     paths:
       - "contracts/**"
@@ -22,12 +20,44 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  CONTRACTS_NETWORK: sepolia
+  # Must match `environment:` on jobs below. Add `staging` here when that stack exists.
   GITHUB_ENVIRONMENT: production
 
 jobs:
-  test:
+  contracts-changed:
     runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      changed: ${{ steps.decide.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'push'
+        with:
+          fetch-depth: 0
+      - id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE="${SHA}^"
+          fi
+          if git diff --name-only "$BEFORE" "$SHA" | grep -qE '^contracts/(contracts/|scripts/deploy/|hardhat\.config\.ts|foundry\.toml)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No contract source change; skipping tests and deploy for CHAIN_ID=${{ vars.CHAIN_ID }}"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  pre-deploy:
+    name: Pre-deploy tests (runner local chain)
+    needs: contracts-changed
+    if: needs.contracts-changed.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment: production
     services:
       postgres:
         image: postgres:16
@@ -43,7 +73,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgres://brickbase:brickbase@127.0.0.1:5432/brickbase
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -62,51 +92,22 @@ jobs:
             apps/api
             apps/events/ingest
       - uses: foundry-rs/foundry-toolchain@v1
-      - name: Hardhat tests (all contracts)
+      - name: Hardhat tests on in-process chain
         run: npm run contracts:test
-      - name: Hardhat unit tests
+      - name: Hardhat unit tests on in-process chain
         run: npm run contracts:test:unit
-      - name: Hardhat integration tests
+      - name: Hardhat integration tests on in-process chain
         run: npm run contracts:test:integration
-      - name: Foundry tests (all contracts)
+      - name: Foundry tests on in-process chain
         run: npm run contracts:test:forge
-      - name: Foundry invariant tests
+      - name: Foundry invariant tests on in-process chain
         run: npm run contracts:test:invariant
       - name: Other workspace tests
         run: npx nx run-many -t test --exclude=contracts
 
-  should-deploy:
-    needs: test
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    outputs:
-      deploy: ${{ steps.decide.outputs.deploy }}
-    steps:
-      - uses: actions/checkout@v6
-        if: github.event_name == 'push'
-        with:
-          fetch-depth: 0
-      - id: decide
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "deploy=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          BEFORE="${{ github.event.before }}"
-          SHA="${{ github.sha }}"
-          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            BEFORE="${SHA}^"
-          fi
-          if git diff --name-only "$BEFORE" "$SHA" | grep -qE '^contracts/(contracts/|scripts/deploy/|hardhat\.config\.ts|foundry\.toml)'; then
-            echo "deploy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Contract tests-only change; skipping Sepolia deploy"
-            echo "deploy=false" >> "$GITHUB_OUTPUT"
-          fi
-
   deploy:
-    needs: [test, should-deploy]
-    if: needs.should-deploy.outputs.deploy == 'true'
+    needs: [contracts-changed, pre-deploy]
+    if: needs.contracts-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
     environment: production
     outputs:
@@ -122,11 +123,25 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Resolve deploy target from CHAIN_ID
+        run: |
+          case "${{ vars.CHAIN_ID }}" in
+            1) name=mainnet ;;
+            11155111) name=sepolia ;;
+            8453) name=base ;;
+            84532) name=baseSepolia ;;
+            *)
+              echo "Unsupported CHAIN_ID=${{ vars.CHAIN_ID }} — set CHAIN_ID on GitHub Environment ${{ env.GITHUB_ENVIRONMENT }} (same as .env)" >&2
+              exit 1
+              ;;
+          esac
+          echo "CONTRACTS_NETWORK=$name" >> "$GITHUB_ENV"
+          echo "Deploy target=$name (CHAIN_ID=${{ vars.CHAIN_ID }})"
       - name: Compile contracts
         run: npm run contracts:compile
       - name: Deploy contracts
         working-directory: contracts
-        run: npx hardhat run scripts/deploy/deploy.ts --network ${{ env.CONTRACTS_NETWORK }}
+        run: npx hardhat run scripts/deploy/deploy.ts --network "$CONTRACTS_NETWORK"
         env:
           RPC_URL: ${{ vars.RPC_URL }}
           INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
@@ -142,16 +157,16 @@ jobs:
       - name: Capture deployed addresses
         id: addresses
         run: |
-          FILE="contracts/deployments/${{ env.CONTRACTS_NETWORK }}-addresses.json"
+          FILE="contracts/deployments/${CONTRACTS_NETWORK}-addresses.json"
           if [ ! -f "$FILE" ]; then
             echo "Address file not found: $FILE"
             exit 1
           fi
           cat "$FILE"
           jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" >> "$GITHUB_OUTPUT"
-      - name: Verify deployment
+      - name: Post-deploy tests on deployed chain
         working-directory: contracts
-        run: npx hardhat test tests/deployment/*.t.ts --network ${{ env.CONTRACTS_NETWORK }}
+        run: npx hardhat test tests/deployment/*.t.ts --network "$CONTRACTS_NETWORK"
         env:
           RPC_URL: ${{ vars.RPC_URL }}
           INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
@@ -166,7 +181,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FILE="contracts/deployments/${{ env.CONTRACTS_NETWORK }}-addresses.json"
+          FILE="contracts/deployments/${CONTRACTS_NETWORK}-addresses.json"
           ENV="${{ env.GITHUB_ENVIRONMENT }}"
           REPO="${{ github.repository }}"
           for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
