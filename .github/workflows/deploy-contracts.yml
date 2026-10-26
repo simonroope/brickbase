@@ -53,7 +53,7 @@ jobs:
           fi
 
   pre-deploy:
-    name: Pre-deploy tests (runner local chain)
+    name: Pre-deploy tests
     needs: contracts-changed
     if: needs.contracts-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
@@ -103,7 +103,13 @@ jobs:
       - name: Foundry invariant tests on in-process chain
         run: npm run contracts:test:invariant
       - name: Other workspace tests
-        run: npx nx run-many -t test --exclude=contracts
+        run: |
+          EXCLUDES=contracts
+          if [ "$DATABASE_URL" = "unknown" ]; then
+            echo "Skipping api tests; DATABASE_URL is unknown"
+            EXCLUDES=contracts,api
+          fi
+          npx nx run-many -t test --exclude="$EXCLUDES"
 
   deploy:
     needs: [contracts-changed, pre-deploy]

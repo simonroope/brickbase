@@ -61,7 +61,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 
 - Contract addresses use canonical names (`ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, etc.) — no `NEXT_PUBLIC_` prefix anywhere.
 - `RPC_URL` is this environment's JSON-RPC base (Infura hostname selects the chain; ending with `/`); `INFURA_PROJECT_ID` is appended at runtime — never hardcode the joined URL. Local `.env`, AWS staging, and production each set their own value. Do not add a second RPC URL per chain family.
-- `DATABASE_URL` is the Postgres URL for `apps/api` (`postgres://…`). Required to serve `/assets`; `GET /health` must not query it.
+- `DATABASE_URL` is the Postgres URL for `apps/api` (`postgres://…`). Required to serve `/assets`; `GET /health` must not query it. Postgres-backed tests skip when the value is `unknown`.
 - All env vars baked into the browser bundle go through the `env` block in `next.config.ts`, not `NEXT_PUBLIC_` prefixes.
 - Never commit secrets or real addresses to source; use `.env.example` for documentation.
 

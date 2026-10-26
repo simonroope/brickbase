@@ -8,9 +8,20 @@ use tower::ServiceExt;
 
 const DATABASE_URL: &str = "postgres://brickbase:brickbase@127.0.0.1:5432/brickbase";
 
+fn postgres_url() -> Option<String> {
+    match std::env::var("DATABASE_URL") {
+        Ok(url) if url == "unknown" => None,
+        Ok(url) => Some(url),
+        Err(_) => Some(DATABASE_URL.to_string()),
+    }
+}
+
 #[tokio::test]
 async fn get_assets_returns_mock_rows_from_postgres() {
-    let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| DATABASE_URL.to_string());
+    let Some(url) = postgres_url() else {
+        eprintln!("skipping: DATABASE_URL is unknown");
+        return;
+    };
     let pool = PgPoolOptions::new().connect(&url).await.expect("postgres");
     brickbase_api::db::migrate(&pool).await.expect("migrate");
     sqlx::query("TRUNCATE assets")
