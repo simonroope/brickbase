@@ -51,7 +51,9 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - run: npm ci --prefix apps/web
+      # apps/web lockfile was generated on darwin-arm64 and omits other
+      # optional natives; npm ci fails on Linux until the lockfile lists them.
+      - run: npm install --prefix apps/web --no-audit --no-fund
       - run: npm ci --prefix apps/events
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
