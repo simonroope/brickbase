@@ -16,7 +16,6 @@ permissions:
   contents: read
   id-token: write
   actions: write
-  variables: write
 
 concurrency:
   group: deploy-contracts-${{ github.ref }}
