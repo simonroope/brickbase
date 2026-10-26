@@ -18,6 +18,7 @@
     "contracts:test:coverage": "nx run contracts:test:coverage",
     "contracts:test:coverage:forge": "nx run contracts:test:coverage:forge",
     "contracts:test:integration": "nx run contracts:test:integration",
+    "contracts:test:deployment": "nx run contracts:test:deployment",
     "contracts:deploy": "nx run contracts:deploy:localhost",
     "contracts:seed:users": "nx run contracts:seed-users",
     "contracts:seed:assets": "nx run contracts:seed-assets",

@@ -5,12 +5,39 @@ on:
     branches: [main]
     paths:
       - "apps/**"
-      - "contracts/**"
+      - "contracts/abi/**"
       - "infra/docker/**"
       - "package.json"
       - "package-lock.json"
       - "nx.json"
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      asset_vault_address:
+        description: "AssetVault address to bake into images (after a contract deploy)"
+        type: string
+        required: false
+        default: ""
+      asset_shares_address:
+        description: "AssetShares address to bake into images (after a contract deploy)"
+        type: string
+        required: false
+        default: ""
+      oracle_router_address:
+        description: "OracleRouter address to bake into images (after a contract deploy)"
+        type: string
+        required: false
+        default: ""
+      user_allowlist_address:
+        description: "AssetUserAllowList address to bake into images (after a contract deploy)"
+        type: string
+        required: false
+        default: ""
+      usdc_address:
+        description: "USDC address to bake into images (after a contract deploy)"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -25,7 +52,37 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.decide.outputs.proceed }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'push'
+        with:
+          fetch-depth: 0
+      - id: decide
+        run: |
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE="${SHA}^"
+          fi
+          # Deploy-contracts owns source/deploy changes and calls this workflow after vars are written.
+          if git diff --name-only "$BEFORE" "$SHA" | grep -qE '^contracts/(contracts/|scripts/deploy/|hardhat\.config\.ts|foundry\.toml)'; then
+            echo "Contract sources changed; skipping until deploy-contracts publishes with new addresses"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -61,11 +118,11 @@ jobs:
             --build-arg CHAIN_ID="${{ vars.CHAIN_ID }}" \
             --build-arg RPC_URL="${{ vars.RPC_URL }}" \
             --build-arg INFURA_PROJECT_ID="${{ secrets.INFURA_PROJECT_ID }}" \
-            --build-arg ASSET_VAULT_ADDRESS="${{ vars.ASSET_VAULT_ADDRESS }}" \
-            --build-arg ASSET_SHARES_ADDRESS="${{ vars.ASSET_SHARES_ADDRESS }}" \
-            --build-arg ORACLE_ROUTER_ADDRESS="${{ vars.ORACLE_ROUTER_ADDRESS }}" \
-            --build-arg USER_ALLOWLIST_ADDRESS="${{ vars.USER_ALLOWLIST_ADDRESS }}" \
-            --build-arg USDC_ADDRESS="${{ vars.USDC_ADDRESS }}" \
+            --build-arg ASSET_VAULT_ADDRESS="${{ inputs.asset_vault_address || vars.ASSET_VAULT_ADDRESS }}" \
+            --build-arg ASSET_SHARES_ADDRESS="${{ inputs.asset_shares_address || vars.ASSET_SHARES_ADDRESS }}" \
+            --build-arg ORACLE_ROUTER_ADDRESS="${{ inputs.oracle_router_address || vars.ORACLE_ROUTER_ADDRESS }}" \
+            --build-arg USER_ALLOWLIST_ADDRESS="${{ inputs.user_allowlist_address || vars.USER_ALLOWLIST_ADDRESS }}" \
+            --build-arg USDC_ADDRESS="${{ inputs.usdc_address || vars.USDC_ADDRESS }}" \
             --build-arg WALLETCONNECT_PROJECT_ID="${{ secrets.WALLETCONNECT_PROJECT_ID }}" \
             --build-arg WS_LIVE_URL="${{ vars.WS_LIVE_URL }}" \
             -t "$IMAGE" .

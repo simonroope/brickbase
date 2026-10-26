@@ -1,0 +1,195 @@
+name: Deploy contracts
+
+# Prod chain is Sepolia until mainnet cutover (`CONTRACTS_NETWORK`).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "contracts/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "contracts/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  actions: write
+  variables: write
+
+concurrency:
+  group: deploy-contracts-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CONTRACTS_NETWORK: sepolia
+  GITHUB_ENVIRONMENT: production
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: brickbase
+          POSTGRES_PASSWORD: brickbase
+          POSTGRES_DB: brickbase
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brickbase -d brickbase"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://brickbase:brickbase@127.0.0.1:5432/brickbase
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix apps/web
+      - run: npm ci --prefix apps/events
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/api
+            apps/events/ingest
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Hardhat tests (all contracts)
+        run: npm run contracts:test
+      - name: Hardhat unit tests
+        run: npm run contracts:test:unit
+      - name: Hardhat integration tests
+        run: npm run contracts:test:integration
+      - name: Foundry tests (all contracts)
+        run: npm run contracts:test:forge
+      - name: Foundry invariant tests
+        run: npm run contracts:test:invariant
+      - name: Other workspace tests
+        run: npx nx run-many -t test --exclude=contracts
+
+  should-deploy:
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'push'
+        with:
+          fetch-depth: 0
+      - id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE="${SHA}^"
+          fi
+          if git diff --name-only "$BEFORE" "$SHA" | grep -qE '^contracts/(contracts/|scripts/deploy/|hardhat\.config\.ts|foundry\.toml)'; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Contract tests-only change; skipping Sepolia deploy"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: [test, should-deploy]
+    if: needs.should-deploy.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      asset_vault_address: ${{ steps.addresses.outputs.ASSET_VAULT_ADDRESS }}
+      asset_shares_address: ${{ steps.addresses.outputs.ASSET_SHARES_ADDRESS }}
+      oracle_router_address: ${{ steps.addresses.outputs.ORACLE_ROUTER_ADDRESS }}
+      user_allowlist_address: ${{ steps.addresses.outputs.USER_ALLOWLIST_ADDRESS }}
+      usdc_address: ${{ steps.addresses.outputs.USDC_ADDRESS }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Compile contracts
+        run: npm run contracts:compile
+      - name: Deploy contracts
+        working-directory: contracts
+        run: npx hardhat run scripts/deploy/deploy.ts --network ${{ env.CONTRACTS_NETWORK }}
+        env:
+          RPC_URL: ${{ vars.RPC_URL }}
+          INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
+          PRIVATE_KEY: ${{ secrets.CONTRACTS_DEPLOYER_PRIVATE_KEY }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
+          CHAINLINK_USD_GBP_ADDRESS: ${{ vars.CHAINLINK_USD_GBP_ADDRESS }}
+          CHAINLINK_XAU_USD_ADDRESS: ${{ vars.CHAINLINK_XAU_USD_ADDRESS }}
+          CHAINLINK_FTSE100_ADDRESS: ${{ vars.CHAINLINK_FTSE100_ADDRESS }}
+          ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
+          ADMIN_ASSET_MANAGER_ADDRESS: ${{ vars.ADMIN_ASSET_MANAGER_ADDRESS }}
+          ADMIN_COMPLIANCE_ADDRESS: ${{ vars.ADMIN_COMPLIANCE_ADDRESS }}
+      - name: Capture deployed addresses
+        id: addresses
+        run: |
+          FILE="contracts/deployments/${{ env.CONTRACTS_NETWORK }}-addresses.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Address file not found: $FILE"
+            exit 1
+          fi
+          cat "$FILE"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" >> "$GITHUB_OUTPUT"
+      - name: Verify deployment
+        working-directory: contracts
+        run: npx hardhat test tests/deployment/*.t.ts --network ${{ env.CONTRACTS_NETWORK }}
+        env:
+          RPC_URL: ${{ vars.RPC_URL }}
+          INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
+          PRIVATE_KEY: ${{ secrets.CONTRACTS_DEPLOYER_PRIVATE_KEY }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
+          CHAINLINK_USD_GBP_ADDRESS: ${{ vars.CHAINLINK_USD_GBP_ADDRESS }}
+          CHAINLINK_XAU_USD_ADDRESS: ${{ vars.CHAINLINK_XAU_USD_ADDRESS }}
+          CHAINLINK_FTSE100_ADDRESS: ${{ vars.CHAINLINK_FTSE100_ADDRESS }}
+          ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
+      - name: Store changed addresses in GitHub Environment vars
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FILE="contracts/deployments/${{ env.CONTRACTS_NETWORK }}-addresses.json"
+          ENV="${{ env.GITHUB_ENVIRONMENT }}"
+          REPO="${{ github.repository }}"
+          for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
+            NEW=$(jq -r --arg k "$KEY" '.[$k]' "$FILE")
+            if [ -z "$NEW" ] || [ "$NEW" = "null" ]; then
+              echo "Skipping empty $KEY"
+              continue
+            fi
+            OLD=$(gh variable get "$KEY" --env "$ENV" --repo "$REPO" 2>/dev/null || true)
+            if [ "$NEW" = "$OLD" ]; then
+              echo "$KEY unchanged ($NEW)"
+              continue
+            fi
+            gh variable set "$KEY" --env "$ENV" --repo "$REPO" --body "$NEW"
+            echo "Updated $KEY=$NEW in $ENV"
+          done
+
+  publish-images:
+    needs: deploy
+    uses: ./.github/workflows/publish-to-ecr.yml
+    secrets: inherit
+    with:
+      asset_vault_address: ${{ needs.deploy.outputs.asset_vault_address }}
+      asset_shares_address: ${{ needs.deploy.outputs.asset_shares_address }}
+      oracle_router_address: ${{ needs.deploy.outputs.oracle_router_address }}
+      user_allowlist_address: ${{ needs.deploy.outputs.user_allowlist_address }}
+      usdc_address: ${{ needs.deploy.outputs.usdc_address }}

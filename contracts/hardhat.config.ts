@@ -11,7 +11,10 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 subtask(TASK_TEST_GET_TEST_FILES).setAction(async (args, _hre, runSuper) => {
   const files: string[] = await runSuper(args);
   return files.filter(
-    (file) => !file.endsWith(".d.ts") && !file.includes(`${path.sep}seed${path.sep}`)
+    (file) =>
+      !file.endsWith(".d.ts") &&
+      !file.includes(`${path.sep}seed${path.sep}`) &&
+      !file.includes(`${path.sep}deployment${path.sep}`)
   );
 });
 

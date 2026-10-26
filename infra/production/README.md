@@ -213,7 +213,7 @@ Set these in the GitHub `production` environment before running the deploy workf
 
 The `contracts_network` workflow input selects the Hardhat network (`sepolia`, `mainnet`, `baseSepolia`). Default is `sepolia` — use `mainnet` only when ready for production contract deployment.
 
-After a contract deploy the new addresses must be updated in the `production` environment as `NEXT_PUBLIC_*` vars and a new ECR image rebuild/deploy triggered so the web app picks them up.
+On push to `main` when contract sources change, **Deploy contracts** (`deploy-contracts.yml`) runs tests, deploys to Sepolia, writes changed `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `USER_ALLOWLIST_ADDRESS`, and `USDC_ADDRESS` on the `production` environment, then calls **Publish images to ECR** with those addresses as build args. A GitHub Release still rolls ECS onto the new images.
 
 ## Destroy
 

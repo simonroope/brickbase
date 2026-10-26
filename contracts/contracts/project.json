@@ -81,6 +81,27 @@
         "cwd": "contracts"
       }
     },
+    "test:deployment": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "sepolia",
+      "options": {
+        "cwd": "contracts"
+      },
+      "configurations": {
+        "sepolia": {
+          "command": "npx hardhat test tests/deployment/*.t.ts --network sepolia"
+        },
+        "mainnet": {
+          "command": "npx hardhat test tests/deployment/*.t.ts --network mainnet"
+        },
+        "baseSepolia": {
+          "command": "npx hardhat test tests/deployment/*.t.ts --network baseSepolia"
+        },
+        "base": {
+          "command": "npx hardhat test tests/deployment/*.t.ts --network base"
+        }
+      }
+    },
     "test:gas": {
       "executor": "nx:run-commands",
       "options": {
