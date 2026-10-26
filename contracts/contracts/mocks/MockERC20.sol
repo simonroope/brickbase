@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockERC20 is ERC20 {
     uint8 private immutable _decimals;
+    bool private _failTransferFrom;
 
     constructor(
         string memory name_,
@@ -22,6 +23,17 @@ contract MockERC20 is ERC20 {
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
+    }
+
+    function setFailTransferFrom(bool fail) external {
+        _failTransferFrom = fail;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        if (_failTransferFrom) {
+            return false;
+        }
+        return super.transferFrom(from, to, amount);
     }
 }
 

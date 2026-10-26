@@ -74,5 +74,7 @@ export type { MockChainlinkAggregator } from "./contracts/mocks/MockChainlinkAgg
 export { MockChainlinkAggregator__factory } from "./factories/contracts/mocks/MockChainlinkAggregator__factory";
 export type { MockERC20 } from "./contracts/mocks/MockERC20";
 export { MockERC20__factory } from "./factories/contracts/mocks/MockERC20__factory";
+export type { ReenterShareReceiver } from "./contracts/mocks/ReenterShareReceiver";
+export { ReenterShareReceiver__factory } from "./factories/contracts/mocks/ReenterShareReceiver__factory";
 export type { OracleRouter } from "./contracts/periphery/OracleRouter";
 export { OracleRouter__factory } from "./factories/contracts/periphery/OracleRouter__factory";

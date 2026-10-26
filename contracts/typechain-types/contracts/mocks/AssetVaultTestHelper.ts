@@ -73,6 +73,7 @@ export interface AssetVaultTestHelperInterface extends Interface {
       | "isApprovedForAll"
       | "isFrozen"
       | "isUserAllowed"
+      | "mintForTest"
       | "name"
       | "ownerOf"
       | "pause"
@@ -87,6 +88,7 @@ export interface AssetVaultTestHelperInterface extends Interface {
       | "setAssetShares"
       | "setFrozenToken"
       | "setPauser"
+      | "setReenterHook"
       | "setUserAllowed"
       | "supportsInterface"
       | "symbol"
@@ -194,6 +196,10 @@ export interface AssetVaultTestHelperInterface extends Interface {
     functionFragment: "isUserAllowed",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "mintForTest",
+    values: [AddressLike, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "ownerOf",
@@ -237,6 +243,10 @@ export interface AssetVaultTestHelperInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setPauser",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setReenterHook",
+    values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setUserAllowed",
@@ -323,6 +333,10 @@ export interface AssetVaultTestHelperInterface extends Interface {
     functionFragment: "isUserAllowed",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "mintForTest",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
@@ -358,6 +372,10 @@ export interface AssetVaultTestHelperInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setPauser", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setReenterHook",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setUserAllowed",
     data: BytesLike
@@ -752,6 +770,12 @@ export interface AssetVaultTestHelper extends BaseContract {
 
   isUserAllowed: TypedContractMethod<[user: AddressLike], [boolean], "view">;
 
+  mintForTest: TypedContractMethod<
+    [to: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   name: TypedContractMethod<[], [string], "view">;
 
   ownerOf: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
@@ -822,6 +846,12 @@ export interface AssetVaultTestHelper extends BaseContract {
   >;
 
   setPauser: TypedContractMethod<[_pauser: AddressLike], [void], "nonpayable">;
+
+  setReenterHook: TypedContractMethod<
+    [hook: AddressLike, data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
   setUserAllowed: TypedContractMethod<
     [user: AddressLike, allowed: boolean],
@@ -959,6 +989,13 @@ export interface AssetVaultTestHelper extends BaseContract {
     nameOrSignature: "isUserAllowed"
   ): TypedContractMethod<[user: AddressLike], [boolean], "view">;
   getFunction(
+    nameOrSignature: "mintForTest"
+  ): TypedContractMethod<
+    [to: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -1039,6 +1076,13 @@ export interface AssetVaultTestHelper extends BaseContract {
   getFunction(
     nameOrSignature: "setPauser"
   ): TypedContractMethod<[_pauser: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setReenterHook"
+  ): TypedContractMethod<
+    [hook: AddressLike, data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "setUserAllowed"
   ): TypedContractMethod<

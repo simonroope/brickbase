@@ -1,5 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 
 describe("AssetVault", () => {
   let vault: any;
@@ -43,6 +44,14 @@ describe("AssetVault", () => {
   describe("Deployment", () => {
     it("deploys successfully with allowlist", async () => {
       expect(await vault.getAddress()).to.properAddress;
+      expect(await vault.userAllowList()).to.equal(await allowList.getAddress());
+    });
+
+    it("reverts when the allowlist address is zero", async () => {
+      const AssetVault = await ethers.getContractFactory("AssetVault");
+      await expect(AssetVault.deploy(ethers.ZeroAddress)).to.be.revertedWith(
+        "Invalid allowlist address"
+      );
     });
 
     it("sets correct name and symbol", async () => {
@@ -99,6 +108,27 @@ describe("AssetVault", () => {
     });
   });
 
+  describe("setPauser", () => {
+    it("reverts when the pauser address is zero", async () => {
+      const AssetVault = await ethers.getContractFactory("AssetVault");
+      const fresh = await AssetVault.deploy(await allowList.getAddress());
+      await expect(fresh.setPauser(ethers.ZeroAddress)).to.be.revertedWith("Invalid pauser address");
+    });
+
+    it("reverts when the pauser is already set", async () => {
+      await expect(vault.setPauser(user1.address)).to.be.revertedWith("Pauser already set");
+    });
+
+    it("reverts when a non-admin sets the pauser", async () => {
+      const AssetVault = await ethers.getContractFactory("AssetVault");
+      const fresh = await AssetVault.deploy(await allowList.getAddress());
+      await expect(fresh.connect(user1).setPauser(user1.address)).to.be.revertedWithCustomError(
+        fresh,
+        "AccessControlUnauthorizedAccount"
+      );
+    });
+  });
+
   describe("Access Control", () => {
     it("allows admin to grant roles", async () => {
       await vault.grantRole(ASSET_MANAGER_ROLE, user1.address);
@@ -146,116 +176,173 @@ describe("AssetVault", () => {
   });
 
   describe("ERC7943 - Token Freezing", () => {
+    let tokenVault: any;
+    const tokenId = 1n;
+
+    beforeEach(async () => {
+      const AssetVaultTestHelper = await ethers.getContractFactory("AssetVaultTestHelper", deployer);
+      tokenVault = await AssetVaultTestHelper.deploy(await allowList.getAddress());
+      await tokenVault.waitForDeployment();
+      await allowList.setAuthorizedCaller(await tokenVault.getAddress(), true);
+      await tokenVault.grantRole(COMPLIANCE_OFFICER_ROLE, complianceOfficer.address);
+      await tokenVault.setPauser(deployer.address);
+      await tokenVault.mintForTest(user1.address, tokenId);
+    });
 
     it("returns false for non-frozen token", async () => {
-      // Test that non-existent tokens return false (not frozen)
-      // In production, tokens would be minted by AssetShares
-      expect(await vault.isFrozen(1)).to.be.false;
+      expect(await tokenVault.isFrozen(tokenId)).to.be.false;
     });
 
     it("allows compliance officer to freeze token", async () => {
-      // Note: This requires a token to exist first
-      // Since ERC721._mint is internal, we can't mint directly in tests
-      // In production, tokens are minted by AssetShares contract via MINTER_ROLE
-      // For now, we test that the function exists and access control works
-      // Full test would require: 1) Mint token, 2) Freeze it, 3) Verify frozen
+      await tokenVault.connect(complianceOfficer).setFrozenToken(tokenId, true);
+      expect(await tokenVault.isFrozen(tokenId)).to.be.true;
     });
 
     it("reverts when non-compliance officer tries to freeze token", async () => {
       await expect(
-        vault.connect(user1).setFrozenToken(1, true)
-      ).to.be.revertedWithCustomError(vault, "AccessControlUnauthorizedAccount");
+        tokenVault.connect(user1).setFrozenToken(tokenId, true)
+      ).to.be.revertedWithCustomError(tokenVault, "AccessControlUnauthorizedAccount");
     });
 
     it("reverts when trying to freeze non-existent token", async () => {
-      // setFrozenToken calls ownerOf which will revert for non-existent tokens
       await expect(
-        vault.connect(complianceOfficer).setFrozenToken(999, true)
+        tokenVault.connect(complianceOfficer).setFrozenToken(999, true)
       ).to.be.reverted;
     });
 
     it("emits Frozen event when token is frozen", async () => {
-      // Would require a minted token to test fully
-      // For now, we verify the function signature exists
+      await expect(tokenVault.connect(complianceOfficer).setFrozenToken(tokenId, true))
+        .to.emit(tokenVault, "Frozen")
+        .withArgs(user1.address, tokenId);
     });
   });
 
   describe("ERC7943 - Transaction Checks", () => {
+    let tokenVault: any;
+    const tokenId = 1n;
+
     beforeEach(async () => {
-      // Add users to allowlist
-      await vault.connect(complianceOfficer).setUserAllowed(user1.address, true);
-      await vault.connect(complianceOfficer).setUserAllowed(user2.address, true);
+      const AssetVaultTestHelper = await ethers.getContractFactory("AssetVaultTestHelper", deployer);
+      tokenVault = await AssetVaultTestHelper.deploy(await allowList.getAddress());
+      await tokenVault.waitForDeployment();
+      await allowList.setAuthorizedCaller(await tokenVault.getAddress(), true);
+      await tokenVault.grantRole(COMPLIANCE_OFFICER_ROLE, complianceOfficer.address);
+      await tokenVault.setPauser(deployer.address);
+      await tokenVault.connect(complianceOfficer).setUserAllowed(user1.address, true);
+      await tokenVault.connect(complianceOfficer).setUserAllowed(user2.address, true);
+      await tokenVault.mintForTest(user1.address, tokenId);
     });
 
     it("canTransact returns false for user not on allowlist", async () => {
-      expect(await vault.canTransact(user3.address, 1)).to.be.false;
+      expect(await tokenVault.canTransact(user3.address, tokenId)).to.be.false;
     });
 
     it("canTransact returns false when contract is paused", async () => {
-      await vault.pause();
-      expect(await vault.canTransact(user1.address, 1)).to.be.false;
-      await vault.unpause();
+      await tokenVault.pause();
+      expect(await tokenVault.canTransact(user1.address, tokenId)).to.be.false;
     });
 
     it("canTransact returns false for frozen token", async () => {
-      // Would need: 1) Mint token to user1, 2) Freeze token, 3) Verify canTransact returns false
-      // For now, we test the function exists and logic is correct
+      await tokenVault.connect(complianceOfficer).setFrozenToken(tokenId, true);
+      expect(await tokenVault.canTransact(user1.address, tokenId)).to.be.false;
     });
 
     it("canTransact returns true when user owns token and conditions are met", async () => {
-      // Would need: 1) Mint token to user1, 2) Verify canTransact returns true
-      // For now, we test the function exists
+      expect(await tokenVault.canTransact(user1.address, tokenId)).to.be.true;
+    });
+
+    it("canTransact returns false when the user does not own the token", async () => {
+      expect(await tokenVault.canTransact(user2.address, tokenId)).to.be.false;
     });
 
     it("canTransfer returns false when from user not allowed", async () => {
-      expect(await vault.canTransfer(user3.address, user1.address, 1)).to.be.false;
+      expect(await tokenVault.canTransfer(user3.address, user1.address, tokenId)).to.be.false;
     });
 
     it("canTransfer returns false when to user not allowed", async () => {
-      expect(await vault.canTransfer(user1.address, user3.address, 1)).to.be.false;
+      expect(await tokenVault.canTransfer(user1.address, user3.address, tokenId)).to.be.false;
     });
 
     it("canTransfer returns false when contract is paused", async () => {
-      await vault.pause();
-      expect(await vault.canTransfer(user1.address, user2.address, 1)).to.be.false;
-      await vault.unpause();
+      await tokenVault.pause();
+      expect(await tokenVault.canTransfer(user1.address, user2.address, tokenId)).to.be.false;
     });
 
     it("canTransfer returns true when all conditions are met", async () => {
-      // Would need: 1) Mint token to user1, 2) Verify canTransfer returns true
-      // For now, we test the function exists and logic is correct
+      expect(await tokenVault.canTransfer(user1.address, user2.address, tokenId)).to.be.true;
     });
 
     it("canTransfer returns false for frozen token", async () => {
-      // Would need: 1) Mint token to user1, 2) Freeze token, 3) Verify canTransfer returns false
-      // For now, we test the function exists
+      await tokenVault.connect(complianceOfficer).setFrozenToken(tokenId, true);
+      expect(await tokenVault.canTransfer(user1.address, user2.address, tokenId)).to.be.false;
+    });
+
+    it("canTransfer returns false when from does not own the token", async () => {
+      expect(await tokenVault.canTransfer(user2.address, user1.address, tokenId)).to.be.false;
     });
   });
 
   describe("ERC7943 - Forced Transfer", () => {
+    let tokenVault: any;
+    const tokenId = 1n;
+
+    beforeEach(async () => {
+      const AssetVaultTestHelper = await ethers.getContractFactory("AssetVaultTestHelper", deployer);
+      tokenVault = await AssetVaultTestHelper.deploy(await allowList.getAddress());
+      await tokenVault.waitForDeployment();
+      await allowList.setAuthorizedCaller(await tokenVault.getAddress(), true);
+      await tokenVault.grantRole(COMPLIANCE_OFFICER_ROLE, complianceOfficer.address);
+      await tokenVault.setPauser(deployer.address);
+      await tokenVault.mintForTest(user1.address, tokenId);
+    });
+
     it("reverts when non-compliance officer tries forced transfer", async () => {
       await expect(
-        vault.connect(user1).forcedTransfer(user1.address, user2.address, 1)
-      ).to.be.revertedWithCustomError(vault, "AccessControlUnauthorizedAccount");
+        tokenVault.connect(user1).forcedTransfer(user1.address, user2.address, tokenId)
+      ).to.be.revertedWithCustomError(tokenVault, "AccessControlUnauthorizedAccount");
     });
 
     it("reverts when token not owned by from address", async () => {
-      // Would need a minted token to test fully
-      // For now, we test that ownerOf check works (will revert for non-existent token)
       await expect(
-        vault.connect(complianceOfficer).forcedTransfer(user1.address, user2.address, 999)
-      ).to.be.reverted;
+        tokenVault.connect(complianceOfficer).forcedTransfer(user2.address, user1.address, tokenId)
+      ).to.be.revertedWith("Token not owned by from");
     });
 
     it("reverts when called on non-existent token", async () => {
       await expect(
-        vault.connect(complianceOfficer).forcedTransfer(user1.address, user2.address, 999)
+        tokenVault.connect(complianceOfficer).forcedTransfer(user1.address, user2.address, 999)
       ).to.be.reverted;
     });
 
     it("emits ForcedTransfer event when transfer succeeds", async () => {
-      // Would require: 1) Mint token to user1, 2) Force transfer to user2, 3) Verify event
-      // For now, we verify the function exists and access control works
+      await expect(
+        tokenVault.connect(complianceOfficer).forcedTransfer(user1.address, user2.address, tokenId)
+      )
+        .to.emit(tokenVault, "ForcedTransfer")
+        .withArgs(user1.address, user2.address, tokenId);
+      expect(await tokenVault.ownerOf(tokenId)).to.equal(user2.address);
+    });
+
+    it("reverts a forced transfer when the vault is paused", async () => {
+      await tokenVault.pause();
+      await expect(
+        tokenVault.connect(complianceOfficer).forcedTransfer(user1.address, user2.address, tokenId)
+      ).to.be.revertedWithCustomError(tokenVault, "EnforcedPause");
+    });
+
+    it("reverts when forcedTransfer is reentered", async () => {
+      await tokenVault.grantRole(COMPLIANCE_OFFICER_ROLE, await tokenVault.getAddress());
+      await tokenVault.setReenterHook(
+        await tokenVault.getAddress(),
+        tokenVault.interface.encodeFunctionData("forcedTransfer", [
+          user1.address,
+          user2.address,
+          tokenId,
+        ])
+      );
+      await expect(
+        tokenVault.connect(complianceOfficer).forcedTransfer(user1.address, user2.address, tokenId)
+      ).to.be.revertedWithCustomError(tokenVault, "ReentrancyGuardReentrantCall");
     });
   });
 
@@ -303,6 +390,10 @@ describe("AssetVault", () => {
       const ERC165_INTERFACE_ID = "0x01ffc9a7";
       expect(await vault.supportsInterface(ERC165_INTERFACE_ID)).to.be.true;
     });
+
+    it("returns false for an unsupported interface", async () => {
+      expect(await vault.supportsInterface("0xffffffff")).to.be.false;
+    });
   });
 
   describe("Role Constants", () => {
@@ -312,6 +403,10 @@ describe("AssetVault", () => {
 
     it("exposes COMPLIANCE_OFFICER_ROLE constant", async () => {
       expect(await vault.COMPLIANCE_OFFICER_ROLE()).to.equal(COMPLIANCE_OFFICER_ROLE);
+    });
+
+    it("exposes PAUSER_ROLE constant", async () => {
+      expect(await vault.PAUSER_ROLE()).to.equal(ethers.keccak256(ethers.toUtf8Bytes("PAUSER_ROLE")));
     });
   });
 
@@ -330,6 +425,54 @@ describe("AssetVault", () => {
       await testAllowList.setAuthorizedCaller(await testVault.getAddress(), true);
       await testVault.grantRole(COMPLIANCE_OFFICER_ROLE, complianceOfficer.address);
       await (testVault as any).setPauser(deployer.address);
+    });
+
+    it("createAsset assigns the next id and stores the record", async () => {
+      const capitalValue = ethers.parseUnits("1000000", 6);
+      const incomeValue = ethers.parseUnits("50000", 6);
+      const metadataURI = "ipfs://QmCreateAsset1";
+
+      const assetId = await testVault.createAsset.staticCall(0, capitalValue, incomeValue, metadataURI);
+      await expect(testVault.createAsset(0, capitalValue, incomeValue, metadataURI))
+        .to.emit(testVault, "AssetVaulted")
+        .withArgs(assetId, 0, capitalValue, incomeValue, anyValue);
+
+      const asset = await testVault.getAsset(assetId);
+      expect(asset.status).to.equal(0);
+      expect(asset.capitalValue).to.equal(capitalValue);
+      expect(asset.incomeValue).to.equal(incomeValue);
+      expect(asset.metadataURI).to.equal(metadataURI);
+      expect(asset.createdAt).to.be.gt(0);
+      expect(asset.updatedAt).to.equal(0);
+    });
+
+    it("reverts createAsset when metadataURI is already used", async () => {
+      const metadataURI = "ipfs://QmDuplicate";
+      await testVault.createAsset(0, 1, 1, metadataURI);
+      await expect(testVault.createAsset(0, 2, 2, metadataURI)).to.be.revertedWith(
+        "Asset already exists"
+      );
+    });
+
+    it("reverts createAsset when caller is not an asset manager", async () => {
+      await expect(
+        testVault.connect(user1).createAsset(0, 1, 1, "ipfs://QmNoRole")
+      ).to.be.revertedWithCustomError(testVault, "AccessControlUnauthorizedAccount");
+    });
+
+    it("getAllAssets returns records for the requested ids", async () => {
+      await testVault.createAsset(0, 10, 1, "ipfs://QmA");
+      await testVault.createAsset(1, 20, 2, "ipfs://QmB");
+
+      const assets = await testVault.getAllAssets([1, 2]);
+      expect(assets).to.have.lengthOf(2);
+      expect(assets[0].capitalValue).to.equal(10n);
+      expect(assets[1].capitalValue).to.equal(20n);
+      expect(assets[1].status).to.equal(1);
+    });
+
+    it("getAllAssets returns an empty list when no ids are given", async () => {
+      expect(await testVault.getAllAssets([])).to.deep.equal([]);
     });
 
     it("creates a property (asset) with core numeric fields and metadataURI set", async () => {

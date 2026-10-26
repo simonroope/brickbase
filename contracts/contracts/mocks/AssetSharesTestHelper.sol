@@ -9,9 +9,32 @@ import "../core/AssetShares.sol";
  * @dev Only for use in test environments - shareInfo is normally populated by asset creation flow.
  */
 contract AssetSharesTestHelper is AssetShares {
+    address private _hook;
+    bytes private _hookData;
+
     constructor(address _usdcAddress, address _assetVault, address _userAllowList, string memory uri)
         AssetShares(_usdcAddress, _assetVault, _userAllowList, uri)
     {}
+
+    function setReenterHook(address hook, bytes calldata data) external {
+        _hook = hook;
+        _hookData = data;
+    }
+
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values) internal override {
+        super._update(from, to, ids, values);
+        if (_hook != address(0)) {
+            address hook = _hook;
+            bytes memory data = _hookData;
+            _hook = address(0);
+            (bool ok, bytes memory ret) = hook.call(data);
+            if (!ok) {
+                assembly {
+                    revert(add(ret, 32), mload(ret))
+                }
+            }
+        }
+    }
 
     /**
      * @notice Set shareInfo for testing (ASSET_MANAGER_ROLE only).

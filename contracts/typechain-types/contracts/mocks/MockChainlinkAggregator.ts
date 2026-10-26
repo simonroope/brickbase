@@ -27,6 +27,7 @@ export interface MockChainlinkAggregatorInterface extends Interface {
       | "description"
       | "getRoundData"
       | "latestRoundData"
+      | "setRoundData"
       | "updateAnswer"
       | "version"
   ): FunctionFragment;
@@ -45,6 +46,16 @@ export interface MockChainlinkAggregatorInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "setRoundData",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "updateAnswer",
     values: [BigNumberish]
   ): string;
@@ -61,6 +72,10 @@ export interface MockChainlinkAggregatorInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "latestRoundData",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setRoundData",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -129,6 +144,18 @@ export interface MockChainlinkAggregator extends BaseContract {
     "view"
   >;
 
+  setRoundData: TypedContractMethod<
+    [
+      roundId: BigNumberish,
+      answer: BigNumberish,
+      startedAt: BigNumberish,
+      updatedAt: BigNumberish,
+      answeredInRound: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   updateAnswer: TypedContractMethod<
     [newAnswer: BigNumberish],
     [void],
@@ -160,6 +187,19 @@ export interface MockChainlinkAggregator extends BaseContract {
     [],
     [[bigint, bigint, bigint, bigint, bigint]],
     "view"
+  >;
+  getFunction(
+    nameOrSignature: "setRoundData"
+  ): TypedContractMethod<
+    [
+      roundId: BigNumberish,
+      answer: BigNumberish,
+      startedAt: BigNumberish,
+      updatedAt: BigNumberish,
+      answeredInRound: BigNumberish
+    ],
+    [void],
+    "nonpayable"
   >;
   getFunction(
     nameOrSignature: "updateAnswer"

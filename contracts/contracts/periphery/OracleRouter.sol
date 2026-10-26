@@ -7,7 +7,7 @@ import "../interfaces/IOracleRouter.sol";
 /**
  * @title OracleRouter
  * @notice Routes price feed queries to Chainlink aggregators for ETH/USD, USD/GBP, USD/Gold, and FTSE 100
- * @dev Placeholder implementation - can be extended with additional price conversion logic
+ * @dev Reverts on an invalid, incomplete, or stale Chainlink round rather than returning a bad price
  */
 contract OracleRouter is IOracleRouter {
     AggregatorV3Interface public immutable ethUsdFeed;
@@ -38,8 +38,7 @@ contract OracleRouter is IOracleRouter {
      * @return updatedAt Timestamp of the last update
      */
     function getEthUsdPrice() external view returns (int256 price, uint256 updatedAt) {
-        (, int256 answer, , uint256 timestamp, ) = ethUsdFeed.latestRoundData();
-        return (answer, timestamp);
+        return _latestAnswer(ethUsdFeed);
     }
 
     /**
@@ -48,8 +47,7 @@ contract OracleRouter is IOracleRouter {
      * @return updatedAt Timestamp of the last update
      */
     function getGbpUsdPrice() external view returns (int256 price, uint256 updatedAt) {
-        (, int256 answer, , uint256 timestamp, ) = gbpUsdFeed.latestRoundData();
-        return (answer, timestamp);
+        return _latestAnswer(gbpUsdFeed);
     }
 
     /**
@@ -58,8 +56,7 @@ contract OracleRouter is IOracleRouter {
      * @return updatedAt Timestamp of the last update
      */
     function getGoldUsdPrice() external view returns (int256 price, uint256 updatedAt) {
-        (, int256 answer, , uint256 timestamp, ) = goldUsdFeed.latestRoundData();
-        return (answer, timestamp);
+        return _latestAnswer(goldUsdFeed);
     }
 
     /**
@@ -68,7 +65,21 @@ contract OracleRouter is IOracleRouter {
      * @return updatedAt Timestamp of the last update
      */
     function getFtse100Value() external view returns (int256 value, uint256 updatedAt) {
-        (, int256 answer, , uint256 timestamp, ) = ftse100Feed.latestRoundData();
-        return (answer, timestamp);
+        return _latestAnswer(ftse100Feed);
+    }
+
+    function _latestAnswer(AggregatorV3Interface feed) private view returns (int256 price, uint256 updatedAt) {
+        (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 timestamp,
+            uint80 answeredInRound
+        ) = feed.latestRoundData();
+        if (answer <= 0) revert InvalidAnswer();
+        if (startedAt == 0 || timestamp == 0) revert IncompleteRound();
+        if (answeredInRound < roundId) revert StaleRound();
+        price = answer;
+        updatedAt = timestamp;
     }
 }

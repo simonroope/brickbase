@@ -32,6 +32,13 @@
       },
       "configurations": {}
     },
+    "compile:forge": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "forge build",
+        "cwd": "contracts"
+      }
+    },
     "test": {
       "executor": "nx:run-commands",
       "options": {
@@ -39,10 +46,31 @@
         "cwd": "contracts"
       }
     },
+    "test:forge": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "forge test -vvv",
+        "cwd": "contracts"
+      }
+    },
     "test:unit": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npx hardhat test tests/unit/*.t.ts --network hardhat",
+        "cwd": "contracts"
+      }
+    },
+    "test:coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx hardhat coverage --testfiles 'tests/unit/*.t.ts' && npx tsx scripts/check-core-coverage.ts",
+        "cwd": "contracts"
+      }
+    },
+    "test:coverage:forge": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "forge coverage",
         "cwd": "contracts"
       }
     },
@@ -57,6 +85,20 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "npx hardhat test tests/gas/*.t.ts --network hardhat",
+        "cwd": "contracts"
+      }
+    },
+    "test:gas:forge": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "forge test --gas-report",
+        "cwd": "contracts"
+      }
+    },
+    "test:snapshot:forge": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "forge snapshot",
         "cwd": "contracts"
       }
     },
@@ -78,41 +120,6 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "npx hardhat test tests/upgrade/*.t.ts --network hardhat",
-        "cwd": "contracts"
-      }
-    },
-    "forge:build": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "forge build",
-        "cwd": "contracts"
-      }
-    },
-    "forge:test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "forge test -vvv",
-        "cwd": "contracts"
-      }
-    },
-    "forge:test:gas": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "forge test --gas-report",
-        "cwd": "contracts"
-      }
-    },
-    "forge:coverage": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "forge coverage",
-        "cwd": "contracts"
-      }
-    },
-    "forge:snapshot": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "forge snapshot",
         "cwd": "contracts"
       }
     },

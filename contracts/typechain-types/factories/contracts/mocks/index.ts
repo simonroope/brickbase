@@ -5,3 +5,4 @@ export { AssetSharesTestHelper__factory } from "./AssetSharesTestHelper__factory
 export { AssetVaultTestHelper__factory } from "./AssetVaultTestHelper__factory";
 export { MockChainlinkAggregator__factory } from "./MockChainlinkAggregator__factory";
 export { MockERC20__factory } from "./MockERC20__factory";
+export { ReenterShareReceiver__factory } from "./ReenterShareReceiver__factory";

@@ -110,6 +110,7 @@ Hide what callers don't need to know. In TypeScript, unexported functions and ty
 - `AssetUserAllowList` is the single allowlist gate — do not duplicate allowlist logic in other contracts.
 - Never store user funds in a contract unless it is the designated settlement contract; use `transferFrom` pull patterns.
 - Test files: Hardhat + Chai, one `describe` per contract, one `it` per behaviour. Deploy the full contract graph in `beforeEach`; never reuse state across tests.
+- Core contracts (`AssetVault`, `AssetShares`, `AssetUserAllowList`) must stay at 100% statement, branch, and function coverage. Gate with `npx nx run contracts:test:coverage`.
 
 ---
 

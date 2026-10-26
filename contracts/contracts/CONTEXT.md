@@ -17,7 +17,7 @@ The single shared contract holding the set of allowed addresses. It exposes read
 _Avoid_: whitelist, KYC list, approved list
 
 **OracleRouter**:
-The contract that routes price queries to Chainlink aggregators for ETH/USD, GBP/USD, Gold/USD, and the FTSE 100.
+The contract that routes price queries to Chainlink aggregators for ETH/USD, GBP/USD, Gold/USD, and the FTSE 100. Getters revert on an invalid, incomplete, or stale round.
 _Avoid_: price oracle, feed contract
 
 ## Asset model

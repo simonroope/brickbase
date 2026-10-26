@@ -63,6 +63,7 @@ export interface AssetSharesTestHelperInterface extends Interface {
       | "setFrozenTokens"
       | "setPauser"
       | "setPurchasePriceForTest"
+      | "setReenterHook"
       | "setShareInfoForTest"
       | "setTradingEnabled"
       | "setUserAllowed"
@@ -245,6 +246,10 @@ export interface AssetSharesTestHelperInterface extends Interface {
     values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "setReenterHook",
+    values: [AddressLike, BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setShareInfoForTest",
     values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish, boolean]
   ): string;
@@ -395,6 +400,10 @@ export interface AssetSharesTestHelperInterface extends Interface {
   decodeFunctionResult(functionFragment: "setPauser", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setPurchasePriceForTest",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setReenterHook",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1046,6 +1055,12 @@ export interface AssetSharesTestHelper extends BaseContract {
     "nonpayable"
   >;
 
+  setReenterHook: TypedContractMethod<
+    [hook: AddressLike, data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
   setShareInfoForTest: TypedContractMethod<
     [
       assetId: BigNumberish,
@@ -1378,6 +1393,13 @@ export interface AssetSharesTestHelper extends BaseContract {
     nameOrSignature: "setPurchasePriceForTest"
   ): TypedContractMethod<
     [user: AddressLike, assetId: BigNumberish, price: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setReenterHook"
+  ): TypedContractMethod<
+    [hook: AddressLike, data: BytesLike],
     [void],
     "nonpayable"
   >;

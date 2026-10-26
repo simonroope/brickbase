@@ -154,6 +154,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockERC20__factory>;
     getContractFactory(
+      name: "ReenterShareReceiver",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ReenterShareReceiver__factory>;
+    getContractFactory(
       name: "OracleRouter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OracleRouter__factory>;
@@ -334,6 +338,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.MockERC20>;
     getContractAt(
+      name: "ReenterShareReceiver",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ReenterShareReceiver>;
+    getContractAt(
       name: "OracleRouter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -480,6 +489,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockERC20>;
     deployContract(
+      name: "ReenterShareReceiver",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ReenterShareReceiver>;
+    deployContract(
       name: "OracleRouter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.OracleRouter>;
@@ -659,6 +672,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockERC20>;
+    deployContract(
+      name: "ReenterShareReceiver",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ReenterShareReceiver>;
     deployContract(
       name: "OracleRouter",
       args: any[],

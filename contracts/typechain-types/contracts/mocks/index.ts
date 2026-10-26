@@ -5,3 +5,4 @@ export type { AssetSharesTestHelper } from "./AssetSharesTestHelper";
 export type { AssetVaultTestHelper } from "./AssetVaultTestHelper";
 export type { MockChainlinkAggregator } from "./MockChainlinkAggregator";
 export type { MockERC20 } from "./MockERC20";
+export type { ReenterShareReceiver } from "./ReenterShareReceiver";

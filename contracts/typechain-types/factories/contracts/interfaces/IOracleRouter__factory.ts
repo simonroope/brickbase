@@ -11,6 +11,21 @@ import type {
 const _abi = [
   {
     inputs: [],
+    name: "IncompleteRound",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidAnswer",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "StaleRound",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "getEthUsdPrice",
     outputs: [
       {

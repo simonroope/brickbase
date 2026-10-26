@@ -48,7 +48,7 @@ Contracts also use OpenZeppelin **AccessControl**, **ReentrancyGuard**, and **Pa
 - Node.js ≥ 18
 - [Rust](https://rustup.rs/) (`rustup`) — required for `apps/api` and `apps/events/ingest`. Each crate’s `rust-toolchain.toml` pins stable plus rustfmt and clippy (`rustup component add clippy` if a host toolchain is missing the component)
 - Docker (optional; required for local Redis when running events live feeds, and for local Postgres when running the HTTP API)
-- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:audit`, `contracts:test:invariant`, and Claude Code hooks (`.claude/hooks/*.sh` are Python 3)
+- Python 3.10+ and [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`) — required for `contracts:*:forge` scripts, `contracts:test:invariant`, `contracts:audit`, and Claude Code hooks (`.claude/hooks/*.sh` are Python 3)
 
 ### Install dependencies
 
@@ -113,15 +113,23 @@ npm run contracts:node
 # Same: npx nx run contracts:node
 # Or: cd contracts && npx hardhat node
 
-# Compile contracts
-npx nx run contracts:compile
+# Compile contracts (Hardhat; copies ABIs into contracts/abi)
+npm run contracts:compile
+# Optional Foundry compile-only check — tests compile themselves
+npm run contracts:compile:forge
 
 # Run contracts tests (in-process Hardhat; no `hardhat node` required)
-# npx hardhat test --network hardhat
-npx nx run contracts:test
+npm run contracts:test
+# Foundry Solidity tests — see [Foundry](#foundry)
+npm run contracts:test:forge
+
+# Core contract coverage gate (AssetVault, AssetShares, AssetUserAllowList at 100%)
+npm run contracts:test:coverage
+# Foundry coverage report (not the 100% gate)
+npm run contracts:test:coverage:forge
 
 # Foundry invariant tests — see [Invariant tests](#invariant-tests)
-npx nx run contracts:test:invariant
+npm run contracts:test:invariant
 
 # Slither static analysis — see [Audit](#audit)
 npx nx run contracts:audit
@@ -142,9 +150,30 @@ npx nx run contracts:seed-assets:sepolia
 npx nx reset
 ```
 
+### Foundry
+
+Scripts that end in `:forge` use Foundry; the rest of `contracts:test*` is Hardhat (`*.t.ts`). `forge test`, `forge coverage`, and `forge snapshot` compile first if sources changed — `contracts:compile:forge` is not a prerequisite.
+
+```bash
+npm run contracts:compile:forge          # forge build
+npm run contracts:test:forge             # forge test -vvv
+npm run contracts:test:gas:forge         # forge test --gas-report
+npm run contracts:test:coverage:forge    # forge coverage
+npm run contracts:test:snapshot:forge    # forge snapshot
+```
+
+| Script | What it does |
+| ------ | ------------ |
+| `contracts:test:forge` | Runs Foundry tests (today: `tests/invariant/*.t.sol`) |
+| `contracts:test:gas:forge` | Same tests, plus a per-contract gas table. Hardhat gas files are `npm run contracts:test:gas` (`tests/gas/*.t.ts`) |
+| `contracts:test:coverage:forge` | Foundry coverage report. The 100% core gate is Hardhat: `npm run contracts:test:coverage` |
+| `contracts:test:snapshot:forge` | Runs the Foundry tests and writes/compares `.gas-snapshot` (gas regression baseline). There is no snapshot file in the repo yet |
+
+Same Nx targets: `npx nx run contracts:test:forge`, and so on.
+
 ### Invariant tests
 
-Stateful fuzz tests with [Foundry](https://book.getfoundry.sh/forge/invariant-testing). Hardhat runs the TypeScript suite (`contracts:test`); Foundry runs only `contracts/tests/invariant/*.t.sol` — there is no separate fuzz folder. Config is `[invariant]` in `contracts/foundry.toml` (256 runs, depth 128).
+Stateful fuzz tests with [Foundry](https://book.getfoundry.sh/forge/invariant-testing). Hardhat runs the TypeScript suite (`contracts:test`); Foundry invariants live in `contracts/tests/invariant/*.t.sol` — there is no separate fuzz folder. Config is `[invariant]` in `contracts/foundry.toml` (256 runs, depth 128). `npm run contracts:test:forge` runs that suite too (all Foundry tests).
 
 ```bash
 npx nx run contracts:test:invariant
@@ -181,7 +210,7 @@ Writes:
 | `contracts/audit/slither.md` | Human-readable checklist (committed) |
 | `contracts/audit/slither-report.json` | Machine-readable findings (gitignored) |
 
-The command fails if Slither reports a **high** finding (`--fail-high`). Latest checklist: no highs; four medium unused-return results in `OracleRouter` getters that ignore unused `latestRoundData()` tuple fields.
+The command fails if Slither reports a **high** finding (`--fail-high`). Latest checklist: no highs.
 
 ### Deploy
 

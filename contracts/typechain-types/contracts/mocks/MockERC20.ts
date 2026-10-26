@@ -32,6 +32,7 @@ export interface MockERC20Interface extends Interface {
       | "decimals"
       | "mint"
       | "name"
+      | "setFailTransferFrom"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -58,6 +59,10 @@ export interface MockERC20Interface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "setFailTransferFrom",
+    values: [boolean]
+  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -78,6 +83,10 @@ export interface MockERC20Interface extends Interface {
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setFailTransferFrom",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -193,6 +202,12 @@ export interface MockERC20 extends BaseContract {
 
   name: TypedContractMethod<[], [string], "view">;
 
+  setFailTransferFrom: TypedContractMethod<
+    [fail: boolean],
+    [void],
+    "nonpayable"
+  >;
+
   symbol: TypedContractMethod<[], [string], "view">;
 
   totalSupply: TypedContractMethod<[], [bigint], "view">;
@@ -204,7 +219,7 @@ export interface MockERC20 extends BaseContract {
   >;
 
   transferFrom: TypedContractMethod<
-    [from: AddressLike, to: AddressLike, value: BigNumberish],
+    [from: AddressLike, to: AddressLike, amount: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -244,6 +259,9 @@ export interface MockERC20 extends BaseContract {
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "setFailTransferFrom"
+  ): TypedContractMethod<[fail: boolean], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -259,7 +277,7 @@ export interface MockERC20 extends BaseContract {
   getFunction(
     nameOrSignature: "transferFrom"
   ): TypedContractMethod<
-    [from: AddressLike, to: AddressLike, value: BigNumberish],
+    [from: AddressLike, to: AddressLike, amount: BigNumberish],
     [boolean],
     "nonpayable"
   >;

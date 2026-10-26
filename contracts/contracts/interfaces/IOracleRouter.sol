@@ -4,8 +4,13 @@ pragma solidity ^0.8.20;
 /**
  * @title IOracleRouter
  * @notice Interface for routing price feed queries to Chainlink aggregators
+ * @dev Getters revert on InvalidAnswer, IncompleteRound, or StaleRound
  */
 interface IOracleRouter {
+    error InvalidAnswer();
+    error IncompleteRound();
+    error StaleRound();
+
     /**
      * @notice Get the latest ETH/USD price
      * @return price The latest ETH/USD price (scaled by feed decimals)

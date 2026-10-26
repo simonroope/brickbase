@@ -148,6 +148,46 @@ describe("OracleRouter", () => {
       const [price] = await oracleRouter.getEthUsdPrice();
       expect(price).to.equal(newEthPrice);
     });
+
+    describe("round validation", () => {
+      const validPrice = ethers.parseUnits("2000", 8);
+      const validTs = 1n;
+
+      const feeds: {
+        name: string;
+        getter: "getEthUsdPrice" | "getGbpUsdPrice" | "getGoldUsdPrice" | "getFtse100Value";
+        mock: () => any;
+      }[] = [
+        { name: "ETH/USD", getter: "getEthUsdPrice", mock: () => mockEthUsd },
+        { name: "GBP/USD", getter: "getGbpUsdPrice", mock: () => mockGbpUsd },
+        { name: "Gold/USD", getter: "getGoldUsdPrice", mock: () => mockGoldUsd },
+        { name: "FTSE 100", getter: "getFtse100Value", mock: () => mockFtse100 },
+      ];
+
+      const cases: {
+        name: string;
+        round: [bigint, bigint, bigint, bigint, bigint];
+        error: "InvalidAnswer" | "IncompleteRound" | "StaleRound";
+      }[] = [
+        { name: "a zero answer", round: [1n, 0n, validTs, validTs, 1n], error: "InvalidAnswer" },
+        { name: "a negative answer", round: [1n, -1n, validTs, validTs, 1n], error: "InvalidAnswer" },
+        { name: "an unstarted round", round: [1n, validPrice, 0n, validTs, 1n], error: "IncompleteRound" },
+        { name: "an unupdated round", round: [1n, validPrice, validTs, 0n, 1n], error: "IncompleteRound" },
+        { name: "a stale round", round: [2n, validPrice, validTs, validTs, 1n], error: "StaleRound" },
+      ];
+
+      for (const feed of feeds) {
+        for (const c of cases) {
+          it(`reverts ${feed.name} on ${c.name}`, async () => {
+            await feed.mock().setRoundData(...c.round);
+            await expect(oracleRouter[feed.getter]()).to.be.revertedWithCustomError(
+              oracleRouter,
+              c.error
+            );
+          });
+        }
+      }
+    });
   });
 });
 

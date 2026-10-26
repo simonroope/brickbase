@@ -53,6 +53,26 @@ describe("AssetShares", () => {
 
   it("deploys with valid USDC and AssetVault addresses", async () => {
     expect(await shares.getAddress()).to.properAddress;
+    expect(await shares.USDC()).to.equal(await usdc.getAddress());
+    expect(await shares.assetVault()).to.equal(await vault.getAddress());
+    expect(await shares.userAllowList()).to.equal(await allowList.getAddress());
+  });
+
+  it("reverts when USDC, vault, or allowlist is zero", async () => {
+    const AssetShares = await ethers.getContractFactory("AssetShares");
+    const usdcAddr = await usdc.getAddress();
+    const vaultAddr = await vault.getAddress();
+    const allowListAddr = await allowList.getAddress();
+
+    await expect(AssetShares.deploy(ethers.ZeroAddress, vaultAddr, allowListAddr, "")).to.be.revertedWith(
+      "Invalid USDC address"
+    );
+    await expect(AssetShares.deploy(usdcAddr, ethers.ZeroAddress, allowListAddr, "")).to.be.revertedWith(
+      "Invalid property contract"
+    );
+    await expect(AssetShares.deploy(usdcAddr, vaultAddr, ethers.ZeroAddress, "")).to.be.revertedWith(
+      "Invalid allowlist address"
+    );
   });
 
   describe("Access Control", () => {
@@ -102,6 +122,15 @@ describe("AssetShares", () => {
       await expect(
         shares.connect(user1).setPauser(user2.address)
       ).to.be.revertedWithCustomError(shares, "AccessControlUnauthorizedAccount");
+    });
+
+    it("reverts when the pauser address is zero", async () => {
+      await expect(shares.setPauser(ethers.ZeroAddress)).to.be.revertedWith("Invalid pauser address");
+    });
+
+    it("reverts when the pauser is already set", async () => {
+      await shares.setPauser(user1.address);
+      await expect(shares.setPauser(user2.address)).to.be.revertedWith("Pauser already set");
     });
 
     it("allows pauser to pause and unpause contract", async () => {
@@ -213,6 +242,24 @@ describe("AssetShares", () => {
       const ERC165_INTERFACE_ID = "0x01ffc9a7";
       expect(await shares.supportsInterface(ERC165_INTERFACE_ID)).to.be.true;
     });
+
+    it("returns false for an unsupported interface", async () => {
+      expect(await shares.supportsInterface("0xffffffff")).to.be.false;
+    });
+  });
+
+  describe("ERC1155 receiver", () => {
+    it("accepts a single ERC1155 receipt", async () => {
+      expect(
+        await shares.onERC1155Received(ethers.ZeroAddress, ethers.ZeroAddress, 0, 0, "0x")
+      ).to.equal("0xf23a6e61");
+    });
+
+    it("accepts a batch ERC1155 receipt", async () => {
+      expect(
+        await shares.onERC1155BatchReceived(ethers.ZeroAddress, ethers.ZeroAddress, [], [], "0x")
+      ).to.equal("0xbc197c81");
+    });
   });
 
   describe("Role Constants", () => {
@@ -298,6 +345,7 @@ describe("AssetShares", () => {
     });
 
     it("canTransact returns false for user not on allowlist", async () => {
+      await shares.setUserAllowed(user2.address, false);
       expect(await shares.canTransact(user2.address, assetId, 1n)).to.be.false;
     });
 
@@ -341,8 +389,7 @@ describe("AssetShares", () => {
     });
 
     it("canTransfer returns false when from or to user not allowed", async () => {
-      await shares.setUserAllowed(user1.address, true);
-      // user2 remains not allowed
+      await shares.setUserAllowed(user2.address, false);
 
       expect(
         await shares.canTransfer(user1.address, user2.address, assetId, 1n)
@@ -432,6 +479,22 @@ describe("AssetShares", () => {
       expect(await testShares.balanceOf(user1.address, assetId)).to.equal(0n);
       expect(await testShares.balanceOf(user2.address, assetId)).to.equal(amount);
     });
+
+    it("reverts when forcedTransfer is reentered via the receiver", async () => {
+      const amount = ethers.parseUnits("10", 18);
+      const Reenter = await ethers.getContractFactory("ReenterShareReceiver");
+      const attacker = await Reenter.deploy(await testShares.getAddress());
+      await attacker.waitForDeployment();
+      const COMPLIANCE_OFFICER_ROLE = await testShares.COMPLIANCE_OFFICER_ROLE();
+      await testShares.grantRole(COMPLIANCE_OFFICER_ROLE, await attacker.getAddress());
+      await testShares.mintSharesForTest(user1.address, assetId, amount);
+      await attacker.arm(assetId, user1.address, amount, 0);
+      await attacker.enableForceOnReceive();
+
+      await expect(
+        testShares.forcedTransfer(user1.address, await attacker.getAddress(), assetId, amount)
+      ).to.be.revertedWithCustomError(testShares, "ReentrancyGuardReentrantCall");
+    });
   });
 
   describe("Trading Status Management", () => {
@@ -457,6 +520,10 @@ describe("AssetShares", () => {
       await expect(
         shares.connect(user1).setTradingEnabled(assetId, true)
       ).to.be.revertedWithCustomError(shares, "AccessControlUnauthorizedAccount");
+    });
+
+    it("reverts when enabling trading for a missing asset", async () => {
+      await expect(shares.setTradingEnabled(99, true)).to.be.revertedWith("Asset does not exist");
     });
   });
 
@@ -754,6 +821,48 @@ describe("AssetShares", () => {
       ).to.be.revertedWithCustomError(shares, "EnforcedPause");
     });
 
+    it("reverts when the purchase amount is zero", async () => {
+      await expect(
+        shares.connect(user1).purchaseAssetShares(assetId, 0)
+      ).to.be.revertedWith("Amount must be greater than zero");
+    });
+
+    it("reverts when the USDC transfer returns false", async () => {
+      const purchaseAmount = ethers.parseUnits("100", 18);
+      const expectedCost = (purchaseAmount * sharePrice) / ethers.parseUnits("1", 18);
+      await usdc.connect(user1).approve(await shares.getAddress(), expectedCost);
+      await usdc.setFailTransferFrom(true);
+
+      await expect(
+        shares.connect(user1).purchaseAssetShares(assetId, purchaseAmount)
+      ).to.be.revertedWith("USDC transfer failed");
+    });
+
+    it("reverts when purchaseAssetShares is reentered", async () => {
+      const id = 7;
+      const purchaseAmount = ethers.parseUnits("1", 18);
+      const expectedCost = (purchaseAmount * sharePrice) / ethers.parseUnits("1", 18);
+      const MINTER_ROLE = await testShares.MINTER_ROLE();
+      await testShares.grantRole(MINTER_ROLE, deployer.address);
+      await testShares.createAssetShares(id, ethers.parseUnits("100", 18), sharePrice);
+      await testShares.setUserAllowed(user1.address, true);
+
+      const Reenter = await ethers.getContractFactory("ReenterShareReceiver");
+      const attacker = await Reenter.deploy(await testShares.getAddress());
+      await testShares.setUserAllowed(await attacker.getAddress(), true);
+      await usdc.transfer(await attacker.getAddress(), expectedCost);
+      await attacker.approveUsdc(await usdc.getAddress(), expectedCost);
+      await testShares.setReenterHook(
+        await attacker.getAddress(),
+        attacker.interface.encodeFunctionData("purchase", [id, purchaseAmount])
+      );
+      await usdc.connect(user1).approve(await testShares.getAddress(), expectedCost);
+
+      await expect(
+        testShares.connect(user1).purchaseAssetShares(id, purchaseAmount)
+      ).to.be.revertedWithCustomError(testShares, "ReentrancyGuardReentrantCall");
+    });
+
   });
 
   describe("Share Trading", () => {
@@ -838,6 +947,87 @@ describe("AssetShares", () => {
       await expect(
         testShares.connect(user2).tradeShares(assetId, user1.address, tradeAmount, tradePrice)
       ).to.be.revertedWith("Insufficient unfrozen balance");
+    });
+
+    it("reverts when the buyer is not allowlisted", async () => {
+      await testShares.setUserAllowed(user2.address, false);
+      await expect(
+        testShares.connect(user2).tradeShares(assetId, user1.address, ethers.parseUnits("1", 18), sharePrice)
+      ).to.be.revertedWith("Buyer not allowed");
+    });
+
+    it("reverts when the seller is not allowlisted", async () => {
+      await testShares.setUserAllowed(user1.address, false);
+      await expect(
+        testShares.connect(user2).tradeShares(assetId, user1.address, ethers.parseUnits("1", 18), sharePrice)
+      ).to.be.revertedWith("Seller not allowed");
+    });
+
+    it("reverts when the traded asset does not exist", async () => {
+      await expect(
+        testShares.connect(user2).tradeShares(99, user1.address, ethers.parseUnits("1", 18), sharePrice)
+      ).to.be.revertedWith("Asset does not exist");
+    });
+
+    it("reverts when the trade amount is zero", async () => {
+      await expect(
+        testShares.connect(user2).tradeShares(assetId, user1.address, 0, sharePrice)
+      ).to.be.revertedWith("Amount must be greater than zero");
+    });
+
+    it("reverts when tradeShares is reentered via the buyer receiver", async () => {
+      const Reenter = await ethers.getContractFactory("ReenterShareReceiver");
+      const attacker = await Reenter.deploy(await testShares.getAddress());
+      await attacker.waitForDeployment();
+      await testShares.setUserAllowed(await attacker.getAddress(), true);
+
+      const tradeAmount = ethers.parseUnits("1", 18);
+      const tradePrice = ethers.parseUnits("1200", 6);
+      const cost = (tradeAmount * tradePrice) / ethers.parseUnits("1", 18);
+      await attacker.arm(assetId, user1.address, tradeAmount, tradePrice);
+      await usdc.transfer(await attacker.getAddress(), cost * 2n);
+      await attacker.approveUsdc(await usdc.getAddress(), cost * 2n);
+      await testShares.connect(user1).setApprovalForAll(await testShares.getAddress(), true);
+
+      await expect(attacker.buy()).to.be.revertedWithCustomError(
+        testShares,
+        "ReentrancyGuardReentrantCall"
+      );
+    });
+
+    it("reverts when trading while paused", async () => {
+      await testShares.setPauser(deployer.address);
+      await testShares.pause();
+      await expect(
+        testShares.connect(user2).tradeShares(assetId, user1.address, ethers.parseUnits("1", 18), sharePrice)
+      ).to.be.revertedWithCustomError(testShares, "EnforcedPause");
+    });
+
+    it("reverts when the buyer trades with themselves", async () => {
+      await expect(
+        testShares.connect(user1).tradeShares(assetId, user1.address, ethers.parseUnits("1", 18), sharePrice)
+      ).to.be.revertedWith("Cannot trade with yourself");
+    });
+
+    it("reverts when the USDC transfer returns false", async () => {
+      const tradeAmount = ethers.parseUnits("100", 18);
+      const tradePrice = ethers.parseUnits("1200", 6);
+      const expectedCost = (tradeAmount * tradePrice) / ethers.parseUnits("1", 18);
+      await usdc.connect(user2).approve(await testShares.getAddress(), expectedCost);
+      await testShares.connect(user1).setApprovalForAll(await testShares.getAddress(), true);
+      await usdc.setFailTransferFrom(true);
+
+      await expect(
+        testShares.connect(user2).tradeShares(assetId, user1.address, tradeAmount, tradePrice)
+      ).to.be.revertedWith("USDC transfer failed");
+    });
+
+    it("reverts a forced transfer when the contract is paused", async () => {
+      await testShares.setPauser(deployer.address);
+      await testShares.pause();
+      await expect(
+        testShares.forcedTransfer(user1.address, user2.address, assetId, ethers.parseUnits("1", 18))
+      ).to.be.revertedWithCustomError(testShares, "EnforcedPause");
     });
 
     it("mints shares for property, user1 purchases 60%, user2 then purchases 30% from user1", async () => {
@@ -990,6 +1180,17 @@ describe("AssetShares", () => {
       expect(frozen).to.equal(0n);
       expect(unfrozen).to.equal(shareAmount);
       expect(recordedPurchasePrice).to.equal(purchasePrice);
+    });
+
+    it("getUserShares returns zero unfrozen when frozen exceeds balance", async () => {
+      const assetId = 1;
+      await (testShares as any).mintSharesForTest(user1.address, assetId, ethers.parseUnits("10", 18));
+      await testShares.setFrozenTokens(user1.address, assetId, ethers.parseUnits("20", 18));
+
+      const [, , , , balance, frozen, unfrozen] = await testShares.getUserShares(user1.address, assetId);
+      expect(balance).to.equal(ethers.parseUnits("10", 18));
+      expect(frozen).to.equal(ethers.parseUnits("20", 18));
+      expect(unfrozen).to.equal(0n);
     });
 
     it("getUserShares correctly calculates unfrozen balance when some shares are frozen", async () => {

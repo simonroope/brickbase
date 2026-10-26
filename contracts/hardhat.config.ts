@@ -1,5 +1,5 @@
-import { HardhatUserConfig, subtask } from "hardhat/config";
-import { TASK_TEST_GET_TEST_FILES } from "hardhat/builtin-tasks/task-names";
+import { HardhatUserConfig, subtask, task } from "hardhat/config";
+import { TASK_COMPILE, TASK_TEST_GET_TEST_FILES } from "hardhat/builtin-tasks/task-names";
 import "@nomicfoundation/hardhat-toolbox";
 import * as dotenv from "dotenv";
 import path from "path";
@@ -13,6 +13,15 @@ subtask(TASK_TEST_GET_TEST_FILES).setAction(async (args, _hre, runSuper) => {
   return files.filter(
     (file) => !file.endsWith(".d.ts") && !file.includes(`${path.sep}seed${path.sep}`)
   );
+});
+
+const coverageRun = process.argv.includes("coverage");
+
+task(TASK_COMPILE).setAction(async (args, _hre, runSuper) => {
+  if (coverageRun) {
+    args.noTypechain = true;
+  }
+  return runSuper(args);
 });
 
 function isLoopbackRpc(url: string | undefined): boolean {
@@ -35,12 +44,15 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200
       },
-      "viaIR": true
+      // Instrumented coverage compiles fail under viaIR.
+      viaIR: !coverageRun,
     }
   },
   defaultNetwork: "localhost",
   networks: {
-    hardhat: {},
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
     localhost: {
       url: "http://127.0.0.1:8545",
     },
@@ -69,7 +81,11 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 200000
-  }
+  },
+  typechain: {
+    outDir: "typechain-types",
+    dontOverrideCompile: coverageRun,
+  },
 };
 
 export default config;
