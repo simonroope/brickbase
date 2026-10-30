@@ -1,61 +1,41 @@
-name: Publish images to ECR
+name: Validate release
 
+# On push to main: local Hardhat/Foundry/Slither tests in parallel with
+# Docker builds, then publish to ECR (web, mcp, ingest, gateway, api) tagged with
+# the git SHA (immutable). Contract addresses are not applied here;
+# deploy-to-production.yml publishes the deployment manifest.
 on:
   push:
     branches: [main]
     paths:
+      - "contracts/**"
       - "apps/**"
-      - "contracts/abi/**"
       - "infra/docker/**"
       - "package.json"
       - "package-lock.json"
       - "nx.json"
+      - ".github/workflows/validate-release.yml"
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      asset_vault_address:
-        description: "AssetVault address to bake into images (after a contract deploy)"
-        type: string
-        required: false
-        default: ""
-      asset_shares_address:
-        description: "AssetShares address to bake into images (after a contract deploy)"
-        type: string
-        required: false
-        default: ""
-      oracle_router_address:
-        description: "OracleRouter address to bake into images (after a contract deploy)"
-        type: string
-        required: false
-        default: ""
-      user_allowlist_address:
-        description: "AssetUserAllowList address to bake into images (after a contract deploy)"
-        type: string
-        required: false
-        default: ""
-      usdc_address:
-        description: "USDC address to bake into images (after a contract deploy)"
-        type: string
-        required: false
-        default: ""
 
 permissions:
   contents: read
   id-token: write
 
 concurrency:
-  group: ecr-publish-${{ github.ref }}
-  cancel-in-progress: true
+  group: validate-release-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   AWS_REGION: eu-west-2
   IMAGE_TAG: ${{ github.sha }}
+  GITHUB_ENVIRONMENT: production
 
 jobs:
-  gate:
+  decide:
     runs-on: ubuntu-latest
+    environment: production
     outputs:
-      proceed: ${{ steps.decide.outputs.proceed }}
+      contracts_changed: ${{ steps.decide.outputs.contracts_changed }}
     steps:
       - uses: actions/checkout@v6
         if: github.event_name == 'push'
@@ -63,8 +43,9 @@ jobs:
           fetch-depth: 0
       - id: decide
         run: |
-          if [ "${{ github.event_name }}" != "push" ]; then
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "contracts_changed=false"
+            echo "contracts_changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           BEFORE="${{ github.event.before }}"
@@ -72,18 +53,36 @@ jobs:
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
             BEFORE="${SHA}^"
           fi
-          # Deploy-contracts owns source/deploy changes and calls this workflow after vars are written.
           if git diff --name-only "$BEFORE" "$SHA" | grep -qE '^contracts/(contracts/|scripts/deploy/|hardhat\.config\.ts|foundry\.toml)'; then
-            echo "Contract sources changed; skipping until deploy-contracts publishes with new addresses"
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "contracts_changed=true"
+            echo "contracts_changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
+            echo "contracts_changed=false"
+            echo "contracts_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-  lint:
-    needs: gate
-    if: needs.gate.outputs.proceed == 'true'
+  validate:
+    name: Validate release
+    needs: decide
     runs-on: ubuntu-latest
+    environment: production
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: brickbase
+          POSTGRES_PASSWORD: brickbase
+          POSTGRES_DB: brickbase
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brickbase -d brickbase"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      CONTRACTS_CHANGED: ${{ needs.decide.outputs.contracts_changed }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -91,6 +90,8 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - run: npm install --prefix apps/web --no-audit --no-fund
+      - run: npm ci --prefix apps/events
       - uses: dtolnay/rust-toolchain@stable
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
@@ -98,10 +99,42 @@ jobs:
           workspaces: |
             apps/api
             apps/events/ingest
-      - run: npm run lint
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/setup-python@v5
+        if: env.CONTRACTS_CHANGED == 'true'
+        with:
+          python-version: "3.12"
+      - name: Lint
+        run: npm run lint
+      - name: Hardhat tests on in-process chain
+        if: env.CONTRACTS_CHANGED == 'true'
+        run: npm run contracts:test
+      - name: Solidity unit tests on in-process chain
+        if: env.CONTRACTS_CHANGED == 'true'
+        run: npm run contracts:test:unit
+      - name: Hardhat integration tests on in-process chain
+        if: env.CONTRACTS_CHANGED == 'true'
+        run: npm run contracts:test:integration
+      - name: Foundry tests on in-process chain
+        if: env.CONTRACTS_CHANGED == 'true'
+        run: npm run contracts:test:forge
+      - name: Foundry invariant tests on in-process chain
+        if: env.CONTRACTS_CHANGED == 'true'
+        run: npm run contracts:test:invariant
+      - name: Security checks (Slither)
+        if: env.CONTRACTS_CHANGED == 'true'
+        run: npm run contracts:audit
+      - name: Application tests
+        run: |
+          EXCLUDES=contracts
+          if [ "$DATABASE_URL" = "unknown" ]; then
+            echo "Skipping api tests; DATABASE_URL is unknown"
+            EXCLUDES=contracts,api
+          fi
+          npx nx run-many -t test --exclude="$EXCLUDES"
 
   publish-web:
-    needs: lint
+    name: Build web image
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -118,18 +151,18 @@ jobs:
             --build-arg CHAIN_ID="${{ vars.CHAIN_ID }}" \
             --build-arg RPC_URL="${{ vars.RPC_URL }}" \
             --build-arg INFURA_PROJECT_ID="${{ secrets.INFURA_PROJECT_ID }}" \
-            --build-arg ASSET_VAULT_ADDRESS="${{ inputs.asset_vault_address || vars.ASSET_VAULT_ADDRESS }}" \
-            --build-arg ASSET_SHARES_ADDRESS="${{ inputs.asset_shares_address || vars.ASSET_SHARES_ADDRESS }}" \
-            --build-arg ORACLE_ROUTER_ADDRESS="${{ inputs.oracle_router_address || vars.ORACLE_ROUTER_ADDRESS }}" \
-            --build-arg USER_ALLOWLIST_ADDRESS="${{ inputs.user_allowlist_address || vars.USER_ALLOWLIST_ADDRESS }}" \
-            --build-arg USDC_ADDRESS="${{ inputs.usdc_address || vars.USDC_ADDRESS }}" \
+            --build-arg ASSET_VAULT_ADDRESS="${{ vars.ASSET_VAULT_ADDRESS }}" \
+            --build-arg ASSET_SHARES_ADDRESS="${{ vars.ASSET_SHARES_ADDRESS }}" \
+            --build-arg ORACLE_ROUTER_ADDRESS="${{ vars.ORACLE_ROUTER_ADDRESS }}" \
+            --build-arg USER_ALLOWLIST_ADDRESS="${{ vars.USER_ALLOWLIST_ADDRESS }}" \
+            --build-arg USDC_ADDRESS="${{ vars.USDC_ADDRESS }}" \
             --build-arg WALLETCONNECT_PROJECT_ID="${{ secrets.WALLETCONNECT_PROJECT_ID }}" \
             --build-arg WS_LIVE_URL="${{ vars.WS_LIVE_URL }}" \
             -t "$IMAGE" .
           docker push "$IMAGE"
 
   publish-mcp:
-    needs: lint
+    name: Build mcp image
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -145,7 +178,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-ingest:
-    needs: lint
+    name: Build ingest image
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -161,7 +194,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-gateway:
-    needs: lint
+    name: Build gateway image
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -177,7 +210,7 @@ jobs:
           docker push "$IMAGE"
 
   publish-api:
-    needs: lint
+    name: Build api image
     runs-on: ubuntu-latest
     environment: production
     steps:

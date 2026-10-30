@@ -42,7 +42,7 @@ Or apply `infra/production/bootstrap/` if you prefer Terraform for the bucket.
 
 ## Configure and apply (first time)
 
-GitHub Actions **does not** apply Terraform. `.github/workflows/deploy-to-environment.yml` only rolls ECS onto an existing image. Any change under `infra/production/*.tf` (VPC, ALB, target groups, ECS service shape, SSM, IAM) is applied from this directory.
+GitHub Actions **does not** apply Terraform. `.github/workflows/deploy-to-production.yml` rolls ECS onto an existing image and, when **Deploy contracts** is checked, deploys to this environment's `CHAIN_ID`. Any change under `infra/production/*.tf` (VPC, ALB, target groups, ECS service shape, SSM, IAM) is applied from this directory.
 
 ```bash
 cd infra/production
@@ -169,7 +169,7 @@ export IMAGE_TAG=<git-sha>
 make -C infra/production deploy wait-stable
 ```
 
-The same ECS roll is what **Deploy to environment** (`deploy-to-environment.yml`) runs. A GitHub **release** (`deploy-to-production.yml`) promotes the images from the latest successful **Publish images to ECR** run onto production ECS — it does not rebuild.
+**Validate release** (`validate-release.yml`) on `main` only tests and pushes SHA-tagged images — it does not deploy. **Deploy to production** (`deploy-to-production.yml`) is a separate workflow (Release or dispatch): optional on-chain deploy, contract configuration, promote images, ECS roll, `/health`.
 
 ## GitHub Environment `production`
 
@@ -211,9 +211,9 @@ Set these in the GitHub `production` environment before running the deploy workf
 | `ADMIN_ADDRESS` | Variable | Default admin / multisig address |
 | `ADMIN_ASSET_MANAGER_ADDRESS` | Variable | Asset manager wallet address |
 | `ADMIN_COMPLIANCE_ADDRESS` | Variable | Compliance officer wallet address |
-| `CONTRACTS_DEPLOYER_PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
+| `PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
 
-On push to `main` when contract sources change, **Deploy contracts** (`deploy-contracts.yml`) runs tests, deploys to this environment's `CHAIN_ID`, writes changed `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `USER_ALLOWLIST_ADDRESS`, and `USDC_ADDRESS` on the GitHub Environment, then calls **Publish images to ECR** with those addresses as build args. A GitHub Release still rolls ECS onto the new images.
+On push to `main`, **Validate release** (`validate-release.yml`) runs tests in parallel with image builds (git SHA tags) and stops there. **Deploy to production** (`deploy-to-production.yml`) is started separately (Release or dispatch): it deploys to this environment's `CHAIN_ID` when `deploy_contracts` is set, writes `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `USER_ALLOWLIST_ADDRESS`, and `USDC_ADDRESS`, uploads `deployment-manifest.json`, rolls ECS with that configuration, and verifies `/health`.
 
 ## Destroy
 

@@ -1,32 +1,164 @@
 name: Deploy to production
 
+# Separate from validate-release.yml — that workflow only tests and pushes SHA-tagged
+# images. This workflow is started by a GitHub Release or workflow_dispatch.
+# It deploys contracts (optional), promotes ECR tags, publishes the deployment
+# manifest, rolls ECS, and checks /health. Web is rebuilt when addresses change
+# because Next inlines them at build time.
 on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "ECR image tag (git SHA). Blank uses the latest successful Validate release (validate-release.yml)."
+        type: string
+        required: false
+        default: ""
+      deploy_contracts:
+        description: Deploy smart contracts to production CHAIN_ID
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
-  actions: read
+  actions: write
   id-token: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 env:
   AWS_REGION: eu-west-2
+  GITHUB_ENVIRONMENT: production
 
 jobs:
-  promote:
+  resolve:
     runs-on: ubuntu-latest
     environment: production
     outputs:
-      image_tag: ${{ steps.tags.outputs.IMAGE_TAG }}
+      image_tag: ${{ steps.out.outputs.image_tag }}
+      deploy_contracts: ${{ steps.out.outputs.deploy_contracts }}
+    steps:
+      - id: out
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ inputs.image_tag }}"
+          DEPLOY="${{ inputs.deploy_contracts }}"
+          if [ -z "$TAG" ]; then
+            if [ "${{ github.event_name }}" = "release" ]; then
+              TAG="${{ github.sha }}"
+            else
+              TAG=$(gh run list \
+                --repo "${{ github.repository }}" \
+                --workflow validate-release.yml \
+                --status success \
+                --limit 1 \
+                --json headSha \
+                --jq '.[0].headSha // empty')
+            fi
+          fi
+          if [ -z "$TAG" ]; then
+            echo "No image tag — run Validate release first" >&2
+            exit 1
+          fi
+          if [ "$DEPLOY" != "true" ]; then
+            DEPLOY=false
+          fi
+          echo "image_tag=$TAG"
+          echo "deploy_contracts=$DEPLOY"
+          echo "image_tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "deploy_contracts=$DEPLOY" >> "$GITHUB_OUTPUT"
+
+  deploy-contracts:
+    name: Deploy smart contracts
+    needs: resolve
+    if: needs.resolve.outputs.deploy_contracts == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      asset_vault_address: ${{ steps.addresses.outputs.ASSET_VAULT_ADDRESS }}
+      asset_shares_address: ${{ steps.addresses.outputs.ASSET_SHARES_ADDRESS }}
+      oracle_router_address: ${{ steps.addresses.outputs.ORACLE_ROUTER_ADDRESS }}
+      user_allowlist_address: ${{ steps.addresses.outputs.USER_ALLOWLIST_ADDRESS }}
+      usdc_address: ${{ steps.addresses.outputs.USDC_ADDRESS }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Resolve deploy target from CHAIN_ID
+        run: |
+          case "${{ vars.CHAIN_ID }}" in
+            1) name=mainnet ;;
+            11155111) name=sepolia ;;
+            8453) name=base ;;
+            84532) name=baseSepolia ;;
+            *)
+              echo "Unsupported CHAIN_ID=${{ vars.CHAIN_ID }} — set CHAIN_ID on GitHub Environment production" >&2
+              exit 1
+              ;;
+          esac
+          echo "CONTRACTS_NETWORK=$name" >> "$GITHUB_ENV"
+          echo "Deploy target=$name (CHAIN_ID=${{ vars.CHAIN_ID }})"
+      - name: Compile contracts
+        run: npm run contracts:compile
+      - name: Deploy contracts
+        working-directory: contracts
+        run: npx hardhat run scripts/deploy/deploy.ts --network "$CONTRACTS_NETWORK"
+        env:
+          RPC_URL: ${{ vars.RPC_URL }}
+          INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
+          CHAINLINK_USD_GBP_ADDRESS: ${{ vars.CHAINLINK_USD_GBP_ADDRESS }}
+          CHAINLINK_XAU_USD_ADDRESS: ${{ vars.CHAINLINK_XAU_USD_ADDRESS }}
+          CHAINLINK_FTSE100_ADDRESS: ${{ vars.CHAINLINK_FTSE100_ADDRESS }}
+          ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
+          ADMIN_ASSET_MANAGER_ADDRESS: ${{ vars.ADMIN_ASSET_MANAGER_ADDRESS }}
+          ADMIN_COMPLIANCE_ADDRESS: ${{ vars.ADMIN_COMPLIANCE_ADDRESS }}
+      - name: Capture deployed addresses
+        id: addresses
+        run: |
+          FILE="contracts/deployments/${CONTRACTS_NETWORK}-addresses.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Address file not found: $FILE"
+            exit 1
+          fi
+          cat "$FILE"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" >> "$GITHUB_OUTPUT"
+      - name: Post-deploy tests on deployed chain
+        working-directory: contracts
+        run: npx hardhat test tests/deployment/*.t.ts --network "$CONTRACTS_NETWORK"
+        env:
+          RPC_URL: ${{ vars.RPC_URL }}
+          INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          CHAINLINK_ETH_USD_ADDRESS: ${{ vars.CHAINLINK_ETH_USD_ADDRESS }}
+          CHAINLINK_USD_GBP_ADDRESS: ${{ vars.CHAINLINK_USD_GBP_ADDRESS }}
+          CHAINLINK_XAU_USD_ADDRESS: ${{ vars.CHAINLINK_XAU_USD_ADDRESS }}
+          CHAINLINK_FTSE100_ADDRESS: ${{ vars.CHAINLINK_FTSE100_ADDRESS }}
+          ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
+
+  promote-images:
+    name: Promote application images
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-      - id: tags
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - env:
+          SOURCE: ${{ needs.resolve.outputs.image_tag }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           source_manifest() {
@@ -35,27 +167,18 @@ jobs:
               --image-ids imageTag="$2" \
               --output json | jq -r '.images[0].imageManifest // empty'
           }
-
-          SOURCE=$(gh run list \
-            --repo "${{ github.repository }}" \
-            --workflow publish-to-ecr.yml \
-            --status success \
-            --limit 1 \
-            --json headSha \
-            --jq '.[0].headSha // empty')
-          if [ -z "$SOURCE" ]; then
-            echo "No successful publish-to-ecr run found"
-            exit 1
-          fi
-
-          echo "IMAGE_TAG=$SOURCE" >> "$GITHUB_OUTPUT"
-          echo "Promoting images from latest successful publish-to-ecr ($SOURCE)"
-          for REPO in brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway; do
+          echo "Promoting images tagged $SOURCE"
+          for REPO in brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway brickbase-api; do
             MANIFEST=$(source_manifest "$REPO" "$SOURCE")
             if [ -z "$MANIFEST" ]; then
-              echo "Missing $REPO:$SOURCE — latest publish-to-ecr SHA is not in ECR"
+              echo "Missing $REPO:$SOURCE — Validate release SHA is not in ECR"
               exit 1
             fi
+            aws ecr put-image \
+              --repository-name "$REPO" \
+              --image-tag production \
+              --image-manifest "$MANIFEST"
+            echo "Tagged $REPO:production"
             if [ -n "$RELEASE_TAG" ]; then
               aws ecr put-image \
                 --repository-name "$REPO" \
@@ -65,8 +188,84 @@ jobs:
             fi
           done
 
-  deploy:
-    needs: promote
+  publish-config:
+    name: Publish contract configuration
+    needs: [resolve, deploy-contracts, promote-images]
+    if: |
+      always()
+      && !cancelled()
+      && needs.resolve.result == 'success'
+      && needs.promote-images.result == 'success'
+      && (needs.deploy-contracts.result == 'success' || needs.deploy-contracts.result == 'skipped')
+      && (needs.resolve.outputs.deploy_contracts != 'true' || needs.deploy-contracts.result == 'success')
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      asset_vault_address: ${{ steps.manifest.outputs.ASSET_VAULT_ADDRESS }}
+      asset_shares_address: ${{ steps.manifest.outputs.ASSET_SHARES_ADDRESS }}
+      oracle_router_address: ${{ steps.manifest.outputs.ORACLE_ROUTER_ADDRESS }}
+      user_allowlist_address: ${{ steps.manifest.outputs.USER_ALLOWLIST_ADDRESS }}
+      usdc_address: ${{ steps.manifest.outputs.USDC_ADDRESS }}
+      contracts_deployed: ${{ needs.resolve.outputs.deploy_contracts }}
+      image_tag: ${{ needs.resolve.outputs.image_tag }}
+    steps:
+      - id: manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENV_NAME: production
+          REPO: ${{ github.repository }}
+          CHAIN_ID: ${{ vars.CHAIN_ID }}
+          IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
+          ASSET_VAULT_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_vault_address || vars.ASSET_VAULT_ADDRESS }}
+          ASSET_SHARES_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_shares_address || vars.ASSET_SHARES_ADDRESS }}
+          ORACLE_ROUTER_ADDRESS: ${{ needs.deploy-contracts.outputs.oracle_router_address || vars.ORACLE_ROUTER_ADDRESS }}
+          USER_ALLOWLIST_ADDRESS: ${{ needs.deploy-contracts.outputs.user_allowlist_address || vars.USER_ALLOWLIST_ADDRESS }}
+          USDC_ADDRESS: ${{ needs.deploy-contracts.outputs.usdc_address || vars.USDC_ADDRESS }}
+        run: |
+          for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
+            eval "VALUE=\${$KEY}"
+            if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
+              echo "$KEY is empty — deploy contracts first or set the GitHub Environment var" >&2
+              exit 1
+            fi
+            echo "$KEY=$VALUE" >> "$GITHUB_OUTPUT"
+          done
+          jq -n \
+            --arg chainId "$CHAIN_ID" \
+            --arg imageTag "$IMAGE_TAG" \
+            --arg ASSET_VAULT_ADDRESS "$ASSET_VAULT_ADDRESS" \
+            --arg ASSET_SHARES_ADDRESS "$ASSET_SHARES_ADDRESS" \
+            --arg ORACLE_ROUTER_ADDRESS "$ORACLE_ROUTER_ADDRESS" \
+            --arg USER_ALLOWLIST_ADDRESS "$USER_ALLOWLIST_ADDRESS" \
+            --arg USDC_ADDRESS "$USDC_ADDRESS" \
+            '{
+              chainId: $chainId,
+              imageTag: $imageTag,
+              ASSET_VAULT_ADDRESS: $ASSET_VAULT_ADDRESS,
+              ASSET_SHARES_ADDRESS: $ASSET_SHARES_ADDRESS,
+              ORACLE_ROUTER_ADDRESS: $ORACLE_ROUTER_ADDRESS,
+              USER_ALLOWLIST_ADDRESS: $USER_ALLOWLIST_ADDRESS,
+              USDC_ADDRESS: $USDC_ADDRESS
+            }' > deployment-manifest.json
+          cat deployment-manifest.json
+          for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
+            NEW=$(jq -r --arg k "$KEY" '.[$k]' deployment-manifest.json)
+            OLD=$(gh variable get "$KEY" --env "$ENV_NAME" --repo "$REPO" 2>/dev/null || true)
+            if [ "$NEW" = "$OLD" ]; then
+              echo "$KEY unchanged ($NEW)"
+              continue
+            fi
+            gh variable set "$KEY" --env "$ENV_NAME" --repo "$REPO" --body "$NEW"
+            echo "Updated $KEY=$NEW in $ENV_NAME"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-contract-configuration
+          path: deployment-manifest.json
+
+  deploy-app:
+    name: Deploy application
+    needs: publish-config
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -75,10 +274,37 @@ jobs:
         with:
           role-to-assume: ${{ vars.AUTOMATED_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Rebuild web with contract configuration
+        if: needs.publish-config.outputs.contracts_deployed == 'true'
+        run: |
+          IMAGE="${{ vars.ECR_REGISTRY_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/brickbase-web:${{ needs.publish-config.outputs.image_tag }}"
+          docker build -f infra/docker/Dockerfile.web \
+            --build-arg APP_URL="${{ vars.APP_URL }}" \
+            --build-arg CHAIN_ID="${{ vars.CHAIN_ID }}" \
+            --build-arg RPC_URL="${{ vars.RPC_URL }}" \
+            --build-arg INFURA_PROJECT_ID="${{ secrets.INFURA_PROJECT_ID }}" \
+            --build-arg ASSET_VAULT_ADDRESS="${{ needs.publish-config.outputs.asset_vault_address }}" \
+            --build-arg ASSET_SHARES_ADDRESS="${{ needs.publish-config.outputs.asset_shares_address }}" \
+            --build-arg ORACLE_ROUTER_ADDRESS="${{ needs.publish-config.outputs.oracle_router_address }}" \
+            --build-arg USER_ALLOWLIST_ADDRESS="${{ needs.publish-config.outputs.user_allowlist_address }}" \
+            --build-arg USDC_ADDRESS="${{ needs.publish-config.outputs.usdc_address }}" \
+            --build-arg WALLETCONNECT_PROJECT_ID="${{ secrets.WALLETCONNECT_PROJECT_ID }}" \
+            --build-arg WS_LIVE_URL="${{ vars.WS_LIVE_URL }}" \
+            -t "$IMAGE" .
+          docker push "$IMAGE"
+          MANIFEST=$(aws ecr batch-get-image \
+            --repository-name brickbase-web \
+            --image-ids imageTag="${{ needs.publish-config.outputs.image_tag }}" \
+            --output json | jq -r '.images[0].imageManifest')
+          aws ecr put-image \
+            --repository-name brickbase-web \
+            --image-tag production \
+            --image-manifest "$MANIFEST"
       - run: make -C infra/production deploy wait-stable
         env:
           IMAGE_ACC: ${{ vars.ECR_REGISTRY_ID }}
-          IMAGE_TAG: ${{ needs.promote.outputs.image_tag }}
+          IMAGE_TAG: ${{ needs.publish-config.outputs.image_tag }}
           EXECUTION_ROLE_ARN: ${{ vars.ECS_EXECUTION_ROLE_ARN }}
           TASK_ROLE_ARN: ${{ vars.ECS_TASK_ROLE_ARN }}
           REDIS_URL: ${{ vars.REDIS_URL }}
@@ -86,8 +312,30 @@ jobs:
           SSM_INFURA_ARN: ${{ vars.SSM_INFURA_ARN }}
           CHAIN_ID: ${{ vars.CHAIN_ID }}
           RPC_URL: ${{ vars.RPC_URL }}
-          ASSET_VAULT_ADDRESS: ${{ vars.ASSET_VAULT_ADDRESS }}
-          ASSET_SHARES_ADDRESS: ${{ vars.ASSET_SHARES_ADDRESS }}
-          ORACLE_ROUTER_ADDRESS: ${{ vars.ORACLE_ROUTER_ADDRESS }}
-          USER_ALLOWLIST_ADDRESS: ${{ vars.USER_ALLOWLIST_ADDRESS }}
-          USDC_ADDRESS: ${{ vars.USDC_ADDRESS }}
+          ASSET_VAULT_ADDRESS: ${{ needs.publish-config.outputs.asset_vault_address }}
+          ASSET_SHARES_ADDRESS: ${{ needs.publish-config.outputs.asset_shares_address }}
+          ORACLE_ROUTER_ADDRESS: ${{ needs.publish-config.outputs.oracle_router_address }}
+          USER_ALLOWLIST_ADDRESS: ${{ needs.publish-config.outputs.user_allowlist_address }}
+          USDC_ADDRESS: ${{ needs.publish-config.outputs.usdc_address }}
+
+  verify-health:
+    name: Verify deployment health
+    needs: deploy-app
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: GET /health
+        run: |
+          URL="${{ vars.APP_URL }}/health"
+          echo "Checking $URL"
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "$URL" | jq -e '.status == "ok"' >/dev/null; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed; retrying..."
+            sleep 10
+          done
+          echo "Health check failed" >&2
+          curl -sS "$URL" || true
+          exit 1

@@ -231,10 +231,10 @@ npx nx run contracts:deploy:sepolia
 
 **Outputs** (`contracts/deployments/{network}-addresses.json`) — written after a successful deploy (`USER_ALLOWLIST_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `USDC_ADDRESS`). Copy those into the repo-root `.env` for `apps/web`, `apps/mcp`, and `apps/api`.
 
-**CI test phases** (`deploy-contracts.yml`) run only when contract sources will be deployed (Solidity / `scripts/deploy` / Hardhat / Foundry config on `main`, or `workflow_dispatch`). A tests-only change skips both phases.
+**CI** (`validate-release.yml`) on `main` runs tests and image builds in parallel. It does not deploy. **Deploy to production** (`deploy-to-production.yml`) is a separate workflow (GitHub Release or `workflow_dispatch`).
 
-1. **Pre-deploy** — Hardhat (`--network hardhat`) and Foundry on an **in-process EVM inside the GitHub Actions runner**. Not Sepolia and not `hardhat node` on port 8545.
-2. **Post-deploy** — after a successful deploy, `tests/deployment/` against the **chain just deployed to** (from `CHAIN_ID`: Sepolia when `11155111`). Read-only wiring checks. Vars are not updated if this fails.
+1. **Validate release** (`validate-release.yml`) — Hardhat (`--network hardhat`) and Foundry on an **in-process EVM**, plus Slither when contract sources change. Images are pushed to ECR tagged with the git SHA. Does not deploy contracts or ECS.
+2. **Deploy to production** (`deploy-to-production.yml`) — separate workflow (Release or dispatch). Optional on-chain deploy, `deployment-manifest.json`, promote SHA tags, roll ECS, `GET /health`. Web is rebuilt with new addresses because Next inlines them at build time.
 
 ```bash
 npm run contracts:test:deployment                 # Sepolia (default)
@@ -536,16 +536,15 @@ After apply: Route 53 alias A to `alb_dns_name`, put Infura in SSM (`/brickbase/
 
 | Step | How |
 | ---- | --- |
-| Deploy contracts + bake addresses | Push Solidity / deploy-script changes to `main` → **Deploy contracts**: pre-deploy tests on the runner’s in-process chain, deploy to `CHAIN_ID` on GitHub Environment **`production`** (currently the only GitHub/Terraform environment; `staging` later), post-deploy tests on that chain, write `*_ADDRESS` vars only if that passes, then publish images. No deploy → no contract tests |
-| Build & push ECR | Push to `main` (path filters under `apps/`, `contracts/abi/`, `infra/docker/`) or run workflow **Publish images to ECR**. If contract sources changed on the same push, this workflow skips and waits for **Deploy contracts** so images do not bake stale addresses |
-| Roll production ECS | Publish a **GitHub Release** (workflow **Deploy to production**) — promotes the **latest successful** `publish-to-ecr` SHA; it does not rebuild |
+| Validate release | Push to `main` → **Validate release** (`validate-release.yml`): local Hardhat/Foundry/Slither in parallel with Docker builds; images tagged with the git SHA. Does not deploy |
+| Production deploy | Separate workflow **Deploy to production** (`deploy-to-production.yml`): GitHub Release or `workflow_dispatch`. On-chain deploy if requested, publish contract configuration, promote images, roll ECS, `GET /health` |
 | Manual roll | `make -C infra/production deploy wait-stable` with `IMAGE_ACC` / `IMAGE_TAG` from `terraform output` / the publish SHA |
 
 ```bash
 # After terraform apply, from infra/production (or repo root with -C)
 export AWS_PROFILE=brickbase
 export IMAGE_ACC=$(terraform -chdir=infra/production output -raw ecr_registry_id)
-export IMAGE_TAG=<publish-to-ecr git sha>
+export IMAGE_TAG=<validate-release git sha>
 make -C infra/production deploy wait-stable
 ```
 
@@ -558,8 +557,8 @@ Pick the path that matches what changed. GitHub still does **not** apply Terrafo
 | What changed | Refresh |
 | ------------ | ------- |
 | `infra/production/*.tf` or `terraform.tfvars` (VPC, ALB, target groups, ECS service shape, IAM, SSM, Redis) | Terraform plan/apply (below) |
-| App code (`apps/`, Dockerfiles) | Push `main` → **Publish images to ECR** (uses current `production` `*_ADDRESS` vars), then a **GitHub Release** (or `make … deploy wait-stable`) |
-| Solidity / `contracts/**` | Merge of source/deploy changes → **Deploy contracts** (pre-deploy tests, deploy, post-deploy tests, update `*_ADDRESS` vars, publish images), then a **GitHub Release**. Test-only contract changes do not run contract tests or deploy |
+| App code (`apps/`, Dockerfiles) | Push `main` → **Validate release** (tests + images). Deploy with **Deploy to production** (Release or dispatch) |
+| Solidity / `contracts/**` | Push `main` → **Validate release** (local tests + images). Deploy on-chain and roll ECS with **Deploy to production** (`deploy_contracts`). Test-only contract changes skip Hardhat/Slither in Validate release |
 | GitHub Environment **`production`** vars (`RPC_URL`, `REDIS_URL`, … — not contract addresses after an automated deploy) | Update the vars, then an ECS roll so new task defs pick them up (Release or `make deploy`) — Terraform does not inject those |
 | Infura SSM parameter | `aws ssm put-parameter … --overwrite`, then an ECS roll if tasks already started |
 
