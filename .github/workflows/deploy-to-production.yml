@@ -2,9 +2,9 @@ name: Deploy to production
 
 # Separate from validate-release.yml — that workflow only tests and pushes SHA-tagged
 # images. This workflow is started by a GitHub Release or workflow_dispatch.
-# It deploys contracts (optional), promotes ECR tags, publishes the deployment
-# manifest, rolls ECS, and checks /health. Web is rebuilt when addresses change
-# because Next inlines them at build time.
+# Order: optional on-chain deploy, then promote ECR tags, then publish the
+# deployment manifest, roll ECS, and check /health. Web is rebuilt when
+# addresses change because Next inlines them at build time.
 on:
   release:
     types: [published]
@@ -149,7 +149,13 @@ jobs:
 
   promote-images:
     name: Promote application images
-    needs: resolve
+    needs: [resolve, deploy-contracts]
+    if: |
+      always()
+      && !cancelled()
+      && needs.resolve.result == 'success'
+      && (needs.deploy-contracts.result == 'success' || needs.deploy-contracts.result == 'skipped')
+      && (needs.resolve.outputs.deploy_contracts != 'true' || needs.deploy-contracts.result == 'success')
     runs-on: ubuntu-latest
     environment: production
     steps:
