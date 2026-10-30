@@ -212,6 +212,7 @@ Set these in the GitHub `production` environment before running the deploy workf
 | `ADMIN_ASSET_MANAGER_ADDRESS` | Variable | Asset manager wallet address |
 | `ADMIN_COMPLIANCE_ADDRESS` | Variable | Compliance officer wallet address |
 | `PRIVATE_KEY` | **Secret** | Deployer wallet private key (0x…) |
+| `GH_PAT` | **Secret** | Optional PAT with Variables write on this environment. The default Actions token (`github.token`) cannot persist `*_ADDRESS` vars (403). This run still uses the workflow artifact and job outputs. |
 
 On push to `main`, **Validate release** (`validate-release.yml`) runs tests in parallel with image builds (git SHA tags) and stops there. **Deploy to production** (`deploy-to-production.yml`) is started separately (Release or dispatch): it deploys to this environment's `CHAIN_ID` when `deploy_contracts` is set, writes `ASSET_VAULT_ADDRESS`, `ASSET_SHARES_ADDRESS`, `ORACLE_ROUTER_ADDRESS`, `USER_ALLOWLIST_ADDRESS`, and `USDC_ADDRESS`, uploads `deployment-manifest.json`, rolls ECS with that configuration, and verifies `/health`.
 

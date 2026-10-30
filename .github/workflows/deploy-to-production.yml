@@ -44,7 +44,7 @@ jobs:
     steps:
       - id: out
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ inputs.image_tag }}"
           DEPLOY="${{ inputs.deploy_contracts }}"
@@ -226,7 +226,7 @@ jobs:
     steps:
       - id: manifest
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
           ENV_NAME: production
           REPO: ${{ github.repository }}
           CHAIN_ID: ${{ vars.CHAIN_ID }}
@@ -279,8 +279,18 @@ jobs:
               echo "$KEY unchanged ($NEW)"
               continue
             fi
-            gh variable set "$KEY" --env "$ENV_NAME" --repo "$REPO" --body "$NEW"
-            echo "Updated $KEY=$NEW in $ENV_NAME"
+            if out=$(gh variable set "$KEY" --env "$ENV_NAME" --repo "$REPO" --body "$NEW" 2>&1); then
+              echo "Updated $KEY=$NEW in $ENV_NAME"
+              continue
+            fi
+            if echo "$out" | grep -q '403'; then
+              echo "Cannot write GitHub Environment vars with this token (403)."
+              echo "This run still uses the manifest artifact and job outputs."
+              echo "To persist vars, add production secret GH_PAT with Variables write on this environment."
+              break
+            fi
+            echo "$out" >&2
+            exit 1
           done
       - uses: actions/upload-artifact@v4
         with:
