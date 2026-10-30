@@ -167,6 +167,23 @@ jobs:
               --image-ids imageTag="$2" \
               --output json | jq -r '.images[0].imageManifest // empty'
           }
+          put_tag() {
+            local repo="$1" tag="$2" manifest="$3"
+            local out
+            if out=$(aws ecr put-image \
+              --repository-name "$repo" \
+              --image-tag "$tag" \
+              --image-manifest "$manifest" 2>&1); then
+              echo "Tagged $repo:$tag"
+              return 0
+            fi
+            if echo "$out" | grep -q ImageAlreadyExistsException; then
+              echo "$repo:$tag already on this digest"
+              return 0
+            fi
+            echo "$out" >&2
+            return 1
+          }
           echo "Promoting images tagged $SOURCE"
           for REPO in brickbase-web brickbase-mcp brickbase-ingest brickbase-gateway brickbase-api; do
             MANIFEST=$(source_manifest "$REPO" "$SOURCE")
@@ -174,17 +191,9 @@ jobs:
               echo "Missing $REPO:$SOURCE — Validate release SHA is not in ECR"
               exit 1
             fi
-            aws ecr put-image \
-              --repository-name "$REPO" \
-              --image-tag production \
-              --image-manifest "$MANIFEST"
-            echo "Tagged $REPO:production"
+            put_tag "$REPO" production "$MANIFEST"
             if [ -n "$RELEASE_TAG" ]; then
-              aws ecr put-image \
-                --repository-name "$REPO" \
-                --image-tag "$RELEASE_TAG" \
-                --image-manifest "$MANIFEST"
-              echo "Tagged $REPO:$RELEASE_TAG"
+              put_tag "$REPO" "$RELEASE_TAG" "$MANIFEST"
             fi
           done
 
@@ -216,6 +225,7 @@ jobs:
           REPO: ${{ github.repository }}
           CHAIN_ID: ${{ vars.CHAIN_ID }}
           IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
+          DEPLOY_CONTRACTS: ${{ needs.resolve.outputs.deploy_contracts }}
           ASSET_VAULT_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_vault_address || vars.ASSET_VAULT_ADDRESS }}
           ASSET_SHARES_ADDRESS: ${{ needs.deploy-contracts.outputs.asset_shares_address || vars.ASSET_SHARES_ADDRESS }}
           ORACLE_ROUTER_ADDRESS: ${{ needs.deploy-contracts.outputs.oracle_router_address || vars.ORACLE_ROUTER_ADDRESS }}
@@ -225,8 +235,12 @@ jobs:
           for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
             eval "VALUE=\${$KEY}"
             if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
-              echo "$KEY is empty — deploy contracts first or set the GitHub Environment var" >&2
-              exit 1
+              if [ "$DEPLOY_CONTRACTS" = "true" ]; then
+                echo "$KEY is empty after contract deploy" >&2
+                exit 1
+              fi
+              echo "$KEY is empty — GitHub Environment var not set; skipping (re-run with deploy_contracts to deploy)"
+              VALUE=""
             fi
             echo "$KEY=$VALUE" >> "$GITHUB_OUTPUT"
           done
@@ -250,6 +264,10 @@ jobs:
           cat deployment-manifest.json
           for KEY in ASSET_VAULT_ADDRESS ASSET_SHARES_ADDRESS ORACLE_ROUTER_ADDRESS USER_ALLOWLIST_ADDRESS USDC_ADDRESS; do
             NEW=$(jq -r --arg k "$KEY" '.[$k]' deployment-manifest.json)
+            if [ -z "$NEW" ] || [ "$NEW" = "null" ]; then
+              echo "Skipping empty $KEY"
+              continue
+            fi
             OLD=$(gh variable get "$KEY" --env "$ENV_NAME" --repo "$REPO" 2>/dev/null || true)
             if [ "$NEW" = "$OLD" ]; then
               echo "$KEY unchanged ($NEW)"
@@ -297,10 +315,17 @@ jobs:
             --repository-name brickbase-web \
             --image-ids imageTag="${{ needs.publish-config.outputs.image_tag }}" \
             --output json | jq -r '.images[0].imageManifest')
-          aws ecr put-image \
+          if out=$(aws ecr put-image \
             --repository-name brickbase-web \
             --image-tag production \
-            --image-manifest "$MANIFEST"
+            --image-manifest "$MANIFEST" 2>&1); then
+            echo "Tagged brickbase-web:production"
+          elif echo "$out" | grep -q ImageAlreadyExistsException; then
+            echo "brickbase-web:production already on this digest"
+          else
+            echo "$out" >&2
+            exit 1
+          fi
       - run: make -C infra/production deploy wait-stable
         env:
           IMAGE_ACC: ${{ vars.ECR_REGISTRY_ID }}
